@@ -33,9 +33,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   pointer-events: none;
   z-index: 5;
 }
+.hud-right { display: flex; align-items: center; gap: 8px; }
 
 .pill {
   display: flex;
@@ -47,7 +49,7 @@ html, body {
   padding: 6px 16px 6px 8px;
   font-size: 22px;
   font-weight: 800;
-  min-width: 110px;
+  min-width: 96px;
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
   transition: transform 0.12s;
 }
@@ -180,3 +182,81 @@ html, body {
 
 .bar { height: 14px; border-radius: 7px; background: #e5dccb; overflow: hidden; }
 #loading-bar { height: 100%; width: 0; background: var(--green); transition: width 0.2s; }
+
+.pill.level { min-width: 0; padding: 6px 12px 6px 6px; gap: 8px; }
+.lvl-badge {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe27a, #f2a900);
+  color: #4a3000; font-size: 17px; display: grid; place-items: center;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+}
+.lvl-bar { width: 64px; height: 10px; border-radius: 5px; background: rgba(255,255,255,0.25); overflow: hidden; }
+#level-fill { display: block; height: 100%; width: 0; background: #7be37f; transition: width 0.3s; }
+.pill.clock { min-width: 0; flex-direction: column; gap: 0; padding: 4px 12px; font-size: 16px; line-height: 1.15; align-items: flex-end; }
+#clock-day { font-size: 11px; opacity: 0.8; font-weight: 700; }
+.pill.clock.closed #clock-time { color: #ff9b8a; }
+
+@media (max-width: 420px) {
+  .pill { font-size: 18px; padding: 5px 12px 5px 6px; min-width: 0; }
+  .bill { width: 28px; height: 18px; }
+  .lvl-bar { width: 44px; }
+  .lvl-badge { width: 28px; height: 28px; font-size: 15px; }
+  .round { width: 40px; height: 40px; font-size: 19px; }
+}
+
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  transform: translateX(-50%);
+  width: min(94vw, 420px);
+  max-height: 58vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.2), 0 10px 30px rgba(0,0,0,0.25);
+  z-index: 8;
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet h3 { margin: 0; font-size: 18px; }
+.sheet .x { border: none; background: #ece4d3; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; }
+#order-list { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.order-row { display: grid; grid-template-columns: 34px 1fr 38px 34px 38px; align-items: center; gap: 6px; }
+.o-emoji { font-size: 24px; text-align: center; }
+.o-name { font-weight: 800; display: flex; flex-direction: column; line-height: 1.1; }
+.o-name small { font-weight: 600; opacity: 0.65; font-size: 12px; font-variant-numeric: tabular-nums; }
+.order-row button { height: 34px; border: none; border-radius: 10px; background: #e4f3e1; color: var(--green-dark); font-size: 20px; font-weight: 900; }
+.o-qty { text-align: center; font-weight: 900; font-variant-numeric: tabular-nums; }
+.sheet .row { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+.sheet-foot { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.sheet-foot button { border: none; border-radius: 12px; padding: 10px 12px; font-weight: 800; font-family: inherit; font-size: 15px; }
+.sheet-foot .primary { background: var(--green); color: #fff; box-shadow: 0 3px 0 var(--green-dark); }
+.sheet-foot .primary:disabled { opacity: 0.45; }
+.sheet-foot .ghost, .panel .ghost { background: #ece4d3; color: var(--ink); }
+.o-total { font-size: 14px; white-space: nowrap; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stats div { background: #f1ead9; border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; }
+.stats span { font-size: 12px; opacity: 0.7; font-weight: 700; }
+.stats b { font-size: 20px; font-variant-numeric: tabular-nums; }
+
+.skip {
+  position: fixed;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 900;
+  font-size: 16px;
+  font-family: inherit;
+  background: var(--accent);
+  color: #3a2600;
+  box-shadow: 0 4px 0 #c98d00;
+  z-index: 6;
+}
+.toast.levelup { top: 38%; background: #7be37f; color: #13451a; box-shadow: 0 4px 0 #3fae4a; font-size: 26px; text-align: center; white-space: normal; max-width: 86vw; }
+.toast.levelup small { display: block; font-size: 14px; font-weight: 700; }

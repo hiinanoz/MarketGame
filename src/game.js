@@ -6,14 +6,18 @@ import { Hud } from './hud.js';
 import { Input } from './input.js';
 import { World } from './world.js';
 import { Character } from './character.js';
-import { Shelf, SupplyPoint, Checkout, UnlockPad } from './stations.js';
+import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker } from './actors.js';
+import { Depot } from './depot.js';
+import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
-  PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2, DOOR_X,
+  PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
+  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK,
 } from './config.js';
 
-const SAVE_KEY = 'marketgame-save-v1';
+const SAVE_KEY = 'marketgame-save-v2';
+const OLD_SAVE_KEY = 'marketgame-save-v1';
 
 export class Game {
   constructor(container) {
@@ -31,8 +35,8 @@ export class Game {
     this.scene.fog = new THREE.Fog(0x9ad3f0, 45, 90);
     this.camera = new THREE.PerspectiveCamera(42, 1, 0.5, 200);
 
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x7a8f6a, 1.7);
-    this.scene.add(hemi);
+    this.hemi = new THREE.HemisphereLight(0xffffff, 0x7a8f6a, 1.7);
+    this.scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xfff3dd, 2.2);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -42,15 +46,19 @@ export class Game {
     this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
 
-    this.nav = new Nav({ minX: -15, maxX: 31, minZ: -18, maxZ: 21 });
+    this.nav = new Nav({ minX: -15, maxX: 31, minZ: -30, maxZ: 21 });
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
     this.input = new Input(this.renderer.domElement);
+    this.day = new DayCycle(this);
     this.hud = new Hud(this);
     this.stats = { sold: 0 };
+    this.xp = 0;
+    this.level = 1;
+    this.stockerCapacity = WORKER_CAPACITY;
+    this.door2Open = false;
 
     this.shelves = [];
-    this.supplies = new Map();
     this.checkouts = [];
     this.customers = [];
     this.workers = [];
@@ -60,6 +68,7 @@ export class Game {
     this.money = START_MONEY;
 
     this.world = new World(this);
+    this.depot = new Depot(this);
 
     // Oyuncu
     this.player = new Character(this, 'Barbarian', { speed: PLAYER_SPEED, capacity: START_CAPACITY });
@@ -84,7 +93,8 @@ export class Game {
     this.scene.add(this.pointer);
 
     this.spawnTimer = 1.5;
-    this.timers = { supply: 0, shelf: 0, save: 0 };
+    this.timers = { supply: 0, shelf: 0, save: 0, gift: 3 };
+    this.hud.setLevel(this.level, this.levelProgress());
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -98,7 +108,7 @@ export class Game {
     const def = SHELVES.find((s) => s.id === id);
     const shelf = new Shelf(this, def);
     this.shelves.push(shelf);
-    this.supplies.set(def.product, new SupplyPoint(this, def));
+    this.depot.addPallet(def.product);
     return shelf;
   }
 
@@ -113,6 +123,8 @@ export class Game {
     switch (def.type) {
       case 'shelf':
         return SHELVES.find((s) => s.id === def.target).pos;
+      case 'shelfStage':
+        return this.shelves.find((s) => s.id === def.target).stagePadPos;
       case 'cashier': {
         const co = CHECKOUTS.find((c) => c.id === def.target);
         return [co.cashierSpot[0] + 0.3, co.cashierSpot[1] + 5.4];
@@ -127,6 +139,10 @@ export class Game {
   padLabel(def) {
     switch (def.type) {
       case 'shelf': return { title: PRODUCTS[def.target].name, emoji: PRODUCTS[def.target].emoji };
+      case 'shelfStage': return { title: `Raf ${[8, 16, 24][def.value]}`, emoji: '📶', size: 2.0 };
+      case 'stockerCap': return { title: `Taşıyıcı ${def.value}`, emoji: '🛒' };
+      case 'door': return { title: '2. kapı', emoji: '🚪' };
+      case 'depot': return { title: 'Depo 40', emoji: '🏭' };
       case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
       case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
@@ -136,12 +152,17 @@ export class Game {
     }
   }
 
+  /** Sıradaki seviyenin alanları da kilitli (gri) olarak görünür; ulaşınca açılır. */
   refreshPads() {
+    for (const [id, pad] of this.pads) pad.setLocked(pad.def.level > this.level);
     for (const def of UNLOCKS) {
       if (this.unlocked.has(def.id) || this.pads.has(def.id)) continue;
       if (!def.requires.every((r) => this.unlocked.has(r))) continue;
+      if (def.level > this.level + 1) continue;
+      if (def.type === 'shelfStage' && !this.shelves.some((s) => s.id === def.target)) continue;
       const [x, z] = this.padPosition(def);
       const pad = new UnlockPad(this, def, x, z, this.padLabel(def));
+      pad.setLocked(def.level > this.level);
       if (this.savedPads?.[def.id]) {
         pad.paid = Math.min(this.savedPads[def.id], def.cost - 1);
         pad.redraw();
@@ -165,9 +186,26 @@ export class Game {
       }
       case 'stocker': {
         const [x, z] = def.pos;
-        this.workers.push(new Stocker(this, x, z));
+        const st = new Stocker(this, x, z);
+        st.capacity = this.stockerCapacity;
+        this.workers.push(st);
         break;
       }
+      case 'stockerCap':
+        this.stockerCapacity = Math.max(this.stockerCapacity, def.value);
+        for (const w of this.workers) if (w instanceof Stocker) w.capacity = this.stockerCapacity;
+        break;
+      case 'shelfStage':
+        this.shelves.find((s) => s.id === def.target)?.setStage(def.value);
+        break;
+      case 'door':
+        this.door2Open = true;
+        this.world.openDoor2();
+        break;
+      case 'depot':
+        this.depot.upgrade();
+        if (!silent) this.depot.autoOrder = true;
+        break;
       case 'capacity':
         this.player.capacity = Math.max(this.player.capacity, def.value);
         break;
@@ -191,6 +229,7 @@ export class Game {
 
   earn(amount, pos) {
     this.money += amount;
+    this.day.today.revenue += amount;
     this.hud.setMoney(this.money);
     this.hud.bump();
     this.fx.floatText(pos, `+$${amount}`);
@@ -199,6 +238,7 @@ export class Game {
 
   spend(amount, pos) {
     this.money -= amount;
+    this.day.today.spent += amount;
     this.hud.setMoney(this.money);
     if (pos) this.fx.floatText(pos, `-$${amount}`, '#e04b3a');
   }
@@ -207,6 +247,8 @@ export class Game {
   isBroke() {
     return (
       this.player.carrying === 0 &&
+      this.depot.totalStock() === 0 &&
+      this.depot.trucks.length === 0 &&
       this.shelves.every((s) => s.count === 0 && s.incoming === 0) &&
       this.checkouts.every((c) => c.cash.value === 0 && c.queue.length === 0) &&
       !this.customers.some((c) => c.carrying > 0)
@@ -215,8 +257,37 @@ export class Game {
 
   // ---- Müşteriler ------------------------------------------------------------
 
+  // ---- Seviye ----------------------------------------------------------------
+
+  levelProgress() {
+    const cur = LEVELS[this.level - 1];
+    const next = LEVELS[this.level];
+    if (next === undefined) return 1;
+    return (this.xp - cur) / (next - cur);
+  }
+
+  /** Ödeme yapıp çıkan her müşteri. */
+  onCustomerPaid() {
+    this.xp++;
+    this.day.today.customers++;
+    let leveled = false;
+    while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) {
+      this.level++;
+      leveled = true;
+    }
+    if (leveled) {
+      const names = [...new Set(UNLOCKS.filter((u) => u.level === this.level).map((u) =>
+        u.type === 'shelfStage' ? 'Raf kapasitesi' : this.padLabel(u).title))];
+      this.hud.levelUp(this.level, names);
+      this.audio.play('unlock');
+      this.refreshPads();
+      this.save();
+    }
+    this.hud.setLevel(this.level, this.levelProgress());
+  }
+
   doors() {
-    return this.room2Open ? [[DOOR_X, 4], [20, 4]] : [[DOOR_X, 4]];
+    return this.door2Open ? [[DOOR_X, 4], [DOOR2_X, 4]] : [[DOOR_X, 4]];
   }
 
   nearestDoor(x) {
@@ -245,7 +316,7 @@ export class Game {
     const shelf = pool[Math.floor(Math.random() * pool.length)];
     const qty = 1 + Math.floor(Math.random() * Math.min(3, 1 + this.shelves.length / 2));
     const model = CHARACTER_NAMES.filter((n) => n !== 'Barbarian')[Math.floor(Math.random() * 4)];
-    const door = shelf.x > ROOM2.minX ? [20, 4] : [DOOR_X, 4];
+    const door = shelf.x > ROOM2.minX && this.door2Open ? [DOOR2_X, 4] : [DOOR_X, 4];
     this.customers.push(new Customer(this, model, shelf, qty, door));
   }
 
@@ -260,18 +331,35 @@ export class Game {
     this.input.update();
     this.updatePlayer(dt);
 
-    // Müşteri üretimi
-    const maxCustomers = 3 + this.shelves.length * 2;
-    const interval = Math.max(1.4, 5.5 - this.shelves.length * 0.55);
+    this.day.update(dt);
+    this.hud.setClock(this.day.day, this.day.clockText, this.day.phase);
+
+    // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
+    const rush = this.day.rush;
+    const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
+    const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
     this.spawnTimer -= dt;
-    if (this.spawnTimer <= 0) {
+    if (rush > 0 && this.spawnTimer <= 0) {
       this.spawnTimer = interval * (0.7 + Math.random() * 0.6);
       if (this.customers.length < maxCustomers) this.spawnCustomer();
     }
+    this.spawnTimer = Math.min(this.spawnTimer, interval * 1.3);
 
     for (const c of [...this.customers]) c.update(dt);
     for (const w of this.workers) w.update(dt);
     for (const co of this.checkouts) co.update(dt);
+    this.depot.update(dt);
+
+    // Para ve mal tamamen bittiyse toptancı hediye gönderir (oyun kilitlenmesin)
+    this.timers.gift -= dt;
+    if (this.timers.gift <= 0) {
+      this.timers.gift = 3;
+      const cheapest = Math.min(...[...this.depot.pallets.keys()].map((k) => PRODUCTS[k].cost));
+      if (this.money < cheapest * 3 && this.isBroke()) {
+        this.depot.order({ tomato: 6 }, { free: true });
+        this.hud.toast('🎁 Toptancıdan hediye domates!');
+      }
+    }
 
     // Satın alma alanları
     for (const [id, pad] of this.pads) {
@@ -303,24 +391,20 @@ export class Game {
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
     p.position.x = THREE.MathUtils.clamp(p.position.x, -40, 45);
-    p.position.z = THREE.MathUtils.clamp(p.position.z, -15.4, 17.5);
+    p.position.z = THREE.MathUtils.clamp(p.position.z, -27.4, 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
 
-    // Depodan al
+    // Depo paletinden al
     this.timers.supply -= dt;
-    if (this.timers.supply <= 0) {
-      for (const sup of this.supplies.values()) {
-        if (!sup.inRange(p.position) || p.full) continue;
-        const cost = PRODUCTS[sup.product].cost;
-        const free = this.money < cost && this.isBroke();
-        if (sup.sellTo(p, { free })) {
-          this.timers.supply = 0.13;
-          if (free) this.hud.toast('🎁 Toptancıdan hediye!');
-        } else if (this.money < cost && !this.warnedNoMoney) {
-          this.warnedNoMoney = true;
-          this.hud.toast('Paran yetmiyor 💸');
-          setTimeout(() => (this.warnedNoMoney = false), 2500);
+    if (this.timers.supply <= 0 && !p.full) {
+      for (const pal of this.depot.pallets.values()) {
+        if (!pal.inRange(p.position)) continue;
+        if (pal.giveTo(p)) this.timers.supply = 0.12;
+        else if (pal.stock === 0 && !this.warnedEmpty) {
+          this.warnedEmpty = true;
+          this.hud.toast(`${PRODUCTS[pal.product].emoji} stokta yok — sipariş ver 🚚`);
+          setTimeout(() => (this.warnedEmpty = false), 3000);
         }
         break;
       }
@@ -352,7 +436,7 @@ export class Game {
     const unserved = this.checkouts.find((c) => !c.cashier && c.queue.length > 0 && c.queue[0].readyToPay);
     const cash = this.checkouts.find((c) => c.cash.value > 0);
     const affordable = [...this.pads.values()]
-      .filter((pad) => this.money >= pad.remaining)
+      .filter((pad) => !pad.locked && this.money >= pad.remaining)
       .sort((a, b) => a.remaining - b.remaining)[0];
     const emptyShelf = [...this.shelves].sort((a, b) => a.count - b.count)[0];
 
@@ -376,14 +460,19 @@ export class Game {
       hint = `${affordable.emoji} ${affordable.title} — üzerinde durarak satın al`;
     }
     if (!target && emptyShelf && emptyShelf.count < emptyShelf.capacity / 2 && !p.full) {
-      const sup = this.supplies.get(emptyShelf.product);
-      target = [sup.x, sup.zoneZ];
-      hint = `Depodan ${PRODUCTS[emptyShelf.product].emoji} al`;
+      const pal = this.depot.pallets.get(emptyShelf.product);
+      if (pal.stock > 0) {
+        target = [pal.x, pal.zoneZ];
+        hint = `Arka depodan ${PRODUCTS[emptyShelf.product].emoji} al`;
+      } else if (!this.depot.incoming(emptyShelf.product)) {
+        target = [this.depot.kiosk.x, this.depot.kiosk.z];
+        hint = `${PRODUCTS[emptyShelf.product].emoji} bitti — depodaki noktadan sipariş ver 🚚`;
+      }
     }
 
     if (!hint && this.stats.sold < 3) hint = 'Ekrana dokunup sürükleyerek yürü 👆';
     // Oyuncu ilerledikçe ipuçlarını kapat
-    this.hud.hint(this.stats.sold < 25 ? hint : '');
+    this.hud.hint(this.xp < 25 ? hint : '');
 
     const near = !target || Math.hypot(target[0] - p.position.x, target[1] - p.position.z) < 1.6;
     this.guide.visible = !near;
@@ -429,12 +518,15 @@ export class Game {
 
   save() {
     const data = {
-      v: 1,
+      v: 2,
       money: this.money,
+      xp: this.xp,
       unlocked: [...this.unlocked],
       shelves: Object.fromEntries(this.shelves.map((s) => [s.id, s.count])),
       pads: Object.fromEntries([...this.pads].filter(([, p]) => p.paid > 0).map(([id, p]) => [id, p.paid])),
       sold: this.stats.sold,
+      day: this.day.serialize(),
+      depot: this.depot.serialize(),
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -447,26 +539,46 @@ export class Game {
     let data = null;
     try {
       data = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      if (!data) {
+        // Eski (v1) kayıt: para ve açılanlar korunur, XP satışlardan tahmin edilir
+        const old = JSON.parse(localStorage.getItem(OLD_SAVE_KEY) || 'null');
+        if (old) data = { ...old, xp: Math.floor((old.sold ?? 0) / 2), v: 2 };
+      }
     } catch {
       data = null;
     }
-    if (!data || data.v !== 1) {
+    if (!data || data.v !== 2) {
       this.shelves[0].fillStock(4);
+      for (const [k, n] of Object.entries(START_DEPOT_STOCK)) {
+        const pal = this.depot.pallets.get(k);
+        pal.stock = n;
+        pal.syncVisual();
+      }
       return;
     }
     this.money = data.money ?? START_MONEY;
+    this.xp = data.xp ?? 0;
+    while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) this.level++;
     this.stats.sold = data.sold ?? 0;
     this.savedPads = data.pads ?? {};
     // Bağımlılık sırasıyla uygula
+    const ids = new Set(data.unlocked ?? []);
     for (const def of UNLOCKS) {
-      if (data.unlocked?.includes(def.id)) this.applyUnlock(def, true);
+      if (ids.has(def.id)) this.applyUnlock(def, true);
     }
     for (const s of this.shelves) s.fillStock(data.shelves?.[s.id] ?? 0);
+    this.day.restore(data.day);
+    if (data.depot) this.depot.restore(data.depot);
+    else {
+      // v1'den geçiş: her ürüne biraz stok
+      for (const pal of this.depot.pallets.values()) { pal.stock = 10; pal.syncVisual(); }
+    }
   }
 
   reset() {
     try {
       localStorage.removeItem(SAVE_KEY);
+      localStorage.removeItem(OLD_SAVE_KEY);
     } catch {
       /* yok say */
     }

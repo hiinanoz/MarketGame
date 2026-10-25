@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
 import { makeCrate, CRATE_HEIGHT } from './character.js';
-import { PRODUCTS, SHELF_CAPACITY } from './config.js';
+import { PRODUCTS, SHELF_STAGES } from './config.js';
 import { makeBill, textTexture } from './fx.js';
 
 // ---- Zemin işaretleri --------------------------------------------------------
@@ -61,6 +61,7 @@ function emojiSign(emoji, size = 0.9) {
 const inZone = (p, x, z, hw, hd) => Math.abs(p.x - x) < hw && Math.abs(p.z - z) < hd;
 
 // ---- Reyon (ürün masası) --------------------------------------------------------
+// Aşama 0: 2x2 masa (8 kasa). Aşama 1-2: 3x2 geniş masa (16 / 24 kasa).
 
 export class Shelf {
   constructor(game, def) {
@@ -69,33 +70,56 @@ export class Shelf {
     this.product = def.product;
     this.x = def.pos[0];
     this.z = def.pos[1];
-    this.capacity = SHELF_CAPACITY;
+    this.stage = 0;
     this.stock = []; // kasa mesh'leri
     this.incoming = 0;
     this.reservedBy = null; // bir taşıyıcı işçi bu rafa çalışıyorsa
 
     this.root = new THREE.Group();
     this.root.position.set(this.x, 0, this.z);
-    const table = prop('kitchentable_B');
-    this.root.add(table);
     this.top = new THREE.Group();
     this.top.position.y = 1.0;
     this.root.add(this.top);
-    const sign = emojiSign(PRODUCTS[this.product].emoji, 0.85);
-    sign.position.set(0, 2.55, 0);
-    this.root.add(sign);
-    this.sign = sign;
-
-    // Oyuncunun bırakma alanı (masanın çevresi)
-    const c = padCanvas(256, 256);
-    drawZone(c.getContext('2d'), 256, 256, { color: 'rgba(255,255,255,0.75)', fill: 'rgba(255,255,255,0.12)' });
-    const tex = new THREE.CanvasTexture(c);
-    const zone = flatPlane([3.4, 3.4], tex);
-    this.root.add(zone);
-
+    this.sign = emojiSign(PRODUCTS[this.product].emoji, 0.85);
+    this.root.add(this.sign);
     game.scene.add(this.root);
-    game.nav.setBox(`shelf-${this.id}`, { minX: this.x - 1, maxX: this.x + 1, minZ: this.z - 1, maxZ: this.z + 1 });
     this.waiting = []; // önünde bekleyen müşteriler
+    this.buildTable();
+  }
+
+  get capacity() {
+    return SHELF_STAGES[this.stage];
+  }
+
+  get wide() {
+    return this.stage > 0;
+  }
+
+  buildTable() {
+    if (this.table) this.root.remove(this.table);
+    if (this.zone) this.root.remove(this.zone);
+    this.table = prop(this.wide ? 'kitchentable_B_large' : 'kitchentable_B');
+    this.root.add(this.table);
+    const w = this.wide ? 4.4 : 3.4;
+    const c = padCanvas(this.wide ? 330 : 256, 256);
+    drawZone(c.getContext('2d'), c.width, 256, { color: 'rgba(255,255,255,0.75)', fill: 'rgba(255,255,255,0.12)' });
+    this.zone = flatPlane([w, 3.4], new THREE.CanvasTexture(c));
+    this.root.add(this.zone);
+    const layers = Math.ceil(this.capacity / this.perLayer);
+    this.sign.position.set(0, 1.9 + layers * CRATE_HEIGHT * 0.9, 0);
+    const hw = this.wide ? 1.5 : 1;
+    this.game.nav.setBox(`shelf-${this.id}`, { minX: this.x - hw, maxX: this.x + hw, minZ: this.z - 1, maxZ: this.z + 1 });
+    this.relayout();
+  }
+
+  /** Kapasite yükseltmesi. */
+  setStage(stage) {
+    this.stage = Math.min(stage, SHELF_STAGES.length - 1);
+    this.buildTable();
+  }
+
+  get perLayer() {
+    return this.wide ? 6 : 4;
   }
 
   get count() {
@@ -107,13 +131,17 @@ export class Shelf {
   }
 
   slot(i) {
-    const layer = Math.floor(i / 4);
-    const k = i % 4;
+    const per = this.perLayer;
+    const layer = Math.floor(i / per);
+    const k = i % per;
+    if (this.wide) {
+      return new THREE.Vector3(((k % 3) - 1) * 0.9, layer * CRATE_HEIGHT, (k < 3 ? -0.45 : 0.45));
+    }
     return new THREE.Vector3((k % 2 ? 0.45 : -0.45), layer * CRATE_HEIGHT, (k < 2 ? -0.45 : 0.45));
   }
 
   playerInRange(p) {
-    return inZone(p, this.x, this.z, 1.75, 1.75);
+    return inZone(p, this.x, this.z, this.wide ? 2.2 : 1.75, 1.75);
   }
 
   /** Bir karakterin yığınından kasa alır (oyuncu ya da işçi). */
@@ -155,6 +183,11 @@ export class Shelf {
     return [this.x + o[0], this.z + o[1]];
   }
 
+  /** Kapasite yükseltme alanının konumu (masanın arkası). */
+  get stagePadPos() {
+    return [this.x, this.z - 2.6];
+  }
+
   fillStock(n) {
     for (let i = 0; i < n && this.stock.length < this.capacity; i++) {
       const m = makeCrate(this.product);
@@ -165,50 +198,110 @@ export class Shelf {
   }
 }
 
-// ---- Depo / toptancı noktası ----------------------------------------------------
+// ---- Depo paleti ---------------------------------------------------------------------
+// Siparişle gelen kasalar burada durur. Oyuncu/işçi paletin önündeki alandan alır (ödenmiş mal).
 
-export class SupplyPoint {
-  constructor(game, def) {
+let palletGeo, palletMat;
+const VISIBLE_PER_PALLET = 20;
+
+export class Pallet {
+  constructor(game, product, x, z) {
     this.game = game;
-    this.product = def.product;
-    this.x = def.supply[0];
-    this.z = def.supply[1];
-    const p = PRODUCTS[this.product];
+    this.product = product;
+    this.x = x;
+    this.z = z;
+    this.stock = 0;
+    this.crates = [];
 
     this.root = new THREE.Group();
-    this.root.position.set(this.x, 0, this.z);
-    // Kasa yığını (dekor)
-    for (let i = 0; i < 3; i++) {
-      const c = prop(p.crate);
-      c.scale.setScalar(0.6);
-      c.position.set(i === 2 ? 0 : (i ? 0.62 : -0.62), i === 2 ? 0.55 : 0, i === 2 ? 0 : -0.1);
-      c.rotation.y = (i - 1) * 0.12;
-      this.root.add(c);
+    this.root.position.set(x, 0, z);
+    if (!palletGeo) {
+      palletGeo = new THREE.BoxGeometry(2.1, 0.18, 2.1);
+      palletMat = new THREE.MeshStandardMaterial({ color: 0xc89b62, roughness: 0.9 });
     }
-    // Alma alanı + fiyat yazısı
-    const cv = padCanvas(256, 256);
-    const ctx = cv.getContext('2d');
-    drawZone(ctx, 256, 256, { color: '#ffb703', fill: 'rgba(255,183,3,0.42)' });
-    ctx.font = '84px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(p.emoji, 128, 108);
-    ctx.font = 'bold 52px "Trebuchet MS", sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-    ctx.lineWidth = 8;
-    ctx.strokeText(`$${p.cost}`, 128, 190);
-    ctx.fillText(`$${p.cost}`, 128, 190);
-    const tex = new THREE.CanvasTexture(cv);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const zone = flatPlane([2.4, 2.4], tex);
+    const base = new THREE.Mesh(palletGeo, palletMat);
+    base.position.y = 0.09;
+    base.receiveShadow = true;
+    base.castShadow = true;
+    this.root.add(base);
+    this.stackRoot = new THREE.Group();
+    this.stackRoot.position.y = 0.18;
+    this.root.add(this.stackRoot);
+
+    this.canvas = padCanvas(256, 256);
+    this.tex = new THREE.CanvasTexture(this.canvas);
+    this.tex.colorSpace = THREE.SRGBColorSpace;
+    const zone = flatPlane([2.4, 2.4], this.tex);
     zone.position.z = 1.9;
     this.root.add(zone);
-    this.zoneZ = this.z + 1.9;
+    this.zoneZ = z + 1.9;
 
     game.scene.add(this.root);
-    game.nav.setBox(`supply-${this.product}`, { minX: this.x - 1.25, maxX: this.x + 1.25, minZ: this.z - 0.8, maxZ: this.z + 0.75 });
-    this.timer = 0;
+    game.nav.setBox(`pallet-${product}`, { minX: x - 1.1, maxX: x + 1.1, minZ: z - 1.1, maxZ: z + 1.1 });
+    this.redraw();
+  }
+
+  get capacity() {
+    return this.game.depot.palletCapacity;
+  }
+
+  get space() {
+    return this.capacity - this.stock;
+  }
+
+  slot(i) {
+    const layer = Math.floor(i / 4);
+    const k = i % 4;
+    return new THREE.Vector3((k % 2 ? 0.46 : -0.46), layer * CRATE_HEIGHT, (k < 2 ? -0.46 : 0.46));
+  }
+
+  redraw() {
+    const ctx = this.canvas.getContext('2d');
+    const empty = this.stock === 0;
+    drawZone(ctx, 256, 256, empty
+      ? { color: '#ff8a7a', fill: 'rgba(255,90,70,0.35)' }
+      : { color: '#ffb703', fill: 'rgba(255,183,3,0.42)' });
+    ctx.font = '76px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(PRODUCTS[this.product].emoji, 128, 100);
+    ctx.font = 'bold 48px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 8;
+    const txt = `${this.stock}/${this.capacity}`;
+    ctx.strokeText(txt, 128, 186);
+    ctx.fillText(txt, 128, 186);
+    this.tex.needsUpdate = true;
+  }
+
+  /** Görünen kasa sayısını stokla eşitle. */
+  syncVisual() {
+    const want = Math.min(this.stock, VISIBLE_PER_PALLET);
+    while (this.crates.length < want) {
+      const m = makeCrate(this.product);
+      m.position.copy(this.slot(this.crates.length));
+      this.stackRoot.add(m);
+      this.crates.push(m);
+    }
+    while (this.crates.length > want) this.stackRoot.remove(this.crates.pop());
+    this.redraw();
+  }
+
+  /** Kamyondan gelen kasa (uçarak gelir). */
+  deliver(fromWorld) {
+    if (this.stock >= this.capacity) return false;
+    this.stock++;
+    if (this.crates.length < VISIBLE_PER_PALLET) {
+      const m = makeCrate(this.product);
+      m.position.copy(fromWorld);
+      this.game.scene.add(m);
+      const idx = this.crates.length;
+      this.crates.push(m);
+      this.game.fx.fly(m, this.stackRoot, this.slot(idx), { duration: 0.45, arc: 3 });
+    }
+    this.redraw();
+    return true;
   }
 
   inRange(p) {
@@ -219,18 +312,62 @@ export class SupplyPoint {
     return [this.x, this.zoneZ];
   }
 
-  /** Karakterin yığınına bir kasa satın alıp gönderir. Ücret game.money'den düşer. */
-  sellTo(char, { free = false } = {}) {
-    const p = PRODUCTS[this.product];
-    if (char.full) return false;
-    if (!free && this.game.money < p.cost) return false;
-    if (!free) this.game.spend(p.cost, new THREE.Vector3(this.x, 0, this.zoneZ));
-    const mesh = makeCrate(this.product);
-    mesh.position.set(0, 1.0, 0);
-    this.root.add(mesh);
+  /** Karakterin yığınına bir kasa verir. */
+  giveTo(char) {
+    if (char.full || this.stock <= 0) return false;
+    this.stock--;
+    let mesh;
+    if (this.crates.length > this.stock && this.crates.length) {
+      mesh = this.crates.pop();
+    } else {
+      mesh = makeCrate(this.product);
+      mesh.position.set(0, 1, 0);
+      this.stackRoot.add(mesh);
+    }
     char.receive(mesh, this.product);
+    // Görünmeyen stok varsa yığını yeniden doldur
+    if (this.stock >= VISIBLE_PER_PALLET && this.crates.length < VISIBLE_PER_PALLET) this.syncVisual();
+    this.redraw();
     this.game.audio.play('pick');
     return true;
+  }
+}
+
+// ---- Sipariş noktası ------------------------------------------------------------------
+
+export class OrderKiosk {
+  constructor(game, x, z) {
+    this.game = game;
+    this.x = x;
+    this.z = z;
+    const root = new THREE.Group();
+    root.position.set(x, 0, z);
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.1, 0.4), new THREE.MeshStandardMaterial({ color: 0x3c4552 }));
+    stand.position.set(0, 0.55, -1.2);
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.08), new THREE.MeshStandardMaterial({ color: 0x9be7ff, emissive: 0x2a6f84 }));
+    screen.position.set(0, 1.3, -1.15);
+    screen.rotation.x = -0.4;
+    for (const m of [stand, screen]) { m.castShadow = true; root.add(m); }
+    const cv = padCanvas(256, 256);
+    const ctx = cv.getContext('2d');
+    drawZone(ctx, 256, 256, { color: '#b9f6ca', fill: 'rgba(60,200,120,0.35)' });
+    ctx.font = '84px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🚚', 128, 104);
+    ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Sipariş', 128, 190);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const zone = flatPlane([2.2, 2.2], tex);
+    root.add(zone);
+    game.scene.add(root);
+    game.nav.setBox('kiosk', { minX: x - 0.4, maxX: x + 0.4, minZ: z - 1.5, maxZ: z - 0.9 });
+  }
+
+  inRange(p) {
+    return inZone(p, this.x, this.z, 1.1, 1.1);
   }
 }
 
@@ -390,11 +527,13 @@ export class Checkout {
         },
       });
       this.game.stats.sold++;
+      this.game.day.today.crates++;
       return;
     }
     // Ödeme bitti
     this.queue.shift();
     front.paid();
+    this.game.onCustomerPaid();
     this.queue.forEach((c, i) => c.moveInQueue(i));
   }
 }
@@ -402,9 +541,10 @@ export class Checkout {
 // ---- Satın alma alanı ---------------------------------------------------------------
 
 export class UnlockPad {
-  constructor(game, def, x, z, { title, emoji }) {
+  constructor(game, def, x, z, { title, emoji, size = 2.6 }) {
     this.game = game;
     this.def = def;
+    this.locked = false; // seviye yetmiyorsa gri görünür, ödeme alınmaz
     this.x = x;
     this.z = z;
     this.cost = def.cost;
@@ -418,7 +558,8 @@ export class UnlockPad {
     this.canvas = padCanvas(256, 256);
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.colorSpace = THREE.SRGBColorSpace;
-    this.mesh = flatPlane([2.6, 2.6], this.tex);
+    this.mesh = flatPlane([size, size], this.tex);
+    this.half = size / 2;
     this.mesh.position.set(x, 0.04, z);
     game.scene.add(this.mesh);
     this.label = null;
@@ -433,7 +574,7 @@ export class UnlockPad {
     const ctx = this.canvas.getContext('2d');
     const w = 256;
     ctx.clearRect(0, 0, w, w);
-    ctx.fillStyle = 'rgba(30,60,40,0.55)';
+    ctx.fillStyle = this.locked ? 'rgba(40,40,40,0.35)' : 'rgba(30,60,40,0.55)';
     ctx.beginPath();
     ctx.roundRect(8, 8, w - 16, w - 16, 36);
     ctx.fill();
@@ -449,7 +590,7 @@ export class UnlockPad {
       ctx.restore();
     }
     ctx.lineWidth = 10;
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = this.locked ? 'rgba(255,255,255,0.45)' : '#ffffff';
     ctx.beginPath();
     ctx.roundRect(8, 8, w - 16, w - 16, 36);
     ctx.stroke();
@@ -461,20 +602,27 @@ export class UnlockPad {
     ctx.fillStyle = '#fff';
     ctx.fillText(this.title, w / 2, 150, w - 30);
     ctx.font = 'bold 46px "Trebuchet MS", sans-serif';
-    ctx.fillStyle = '#ffe066';
-    ctx.fillText(`$${Math.ceil(this.remaining)}`, w / 2, 202);
+    ctx.fillStyle = this.locked ? '#e6e6e6' : '#ffe066';
+    ctx.fillText(this.locked ? `🔒 Sv.${this.def.level}` : `$${Math.ceil(this.remaining)}`, w / 2, 202);
     this.tex.needsUpdate = true;
   }
 
   playerInRange(p) {
-    return inZone(p, this.x, this.z, 1.3, 1.3);
+    return inZone(p, this.x, this.z, this.half, this.half);
+  }
+
+  setLocked(locked) {
+    if (this.locked === locked) return;
+    this.locked = locked;
+    this.mesh.material.opacity = locked ? 0.7 : 1;
+    this.redraw();
   }
 
   /** Oyuncu üzerindeyken para akıtır. Tamamlanınca true döner. */
   update(dt, player) {
-    const pulse = 1 + Math.sin(performance.now() / 260) * 0.03;
+    const pulse = this.locked ? 1 : 1 + Math.sin(performance.now() / 260) * 0.03;
     this.mesh.scale.set(pulse, pulse, 1);
-    if (!this.playerInRange(player.position) || this.game.money <= 0) {
+    if (this.locked || !this.playerInRange(player.position) || this.game.money <= 0) {
       this.acc = 0;
       return false;
     }

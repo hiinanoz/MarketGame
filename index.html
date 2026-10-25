@@ -12,12 +12,50 @@
 
     <div id="hud">
       <div id="money" class="pill"><span class="bill"></span><span id="money-value">0</span></div>
-      <button id="menu-btn" class="round" aria-label="Menü">☰</button>
+      <div id="level" class="pill level">
+        <span class="lvl-badge" id="level-value">1</span>
+        <span class="lvl-bar"><span id="level-fill"></span></span>
+      </div>
+      <div class="hud-right">
+        <div id="clock" class="pill clock"><span id="clock-day">Gün 1</span><span id="clock-time">08:00</span></div>
+        <button id="menu-btn" class="round" aria-label="Menü">☰</button>
+      </div>
     </div>
     <div id="hint" class="hint hidden"></div>
     <div id="toast" class="toast hidden"></div>
 
     <div id="joystick" class="hidden"><div id="joystick-knob"></div></div>
+
+    <div id="order-panel" class="sheet hidden">
+      <div class="sheet-head">
+        <h3>🚚 Toptancı siparişi</h3>
+        <button id="order-close" class="x" aria-label="Kapat">✕</button>
+      </div>
+      <div id="order-list"></div>
+      <label id="order-auto-row" class="row hidden"><span>Otomatik sipariş</span><input id="order-auto" type="checkbox" /></label>
+      <div class="sheet-foot">
+        <button id="order-fill" class="ghost">Paletleri doldur</button>
+        <span class="o-total">Toplam <b id="order-total">$0</b></span>
+        <button id="order-buy" class="primary">Sipariş ver</button>
+      </div>
+    </div>
+
+    <div id="summary" class="overlay hidden">
+      <div class="panel">
+        <h2 id="summary-title">Gün 1 bitti</h2>
+        <div class="stats">
+          <div><span>Ciro</span><b id="sum-revenue">$0</b></div>
+          <div><span>Müşteri</span><b id="sum-customers">0</b></div>
+          <div><span>Satılan kasa</span><b id="sum-crates">0</b></div>
+          <div><span>Mal alımı</span><b id="sum-spent">$0</b></div>
+          <div><span>Kızgın ayrılan</span><b id="sum-angry">0</b></div>
+        </div>
+        <button id="sum-night" class="ghost">Gece çalış (raf doldur)</button>
+        <button id="sum-skip" class="primary">Sabahı bekleme ☀️</button>
+      </div>
+    </div>
+    <button id="skip-night" class="skip hidden">Sabahı bekleme ☀️</button>
+    <div id="levelup" class="toast levelup hidden"></div>
 
     <div id="menu" class="overlay hidden">
       <div class="panel">

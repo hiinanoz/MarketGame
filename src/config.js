@@ -2,33 +2,75 @@
 
 // Ürünler: cost = toptancıdan alış fiyatı (kasa başına), price = müşteriye satış fiyatı.
 export const PRODUCTS = {
-  tomato:  { name: 'Domates', emoji: '🍅', crate: 'crate_tomatoes', food: 'food_ingredient_tomato',  cost: 2,  price: 6 },
-  carrot:  { name: 'Havuç',   emoji: '🥕', crate: 'crate_carrots',  food: 'food_ingredient_carrot',  cost: 3,  price: 9 },
-  cheese:  { name: 'Peynir',  emoji: '🧀', crate: 'crate_cheese',   food: 'food_ingredient_cheese',  cost: 5,  price: 14 },
-  lettuce: { name: 'Marul',   emoji: '🥬', crate: 'crate_lettuce',  food: 'food_ingredient_lettuce', cost: 7,  price: 18 },
-  onion:   { name: 'Soğan',   emoji: '🧅', crate: 'crate_onions',   food: 'food_ingredient_onion',   cost: 9,  price: 23 },
-  potato:  { name: 'Patates', emoji: '🥔', crate: 'crate_potatoes', food: 'food_ingredient_potato',  cost: 11, price: 28 },
-  bun:     { name: 'Ekmek',   emoji: '🍞', crate: 'crate_buns',     food: 'food_ingredient_bun',     cost: 13, price: 33 },
-  ham:     { name: 'But',     emoji: '🍖', crate: 'crate_ham',      food: 'food_ingredient_ham',     cost: 16, price: 40 },
-  steak:   { name: 'Biftek',  emoji: '🥩', crate: 'crate_steak',    food: 'food_ingredient_steak',   cost: 20, price: 50 },
+  tomato:  { name: 'Domates', emoji: '🍅', crate: 'crate_tomatoes', cost: 2,  price: 6 },
+  carrot:  { name: 'Havuç',   emoji: '🥕', crate: 'crate_carrots',  cost: 3,  price: 9 },
+  cheese:  { name: 'Peynir',  emoji: '🧀', crate: 'crate_cheese',   cost: 5,  price: 14 },
+  lettuce: { name: 'Marul',   emoji: '🥬', crate: 'crate_lettuce',  cost: 7,  price: 18 },
+  onion:   { name: 'Soğan',   emoji: '🧅', crate: 'crate_onions',   cost: 9,  price: 23 },
+  potato:  { name: 'Patates', emoji: '🥔', crate: 'crate_potatoes', cost: 11, price: 28 },
+  bun:     { name: 'Ekmek',   emoji: '🍞', crate: 'crate_buns',     cost: 13, price: 33 },
+  ham:     { name: 'But',     emoji: '🍖', crate: 'crate_ham',      cost: 16, price: 40 },
+  steak:   { name: 'Biftek',  emoji: '🥩', crate: 'crate_steak',    cost: 20, price: 50 },
 };
 
-// Her reyon bir masa: ürün, masa konumu ve depodaki tedarik noktası.
-// Reyon masası 2x2 birim; müşteri masanın önünde (+z) durur.
+// ---- Seviyeler ----------------------------------------------------------------
+// Ödeme yapıp çıkan her müşteri 1 XP. LEVELS[i] = (i+1). seviyeye ulaşmak için gereken toplam XP.
+export const LEVELS = [0, 15, 40, 80, 130, 200, 280, 380, 500, 650, 800, 1000, 1250, 1500, 1800, 2200, 2600, 3000, 3500, 4000];
+
+// ---- Gün döngüsü ----------------------------------------------------------------
+export const DAY = {
+  length: 240,       // açık kalma süresi (sn) = 08:00 → 22:00
+  openHour: 8,
+  closeHour: 22,
+  night: 25,         // gece molası (sn); "Sabahı bekleme" ile atlanabilir
+};
+
+// Saate göre müşteri yoğunluğu çarpanı (öğle ve akşam tepe).
+export function rushFactor(hour) {
+  if (hour < 10) return 0.55;
+  if (hour < 12) return 0.85;
+  if (hour < 14) return 1.35;
+  if (hour < 17) return 0.9;
+  if (hour < 20) return 1.45;
+  return 0.6;
+}
+
+// ---- Mağaza yerleşimi ------------------------------------------------------------
+// Salon 1: x -12..12, Salon 2: x 12..28, z -16 (arka duvar) .. 4 (ön duvar). Depo: z -28..-16.
+export const ROOM1 = { minX: -12, maxX: 12, minZ: -16, maxZ: 4 };
+export const ROOM2 = { minX: 12, maxX: 28, minZ: -16, maxZ: 4 };
+export const DEPOT = { minX: -12, maxX: 12, minZ: -28, maxZ: -16 };
+export const DOOR_X = 0;          // ön kapının ortası
+export const DOOR2_X = 20;        // ikinci kapı (satın alınınca)
+export const STREET_Z = 16;       // müşterilerin geldiği/gittiği yer
+export const BACK_ROAD_Z = -32;   // toptancı kamyonlarının yolu
+
+// Reyonlar: masa konumu. Müşteri masanın önünde (+z) durur, yükseltme alanı arkasında (−z).
 export const SHELVES = [
-  { id: 'tomato',  product: 'tomato',  pos: [-7, -6.5], supply: [-9.5, -12.8] },
-  { id: 'carrot',  product: 'carrot',  pos: [-2, -6.5], supply: [-6.0, -12.8] },
-  { id: 'cheese',  product: 'cheese',  pos: [3, -6.5],  supply: [-2.5, -12.8] },
-  { id: 'lettuce', product: 'lettuce', pos: [-7, -1.0], supply: [1.0, -12.8] },
-  { id: 'onion',   product: 'onion',   pos: [-2, -1.0], supply: [4.5, -12.8] },
-  { id: 'potato',  product: 'potato',  pos: [3, -1.0],  supply: [8.0, -12.8] },
+  { id: 'tomato',  product: 'tomato',  pos: [-7, -6.5] },
+  { id: 'carrot',  product: 'carrot',  pos: [-2, -6.5] },
+  { id: 'cheese',  product: 'cheese',  pos: [3, -6.5] },
+  { id: 'lettuce', product: 'lettuce', pos: [-7, -1.0] },
+  { id: 'onion',   product: 'onion',   pos: [-2, -1.0] },
+  { id: 'potato',  product: 'potato',  pos: [3, -1.0] },
   // Genişleme sonrası ikinci salon
-  { id: 'bun',     product: 'bun',     pos: [15.5, -6.5], supply: [15, -12.8] },
-  { id: 'ham',     product: 'ham',     pos: [19.5, -6.5], supply: [18.5, -12.8] },
-  { id: 'steak',   product: 'steak',   pos: [15.5, -1.0], supply: [22, -12.8] },
+  { id: 'bun',     product: 'bun',     pos: [15.5, -6.5] },
+  { id: 'ham',     product: 'ham',     pos: [20, -6.5] },
+  { id: 'steak',   product: 'steak',   pos: [15.5, -1.0] },
 ];
 
-export const SHELF_CAPACITY = 8; // masada en fazla kaç kasa durur (2x2, iki kat)
+// Reyon kapasite aşamaları: 1. aşama küçük masa, sonra geniş masa.
+export const SHELF_STAGES = [8, 16, 24];
+
+// Depo paletleri (ürün başına bir palet). Oyuncu/işçi paletin önündeki alandan kasa alır.
+export const PALLETS = {
+  tomato:  [-9, -25.5], carrot: [-5, -25.5], cheese: [-1, -25.5], lettuce: [3, -25.5], onion: [7, -25.5],
+  potato:  [-9, -20.5], bun:    [-5, -20.5], ham:    [-1, -20.5], steak:   [3, -20.5],
+};
+export const ORDER_KIOSK = [8.5, -19.6];
+export const DEPOT_CAPACITY = [20, 40];  // palet başına kasa (depo yükseltmesiyle 40)
+export const TRUCK_CAPACITY = 40;        // bir kamyonun taşıdığı kasa sayısı
+export const START_DEPOT_STOCK = { tomato: 12 };
 
 // Kasalar: müşteri kuyruğu +z yönünde uzar, kasiyer masanın arkasında (+x) durur.
 export const CHECKOUTS = [
@@ -36,28 +78,44 @@ export const CHECKOUTS = [
   { id: 'checkout2', pos: [25, -4], cashierSpot: [27.0, -5], queueStart: [23.0, -4], cashPile: [25, -1.6] },
 ];
 
-// Satın alınabilen her şey. `requires` listesindekiler açılmadan zemin üzerinde görünmez.
-// type: shelf | cashier | stocker | capacity | expansion | checkout
+// ---- Satın alınabilenler ------------------------------------------------------------
+// level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot
 export const UNLOCKS = [
-  { id: 'shelf_carrot',  type: 'shelf',    target: 'carrot',  cost: 30,   requires: [] },
-  { id: 'cashier1',      type: 'cashier',  target: 'checkout1', cost: 60, requires: ['shelf_carrot'] },
-  { id: 'shelf_cheese',  type: 'shelf',    target: 'cheese',  cost: 120,  requires: ['shelf_carrot'] },
-  { id: 'capacity1',     type: 'capacity', value: 7,  cost: 90,  pos: [-9, 2.0], requires: ['shelf_cheese'] },
-  { id: 'stocker1',      type: 'stocker',  cost: 200, pos: [-10.3, -7.4], requires: ['shelf_cheese'] },
-  { id: 'shelf_lettuce', type: 'shelf',    target: 'lettuce', cost: 260,  requires: ['cashier1', 'shelf_cheese'] },
-  { id: 'shelf_onion',   type: 'shelf',    target: 'onion',   cost: 420,  requires: ['shelf_lettuce'] },
-  { id: 'capacity2',     type: 'capacity', value: 10, cost: 350, pos: [-9, 2.0], requires: ['capacity1', 'shelf_onion'] },
-  { id: 'stocker2',      type: 'stocker',  cost: 500, pos: [-10.3, -7.4], requires: ['stocker1', 'shelf_onion'] },
-  { id: 'shelf_potato',  type: 'shelf',    target: 'potato',  cost: 650,  requires: ['shelf_onion'] },
-  { id: 'expansion',     type: 'expansion', cost: 1200, pos: [10.2, -7.6], requires: ['shelf_potato'] },
-  { id: 'shelf_bun',     type: 'shelf',    target: 'bun',     cost: 900,  requires: ['expansion'] },
-  { id: 'checkout2',     type: 'checkout', target: 'checkout2', cost: 800, requires: ['expansion'] },
-  { id: 'cashier2',      type: 'cashier',  target: 'checkout2', cost: 600, requires: ['checkout2'] },
-  { id: 'shelf_ham',     type: 'shelf',    target: 'ham',     cost: 1500, requires: ['shelf_bun'] },
-  { id: 'stocker3',      type: 'stocker',  cost: 1000, pos: [25.5, -9.5], requires: ['shelf_bun', 'stocker2'] },
-  { id: 'shelf_steak',   type: 'shelf',    target: 'steak',   cost: 2200, requires: ['shelf_ham'] },
-  { id: 'capacity3',     type: 'capacity', value: 14, cost: 1500, pos: [26.3, 2.3], requires: ['capacity2', 'shelf_ham'] },
+  { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
+  { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
+  { id: 'shelf_cheese',  type: 'shelf',     target: 'cheese',    cost: 120,  level: 2, requires: ['shelf_carrot'] },
+  { id: 'stocker1',      type: 'stocker',   cost: 200,  pos: [-10.3, -7.4], level: 3, requires: [] },
+  { id: 'capacity1',     type: 'capacity',  value: 7,  cost: 90,  pos: [-9, 2.0], level: 3, requires: [] },
+  { id: 'shelf_lettuce', type: 'shelf',     target: 'lettuce',   cost: 260,  level: 4, requires: ['shelf_cheese'] },
+  { id: 'shelf_onion',   type: 'shelf',     target: 'onion',     cost: 420,  level: 5, requires: ['shelf_lettuce'] },
+  { id: 'stockerCap1',   type: 'stockerCap', value: 6,  cost: 300, pos: [-10.3, -10.6], level: 5, requires: ['stocker1'] },
+  { id: 'capacity2',     type: 'capacity',  value: 10, cost: 350, pos: [-9, 2.0], level: 5, requires: ['capacity1'] },
+  { id: 'depot2',        type: 'depot',     cost: 600,  pos: [10, -25.5], level: 6, requires: [] },
+  { id: 'stocker2',      type: 'stocker',   cost: 500,  pos: [-10.3, -7.4], level: 6, requires: ['stocker1'] },
+  { id: 'shelf_potato',  type: 'shelf',     target: 'potato',    cost: 650,  level: 7, requires: ['shelf_onion'] },
+  { id: 'expansion',     type: 'expansion', cost: 1200, pos: [10.2, -7.6], level: 8, requires: [] },
+  { id: 'door2',         type: 'door',      cost: 500,  pos: [DOOR2_X, 6.2], level: 8, requires: ['expansion'] },
+  { id: 'stockerCap2',   type: 'stockerCap', value: 8, cost: 700, pos: [-10.3, -10.6], level: 8, requires: ['stockerCap1'] },
+  { id: 'shelf_bun',     type: 'shelf',     target: 'bun',       cost: 900,  level: 9, requires: ['expansion'] },
+  { id: 'checkout2',     type: 'checkout',  target: 'checkout2', cost: 800,  level: 9, requires: ['expansion'] },
+  { id: 'cashier2',      type: 'cashier',   target: 'checkout2', cost: 600,  level: 9, requires: ['checkout2'] },
+  { id: 'stocker3',      type: 'stocker',   cost: 1000, pos: [25.5, -9.5], level: 10, requires: ['stocker2', 'expansion'] },
+  { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
+  { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
+  { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },
+  { id: 'stockerCap3',   type: 'stockerCap', value: 10, cost: 1400, pos: [-10.3, -10.6], level: 12, requires: ['stockerCap2'] },
 ];
+
+// Reyon kapasite yükseltmeleri her reyon için otomatik eklenir (2. aşama Sv.2, 3. aşama Sv.5).
+SHELVES.forEach((s, i) => {
+  const shelfUnlock = i === 0 ? [] : [UNLOCKS.find((u) => u.type === 'shelf' && u.target === s.id).id];
+  const mult = 1 + i * 0.6;
+  UNLOCKS.push(
+    { id: `stage2_${s.id}`, type: 'shelfStage', target: s.id, value: 1, cost: Math.round(80 * mult / 10) * 10, level: 2, requires: shelfUnlock },
+    { id: `stage3_${s.id}`, type: 'shelfStage', target: s.id, value: 2, cost: Math.round(260 * mult / 10) * 10, level: 5, requires: [`stage2_${s.id}`] },
+  );
+});
 
 export const START_MONEY = 20;
 export const START_CAPACITY = 4;      // oyuncunun aynı anda taşıyabildiği kasa sayısı
@@ -66,9 +124,3 @@ export const WORKER_CAPACITY = 4;
 export const PLAYER_SPEED = 7.5;
 export const WORKER_SPEED = 5;
 export const CUSTOMER_SPEED = 3.6;
-
-// Mağaza alanı (dünya birimleri). Salon 1: x -12..12, Salon 2: x 12..28. z -16 (arka duvar) .. 4 (ön duvar)
-export const ROOM1 = { minX: -12, maxX: 12, minZ: -16, maxZ: 4 };
-export const ROOM2 = { minX: 12, maxX: 28, minZ: -16, maxZ: 4 };
-export const DOOR_X = 0;          // ön duvardaki kapının ortası
-export const STREET_Z = 16;       // müşterilerin geldiği/gittiği yer

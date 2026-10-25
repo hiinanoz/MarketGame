@@ -18,10 +18,67 @@ export class Hud {
     const sound = document.getElementById('opt-sound');
     sound.checked = game.audio.enabled;
     sound.addEventListener('change', () => { game.audio.enabled = sound.checked; });
+    // Seviye, saat, gün sonu
+    this.levelValue = document.getElementById('level-value');
+    this.levelFill = document.getElementById('level-fill');
+    this.clockEl = document.getElementById('clock');
+    this.clockDay = document.getElementById('clock-day');
+    this.clockTime = document.getElementById('clock-time');
+    this.summary = document.getElementById('summary');
+    this.skipBtn = document.getElementById('skip-night');
+    this.levelupEl = document.getElementById('levelup');
+    this.summaryOpen = false;
+    document.getElementById('sum-night').addEventListener('click', () => this.closeSummary());
+    document.getElementById('sum-skip').addEventListener('click', () => {
+      this.closeSummary();
+      game.day.skipNight();
+    });
+    this.skipBtn.addEventListener('click', () => game.day.skipNight());
+
     // Menü düğmelerine basmak joystick başlatmasın
-    for (const el of [document.getElementById('menu-btn'), this.menu]) {
+    for (const el of [document.getElementById('menu-btn'), this.menu, this.summary, this.skipBtn]) {
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
+  }
+
+  setLevel(level, frac) {
+    if (this.levelValue.textContent !== String(level)) this.levelValue.textContent = level;
+    this.levelFill.style.width = `${Math.round(frac * 100)}%`;
+  }
+
+  setClock(day, time, phase) {
+    const d = `Gün ${day}`;
+    if (this.clockDay.textContent !== d) this.clockDay.textContent = d;
+    const t = phase === 'open' ? time : phase === 'closing' ? 'Kapanıyor' : `🌙 ${time}`;
+    if (this.clockTime.textContent !== t) this.clockTime.textContent = t;
+    this.clockEl.classList.toggle('closed', phase !== 'open');
+    this.skipBtn.classList.toggle('hidden', phase !== 'night' || this.summaryOpen);
+  }
+
+  showSummary(day, st) {
+    document.getElementById('summary-title').textContent = `Gün ${day} bitti`;
+    document.getElementById('sum-revenue').textContent = `$${formatMoney(st.revenue)}`;
+    document.getElementById('sum-customers').textContent = st.customers;
+    document.getElementById('sum-crates').textContent = st.crates;
+    document.getElementById('sum-spent').textContent = `$${formatMoney(st.spent)}`;
+    document.getElementById('sum-angry').textContent = st.angry;
+    this.summary.classList.remove('hidden');
+    this.summaryOpen = true;
+  }
+
+  closeSummary() {
+    this.summary.classList.add('hidden');
+    this.summaryOpen = false;
+  }
+
+  levelUp(level, features) {
+    this.levelupEl.innerHTML = `⭐ Seviye ${level}!${features.length ? `<small>Yeni: ${features.join(', ')}</small>` : ''}`;
+    this.levelupEl.classList.remove('hidden');
+    this.levelupEl.style.animation = 'none';
+    void this.levelupEl.offsetWidth;
+    this.levelupEl.style.animation = '';
+    clearTimeout(this.levelupTimer);
+    this.levelupTimer = setTimeout(() => this.levelupEl.classList.add('hidden'), 3200);
   }
 
   setMoney(v) {

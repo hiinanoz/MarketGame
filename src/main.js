@@ -13,7 +13,7 @@ async function start() {
 
   let last = performance.now();
   const loop = (now) => {
-    const dt = Math.min((now - last) / 1000, 0.05);
+    const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
     last = now;
     game.update(dt);
     game.render();

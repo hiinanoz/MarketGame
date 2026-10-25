@@ -130,7 +130,24 @@ export class Customer extends Character {
     }, 700);
   }
 
+  /** Kapanışta: ürünleri bırakıp sessizce çıkar. */
+  leaveQuietly() {
+    this.releaseShelfSpot();
+    if (this.checkout) {
+      const i = this.checkout.queue.indexOf(this);
+      if (i >= 0) {
+        this.checkout.queue.splice(i, 1);
+        this.checkout.queue.forEach((c, k) => c.moveInQueue(k));
+      }
+    }
+    for (const e of this.stack.splice(0)) e.mesh.removeFromParent();
+    this.readyToPay = false;
+    this.bubble.visible = false;
+    this.walkOut();
+  }
+
   leaveAngry() {
+    this.game.day.today.angry++;
     this.releaseShelfSpot();
     this.setBubble('😠');
     this.state = 'leaving';
@@ -193,7 +210,7 @@ export class Stocker extends Character {
       case 'buying': {
         if (this.timer < 0.22) break;
         const need = Math.min(this.capacity, this.target.shelf.space);
-        if (this.carrying < need && this.target.supply.sellTo(this)) {
+        if (this.carrying < need && this.target.supply.giveTo(this)) {
           this.timer = 0;
         } else if (this.carrying > 0) {
           this.state = 'delivering';
@@ -204,7 +221,7 @@ export class Stocker extends Character {
             this.faceTowards(this.target.shelf.x, this.target.shelf.z);
           });
         } else if (this.timer > 3) {
-          this.finishJob(); // para yetmiyor ya da raf doldu
+          this.finishJob(); // depoda kalmadı ya da raf doldu
         }
         break;
       }
@@ -225,7 +242,8 @@ export class Stocker extends Character {
   }
 
   pickJob() {
-    const shelves = this.game.shelves.filter((s) => !s.reservedBy && s.space > 0);
+    // Depoda stoğu olan, boşalmakta olan bir reyon seç
+    const shelves = this.game.shelves.filter((s) => !s.reservedBy && s.space > 0 && this.game.depot.pallets.get(s.product)?.stock > 0);
     if (!shelves.length) {
       this.wanderHome();
       return;
@@ -236,11 +254,7 @@ export class Stocker extends Character {
       this.wanderHome();
       return;
     }
-    const supply = this.game.supplies.get(shelf.product);
-    if (this.game.money < PRODUCTS[shelf.product].cost) {
-      this.wanderHome();
-      return;
-    }
+    const supply = this.game.depot.pallets.get(shelf.product);
     shelf.reservedBy = this;
     this.target = { shelf, supply };
     this.state = 'toSupply';
@@ -254,8 +268,15 @@ export class Stocker extends Character {
 
   finishJob() {
     if (this.target) this.target.shelf.reservedBy = null;
-    // Elde kalan olursa (raf dolduysa) depoya geri bırakılmış say (parası iade edilmez)
-    for (const e of this.stack.splice(0)) e.mesh.removeFromParent();
+    // Elde kalan olursa (raf dolduysa) depodaki paletine geri sayılır
+    for (const e of this.stack.splice(0)) {
+      e.mesh.removeFromParent();
+      const pal = this.game.depot.pallets.get(e.product);
+      if (pal && pal.stock < pal.capacity) {
+        pal.stock++;
+        pal.syncVisual();
+      }
+    }
     this.target = null;
     this.state = 'idle';
     this.timer = 0;

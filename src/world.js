@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
-import { ROOM1, ROOM2, DOOR_X } from './config.js';
+import { ROOM1, ROOM2, DEPOT, DOOR_X, DOOR2_X, BACK_ROAD_Z } from './config.js';
 
 // Statik çevre: çimen, yol, mağaza zemini, duvarlar, dekor. Çarpışma kutularını nav'a kaydeder.
 
-const WALL_H_SCALE_FRONT = 0.28; // ön duvar alçak: kamera içeriyi görebilsin
+const LOW = 0.28; // alçak duvar: kamera içeriyi görebilsin
 
 export class World {
   constructor(game) {
@@ -23,7 +23,7 @@ export class World {
 
     // Çimen
     const grass = new THREE.Mesh(
-      new THREE.PlaneGeometry(160, 160),
+      new THREE.PlaneGeometry(200, 200),
       new THREE.MeshStandardMaterial({ color: 0x86c96b, roughness: 1 }),
     );
     grass.rotation.x = -Math.PI / 2;
@@ -31,42 +31,34 @@ export class World {
     grass.receiveShadow = true;
     s.add(grass);
 
-    // Kaldırım + yol
-    const walk = new THREE.Mesh(
-      new THREE.PlaneGeometry(160, 3),
-      new THREE.MeshStandardMaterial({ color: 0xd9cfb8, roughness: 1 }),
-    );
-    walk.rotation.x = -Math.PI / 2;
-    walk.position.set(0, -0.01, 15.5);
-    walk.receiveShadow = true;
-    s.add(walk);
-    const road = new THREE.Mesh(
-      new THREE.PlaneGeometry(160, 6),
-      new THREE.MeshStandardMaterial({ color: 0x5b6470, roughness: 1 }),
-    );
-    road.rotation.x = -Math.PI / 2;
-    road.position.set(0, -0.012, 20);
-    road.receiveShadow = true;
-    s.add(road);
-    for (let x = -60; x <= 60; x += 6) {
-      const line = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.25), new THREE.MeshBasicMaterial({ color: 0xf2f2f2 }));
-      line.rotation.x = -Math.PI / 2;
-      line.position.set(x, -0.005, 20);
-      s.add(line);
-    }
+    // Ön cadde + kaldırım, arkada toptancı yolu
+    this.addStrip(0xd9cfb8, 3, 15.5, -0.01);
+    this.addRoad(20, 6);
+    this.addRoad(BACK_ROAD_Z, 5);
 
     // Kapıdan kaldırıma toprak yollar
     this.addPath(DOOR_X, s);
-    const path2 = this.addPath(20, this.room2);
-    path2.visible = true;
+    this.door2Path = this.addPath(DOOR2_X, s);
+    this.door2Path.visible = false;
 
     // Zeminler
-    this.addFloor(ROOM1, s);
-    this.addFloor(ROOM2, this.room2);
+    this.addFloor(ROOM1, s, ['#f4efe4', '#e9e2d3']);
+    this.addFloor(ROOM2, this.room2, ['#f4efe4', '#e9e2d3']);
+    this.addFloor(DEPOT, s, ['#c9ccd1', '#bfc3c9']);
 
-    // Arka duvar
-    for (let x = ROOM1.minX + 2; x < ROOM1.maxX; x += 4) this.addWall('wall_window_closed', x, ROOM1.minZ, 0, s, `wb${x}`);
-    for (let x = ROOM2.minX + 2; x < ROOM2.maxX; x += 4) this.addWall('wall', x, ROOM2.minZ, 0, this.room2, null);
+    // Mağaza ile depo arası: alçak duvar, ortada geçiş
+    for (let x = ROOM1.minX + 2; x < ROOM1.maxX; x += 4) {
+      if (Math.abs(x) < 2.1) continue;
+      this.addWall('wall', x, ROOM1.minZ, 0, s, `wb${x}`, LOW);
+    }
+    for (let x = ROOM2.minX + 2; x < ROOM2.maxX; x += 4) this.addWall('wall_window_closed', x, ROOM2.minZ, 0, this.room2, null);
+
+    // Depo duvarları: yanlar yüksek, arka alçak (kamyon görünsün)
+    for (let z = DEPOT.minZ + 2; z < DEPOT.maxZ; z += 4) {
+      this.addWall('wall', DEPOT.minX, z, Math.PI / 2, s, `dl${z}`);
+      this.addWall('wall', DEPOT.maxX, z, Math.PI / 2, s, `dr${z}`);
+    }
+    for (let x = DEPOT.minX + 2; x < DEPOT.maxX; x += 4) this.addWall('wall', x, DEPOT.minZ, 0, s, `db${x}`, LOW);
 
     // Sol duvar
     for (let z = ROOM1.minZ + 2; z < ROOM1.maxZ; z += 4) this.addWall('wall', ROOM1.minX, z, Math.PI / 2, s, `wl${z}`);
@@ -77,13 +69,12 @@ export class World {
       const w = this.addWall('wall', ROOM1.maxX, z, Math.PI / 2, s, `wm${z}`);
       if (opening) this.dividerWalls.push({ mesh: w, id: `wm${z}` });
     }
-    // İkinci salonun sağ duvarı (açılınca devreye girer)
+    // İkinci salonun sağ ve arka duvarı (açılınca devreye girer)
     this.room2Walls = [];
     for (let z = ROOM2.minZ + 2; z < ROOM2.maxZ; z += 4) {
       this.addWall('wall', ROOM2.maxX, z, Math.PI / 2, this.room2, null);
       this.room2Walls.push({ id: `wr${z}`, box: wallBox(ROOM2.maxX, z, Math.PI / 2) });
     }
-    // Salon 2 arka duvar kutuları
     for (let x = ROOM2.minX + 2; x < ROOM2.maxX; x += 4) {
       this.room2Walls.push({ id: `wb2_${x}`, box: wallBox(x, ROOM2.minZ, 0) });
     }
@@ -91,39 +82,46 @@ export class World {
     // Ön duvar: alçak, kapı boşluklu
     for (let x = ROOM1.minX + 2; x < ROOM1.maxX; x += 4) {
       if (Math.abs(x - DOOR_X) < 2.1) continue;
-      this.addWall('wall', x, ROOM1.maxZ, 0, s, `wf${x}`, WALL_H_SCALE_FRONT);
+      this.addWall('wall', x, ROOM1.maxZ, 0, s, `wf${x}`, LOW);
     }
-    // Salon 1 açılmadan önce, salon 2'nin bulunduğu yer kapalı: sağdan dolaşılmasın
+    // Salon 2 açılmadan önce o bölge kapalı: sağdan dolaşılmasın
     nav.setBox('room2-block', { minX: ROOM2.minX, maxX: ROOM2.maxX + 1, minZ: ROOM2.minZ - 1, maxZ: ROOM2.maxZ + 0.3 });
+    // Salon 2 ön duvarı; kapı boşluğundaki iki parça ikinci kapı alınana kadar kapalı
+    this.door2Walls = [];
     for (let x = ROOM2.minX + 2; x < ROOM2.maxX; x += 4) {
-      if (Math.abs(x - 20) < 2.1) continue;
-      this.addWall('wall', x, ROOM2.maxZ, 0, this.room2, null, WALL_H_SCALE_FRONT);
-      this.room2Walls.push({ id: `wf2_${x}`, box: wallBox(x, ROOM2.maxZ, 0) });
+      const w = this.addWall('wall', x, ROOM2.maxZ, 0, this.room2, null, LOW);
+      const id = `wf2_${x}`;
+      this.room2Walls.push({ id, box: wallBox(x, ROOM2.maxZ, 0) });
+      if (Math.abs(x - DOOR2_X) < 2.1) this.door2Walls.push({ mesh: w, id });
     }
 
     // Dekor (salon 1)
-    this.addDecor('fridge_A', -10.6, -15, 0, s, true);
-    this.addDecor('fridge_B', 10.6, -15, 0, s, true);
+    this.addDecor('fridge_A', -10.6, -14.6, 0, s, true);
+    this.addDecor('fridge_B', 10.6, -14.6, 0, s, true);
     this.addDecor('shelf_papertowel_decorated', -11.6, -4, Math.PI / 2, s, false, 1.6);
     this.addDecor('cactus_medium_A', -11.2, 3.2, 0, s, true);
     this.addDecor('cactus_medium_A', 11, 3, 0, s, true);
     this.addDecor('rug_rectangle_stripes_A', DOOR_X, 2.4, 0, s, false);
     // Dekor (salon 2)
-    this.addDecor('fridge_A', 26.6, -15, 0, this.room2, false);
+    this.addDecor('fridge_A', 26.6, -14.6, 0, this.room2, false);
     this.addDecor('cactus_medium_A', 27, 3, 0, this.room2, false);
-    this.addDecor('rug_rectangle_stripes_A', 20, 2.4, 0, this.room2, false);
+    this.door2Rug = this.addDecor('rug_rectangle_stripes_A', DOOR2_X, 2.4, 0, this.room2, false);
+    this.door2Rug.visible = false;
+    // Depo: boş kasa yığınları
+    this.addDecor('crate', -10.6, -17.4, 0.3, s, true);
+    this.addDecor('crate', 10.6, -17.2, -0.2, s, true);
 
     // Ağaçlar ve çalılar
     const rng = mulberry(7);
-    for (let i = 0; i < 46; i++) {
-      const x = -50 + rng() * 100;
-      const z = -40 + rng() * 52;
-      if (x > -16 && x < 32 && z > -20 && z < 8) continue; // mağazanın etrafını boş bırak
-      if (z > 12) continue;
+    for (let i = 0; i < 70; i++) {
+      const x = -60 + rng() * 120;
+      const z = -55 + rng() * 67;
+      if (x > -17 && x < 32 && z > -30 && z < 8) continue; // mağaza ve depo
+      if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }
-    for (let i = 0; i < 10; i++) {
-      this.addTree(-16 - rng() * 3, -14 + i * 2.6, 0.55, rng, true);
+    for (let i = 0; i < 16; i++) {
+      this.addTree(-16 - rng() * 3, -27 + i * 2.6, 0.55, rng, true);
     }
     // Mağazanın sağı, salon 2 açılana kadar ağaçlık
     this.room2Trees = new THREE.Group();
@@ -133,10 +131,31 @@ export class World {
     }
   }
 
-  addFloor(room, parent) {
+  addStrip(color, depth, z, y) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(200, depth), new THREE.MeshStandardMaterial({ color, roughness: 1 }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(0, y, z);
+    m.receiveShadow = true;
+    this.scene.add(m);
+    return m;
+  }
+
+  addRoad(z, depth) {
+    this.addStrip(0x5b6470, depth, z, -0.012);
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xf2f2f2 });
+    const lineGeo = new THREE.PlaneGeometry(2.6, 0.25);
+    for (let x = -90; x <= 90; x += 6) {
+      const line = new THREE.Mesh(lineGeo, lineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.position.set(x, -0.005, z);
+      this.scene.add(line);
+    }
+  }
+
+  addFloor(room, parent, colors) {
     const w = room.maxX - room.minX;
     const d = room.maxZ - room.minZ;
-    const tex = floorTexture();
+    const tex = floorTexture(colors);
     tex.repeat.set(w / 2, d / 2);
     const m = new THREE.Mesh(
       new THREE.PlaneGeometry(w, d),
@@ -224,19 +243,34 @@ export class World {
       w.mesh.visible = false;
       nav.boxes.delete(w.id);
     }
-    for (const w of this.room2Walls) nav.boxes.set(w.id, w.box);
+    for (const w of this.room2Walls) {
+      if (this.door2Open && this.door2Walls.some((d) => d.id === w.id)) continue;
+      nav.boxes.set(w.id, w.box);
+    }
     nav.rebuild();
+  }
+
+  /** İkinci giriş kapısı: salon 2'nin ön duvarında boşluk aç. */
+  openDoor2() {
+    this.door2Open = true;
+    this.door2Path.visible = true;
+    this.door2Rug.visible = true;
+    for (const d of this.door2Walls) {
+      d.mesh.visible = false;
+      this.game.nav.boxes.delete(d.id);
+    }
+    this.game.nav.rebuild();
   }
 }
 
-let floorTex = null;
-/** Açık renkli market karoları (2x2 birimlik tekrar eden doku). */
-function floorTexture() {
-  if (!floorTex) {
+const floorTex = new Map();
+/** Karo zemin dokusu (2x2 birimlik tekrar eden doku). */
+function floorTexture(colors) {
+  const key = colors.join();
+  if (!floorTex.has(key)) {
     const c = document.createElement('canvas');
     c.width = c.height = 256;
     const ctx = c.getContext('2d');
-    const colors = ['#f4efe4', '#e9e2d3'];
     for (let y = 0; y < 2; y++)
       for (let x = 0; x < 2; x++) {
         ctx.fillStyle = colors[(x + y) % 2];
@@ -248,12 +282,13 @@ function floorTexture() {
       ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 256); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(256, i); ctx.stroke();
     }
-    floorTex = new THREE.CanvasTexture(c);
-    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-    floorTex.colorSpace = THREE.SRGBColorSpace;
-    floorTex.anisotropy = 4;
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    floorTex.set(key, tex);
   }
-  return floorTex.clone();
+  return floorTex.get(key).clone();
 }
 
 export function wallBox(x, z, rotY) {

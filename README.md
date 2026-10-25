@@ -2,7 +2,7 @@
 
 Township tarzı, joystick ile oynanan 3D market işletme oyunu. Tarayıcıda (telefon ve bilgisayar) çalışır; Three.js ile yazıldı.
 
-**Oynanış:** Depodan (toptancı) ürün kasalarını al → reyonlara diz → müşteriler alışveriş yapıp kasaya gelsin → kasada ödemeyi al → paraları topla → parayla yeni reyonlar, kasiyer, taşıyıcı işçi, taşıma kapasitesi ve mağaza genişlemesi satın al.
+**Oynanış:** Toptancıdan sipariş ver, kamyon arka depoya indirsin → depodan kasaları al → reyonlara diz → müşteriler alışveriş yapıp kasaya gelsin → kasada ödemeyi al → paraları topla → parayla yeni reyonlar, kasiyer, taşıyıcı işçi, taşıma kapasitesi ve mağaza genişlemesi satın al.
 
 ## Çalıştırma
 
@@ -38,14 +38,13 @@ Character Pack: Adventurers, Restaurant Bits, Furniture Bits. `src/assets/` alt�
 
 ## Yol haritası
 
-- [x] Joystick/klavye kontrol, kasa taşıma, reyon doldurma
-- [x] Müşteriler: reyon seçer, bekler, kuyruğa girer, öder (sabrı tükenirse kızıp gider)
-- [x] Kasa: oyuncu ya da kasiyer ödeme alır, para yığını toplanır
-- [x] Satın alınabilirler: 9 ürün, kasiyer, taşıyıcı işçiler, taşıma kapasitesi, ikinci salon, ikinci kasa
-- [x] Kayıt (localStorage), ses efektleri, rehber ok ve ipuçları
-- [ ] Ürün fiyatlarını/kâr marjını yükseltme (reyon seviyeleri)
-- [ ] Müşterilerin birden fazla ürün istemesi (alışveriş listesi)
-- [ ] Para toplayan "müdür" işçisi, işçi hız yükseltmeleri
-- [ ] Günlük görevler / seviye sistemi
-- [ ] Gerçek ses ve müzik, parçacık efektleri
-- [ ] Mobil mağaza sürümü (Capacitor ile paketleme ya da Unity/Godot'a taşıma)
+Ayrıntılı seviye tablosu ve aşamalar: [docs/PLAN.md](docs/PLAN.md)
+
+- [x] Joystick/klavye kontrol, kasa taşıma, reyon doldurma, müşteriler, kasa, para toplama
+- [x] Seviye sistemi, gün/saat döngüsü (4 dk), saate göre yoğunluk, gün sonu özeti, gece molası
+- [x] Arka depo, toptancı siparişi, kamyonla teslimat, otomatik sipariş
+- [x] Reyon kapasitesi 8/16/24, taşıyıcı kapasitesi, 2. salon ve 2. giriş kapısı
+- [ ] Kirlenme + temizlikçi, müdür, memnuniyet puanı
+- [ ] Araç trafiği + otopark
+- [ ] Reklam görevlisi, hırsızlık + güvenlik
+- [ ] Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon
