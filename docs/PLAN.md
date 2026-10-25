@@ -18,11 +18,15 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 | 9 | 500 | Ekmek, 2. kasa + kasiyer, otopark, 2. temizlikçi | ✅ |
 | 10 | 650 | 3. taşıyıcı, reklam görevlisi, hırsızlık + güvenlik | ✅ |
 | 11 | 800 | But, taşıma 14 | ✅ |
-| 12 | 1000 | Biftek, taşıyıcı kapasitesi 10, toptancıyı satın alma | Biftek/kapasite ✅ · ⏳ |
-| 14 | 1500 | 3. salon, 3. kasa, otopark 2. aşama | ⏳ |
-| 16 | 2200 | Tedarik krizleri (gecikme, zam) | ⏳ |
-| 18 | 3000 | Üretimhaneler: sera, mandıra, fırın | ⏳ |
-| 20 | 4000 | Kasap/şarküteri üretimi, büyük genişleme | ⏳ |
+| 12 | 1000 | Biftek, taşıyıcı kapasitesi 10, toptancıyı satın alma (alış fiyatları −%30) | ✅ |
+| 13 | 1250 | Reklam panosu | ✅ |
+| 14 | 1500 | 3. salon (ikinci domates reyonu), 3. kasa + kasiyer, otopark 2. aşama | ✅ |
+| 15 | 1800 | İkinci peynir reyonu | ✅ |
+| 16 | 2200 | Tedarik krizleri (günlük zam ya da kıtlık), ikinci marul reyonu | ✅ |
+| 17 | 2600 | İkinci ekmek reyonu | ✅ |
+| 18 | 3000 | Üretimhaneler: sera (sebzeler), mandıra (peynir) | ✅ |
+| 19 | 3500 | Fırın (ekmek) | ✅ |
+| 20 | 4000 | Kasap (but, biftek) | ✅ |
 
 ## Gün döngüsü
 4 dk = 08:00–22:00. Yoğunluk: sabah düşük, 12–14 ve 17–20 tepe (`rushFactor`). 22:00'de kapı kapanır; raftaki müşteriler elindekiyle kasaya gider, eli boş olanlar çıkar (30 sn sonra kalanlar ödemeden gider). Gün özeti → gece molası (25 sn, raf doldurma/sipariş için) → "Gün N" ile sabah.
@@ -34,4 +38,11 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 4. ✅ Kirlenme + temizlikçi (2 kişi), müdür, memnuniyet puanı (yıldız)
 5. ✅ Araç trafiği + otopark (yaya müşteri sınırı 12; otopark 6 + 6 yer)
 6. ✅ Reklam görevlisi (+%35), reklam panosu (Sv.13, +%25), hırsızlık + kapı güvenliği
-7. ⏳ Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon
+7. ✅ Toptancı satın alma, tedarik krizleri, üretimhaneler (depo yanındaki bahçede), 3. salon
+
+## Sonraki fikirler
+- Seviye 20 sonrası: 4. salon / ikinci şube, müşteri alışveriş listeleri (birden çok ürün)
+- Ürün fiyatı/kâr marjı yükseltmeleri, işçi hız yükseltmeleri
+- Günlük görevler, başarımlar
+- Gerçek ses/müzik, parçacık efektleri
+- Mobil mağaza paketi (Capacitor)

@@ -41,6 +41,12 @@ export class Hud {
     }
   }
 
+  setCrisis(text) {
+    const el = document.getElementById('crisis');
+    el.textContent = text ?? '';
+    el.classList.toggle('hidden', !text);
+  }
+
   setRating(stars) {
     const v = stars.toFixed(1);
     if (this.ratingShown === v) return;

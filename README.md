@@ -19,10 +19,15 @@ Kontroller: ekrana dokunup sürükle (yüzen joystick) ya da WASD / ok tuşları
 
 | Dosya | Ne yapar |
 |---|---|
-| `src/config.js` | **Oyun dengesi**: ürün fiyatları, reyon/kasa konumları, açılabilirler ve fiyatları, hızlar |
+| `src/config.js` | **Oyun dengesi**: ürünler, seviyeler, gün süresi, reyon/kasa/depo konumları, açılabilirler ve fiyatları |
+| `src/daycycle.js` | Gün/saat, yoğunluk, kapanış, gün özeti, ışık |
+| `src/depot.js` | Arka depo, paletler, sipariş paneli, toptancı kamyonu |
+| `src/upkeep.js` | Kir lekeleri ve memnuniyet puanı |
+| `src/traffic.js` | Cadde trafiği ve otopark |
+| `src/production.js` | Toptancı indirimi, tedarik krizleri, üretimhaneler |
 | `src/game.js` | Ana oyun sınıfı: döngü, ekonomi, müşteri üretimi, kamera, rehber ok, kayıt |
 | `src/stations.js` | Reyon (`Shelf`), depo (`SupplyPoint`), kasa (`Checkout`), para yığını, satın alma alanı (`UnlockPad`) |
-| `src/actors.js` | Müşteri, kasiyer ve taşıyıcı işçi yapay zekâsı |
+| `src/actors.js` | Müşteri (ve hırsız), kasiyer, taşıyıcı, temizlikçi, müdür, güvenlik, reklamcı |
 | `src/character.js` | Animasyonlu karakter + taşınan kasa yığını |
 | `src/world.js` | Zemin, duvarlar, dekor, ağaçlar, mağaza genişlemesi |
 | `src/nav.js` | Izgara tabanlı A* yol bulma ve çarpışma |
@@ -47,4 +52,5 @@ Ayrıntılı seviye tablosu ve aşamalar: [docs/PLAN.md](docs/PLAN.md)
 - [x] Kirlenme + temizlikçi, müdür, memnuniyet puanı
 - [x] Araç trafiği + otopark
 - [x] Reklam görevlisi, hırsızlık + güvenlik
-- [ ] Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon
+- [x] Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon
+- [ ] Sonraki fikirler: [docs/PLAN.md](docs/PLAN.md#sonraki-fikirler)

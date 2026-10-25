@@ -47,7 +47,7 @@ export class Depot {
   /** Paletin alabileceği en fazla sipariş. */
   room(product) {
     const p = this.pallets.get(product);
-    return p ? p.space - this.incoming(product) : 0;
+    return p ? Math.max(0, Math.min(p.space - this.incoming(product), this.game.supply.orderLimit(product))) : 0;
   }
 
   /**
@@ -60,12 +60,13 @@ export class Depot {
     for (const [product, n] of Object.entries(items)) {
       const qty = Math.max(0, Math.min(n, this.room(product)));
       for (let i = 0; i < qty; i++) cargo.push(product);
-      total += qty * PRODUCTS[product].cost;
+      total += qty * this.game.supply.costOf(product);
     }
     if (!cargo.length) return 0;
     if (!free) {
       if (this.game.money < total) return 0;
       this.game.spend(total, new THREE.Vector3(this.kiosk.x, 0, this.kiosk.z));
+      for (const p of new Set(cargo)) this.game.supply.ordered(p, cargo.filter((c) => c === p).length);
     }
     // Yolda gelen kamyon varsa ona yükle, yoksa yeni kamyon
     let truck = this.trucks.find((t) => t.state === 'arriving' && t.cargo.length < TRUCK_CAPACITY);
@@ -94,7 +95,7 @@ export class Depot {
         for (const [product, p] of this.pallets) {
           if (p.stock + this.incoming(product) < p.capacity * 0.3) {
             const n = this.room(product);
-            const price = PRODUCTS[product].cost;
+            const price = this.game.supply.costOf(product);
             const afford = Math.floor((this.game.money - cost) * 0.6 / price);
             const qty = Math.min(n, afford);
             if (qty > 0) {
@@ -208,7 +209,7 @@ class Truck {
           const from = new THREE.Vector3(p.x - 1.2, 3.1, p.z);
           if (!pallet?.deliver(from)) {
             // palete sığmadı (kapasite düştü vb.) — parası iade
-            this.game.money += PRODUCTS[product].cost;
+            this.game.money += this.game.supply.costOf(product);
             this.game.hud.setMoney(this.game.money);
           }
           this.game.audio.play('drop', 0.3);
@@ -286,12 +287,13 @@ class OrderPanel {
 
   total() {
     let t = 0;
-    for (const [p, n] of Object.entries(this.qty)) t += n * PRODUCTS[p].cost;
+    for (const [p, n] of Object.entries(this.qty)) t += n * this.game.supply.costOf(p);
     return t;
   }
 
   render() {
     const rows = [];
+    const crisis = this.game.supply.crisis?.product;
     for (const [product, pallet] of this.depot.pallets) {
       const info = PRODUCTS[product];
       const q = this.qty[product] ?? 0;
@@ -299,7 +301,7 @@ class OrderPanel {
       rows.push(`
         <div class="order-row">
           <span class="o-emoji">${info.emoji}</span>
-          <span class="o-name">${info.name}<small>${pallet.stock}${inc ? ` +${inc}` : ''} / ${pallet.capacity} · $${info.cost}</small></span>
+          <span class="o-name">${info.name}<small>${pallet.stock}${inc ? ` +${inc}` : ''} / ${pallet.capacity} · <span class="${crisis === product ? 'o-crisis' : ''}">$${this.game.supply.costOf(product)}${crisis === product ? ' ⚠️' : ''}</span></small></span>
           <button data-p="${product}" data-d="-5" aria-label="${info.name} azalt">−</button>
           <span class="o-qty">${q}</span>
           <button data-p="${product}" data-d="5" aria-label="${info.name} artır">+</button>
@@ -328,10 +330,10 @@ class OrderPanel {
     const items = {};
     const products = [...this.depot.pallets.keys()].sort((a, b) => this.depot.pallets.get(a).stock - this.depot.pallets.get(b).stock);
     for (const p of products) {
-      const n = Math.min(this.depot.room(p), Math.floor(budget / PRODUCTS[p].cost));
+      const n = Math.min(this.depot.room(p), Math.floor(budget / this.game.supply.costOf(p)));
       if (n > 0) {
         items[p] = n;
-        budget -= n * PRODUCTS[p].cost;
+        budget -= n * this.game.supply.costOf(p);
       }
     }
     this.qty = items;

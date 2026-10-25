@@ -95,6 +95,7 @@ export class DayCycle {
     this.phase = 'open';
     this.today = blankStats();
     this.game.hud.toast(`☀️ Gün ${this.day} başladı`);
+    this.game.supply.rollCrisis();
     this.game.save();
   }
 

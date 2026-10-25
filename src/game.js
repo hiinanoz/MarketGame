@@ -10,12 +10,13 @@ import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker, Cleaner, Manager, Guard, Advertiser } from './actors.js';
 import { Rating, DirtSystem } from './upkeep.js';
 import { Traffic } from './traffic.js';
+import { Supply, Producer } from './production.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS,
+  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -73,6 +74,9 @@ export class Game {
     this.money = START_MONEY;
 
     this.world = new World(this);
+    this.supply = new Supply(this);
+    this.producers = [];
+    this.room3Open = false;
     this.depot = new Depot(this);
     this.traffic = new Traffic(this);
 
@@ -144,7 +148,11 @@ export class Game {
 
   padLabel(def) {
     switch (def.type) {
-      case 'shelf': return { title: PRODUCTS[def.target].name, emoji: PRODUCTS[def.target].emoji };
+      case 'shelf': {
+        const sh = SHELVES.find((x) => x.id === def.target);
+        const info = PRODUCTS[sh.product];
+        return { title: sh.id === sh.product ? info.name : `${info.name} 2`, emoji: info.emoji };
+      }
       case 'shelfStage': return { title: `Raf ${[8, 16, 24][def.value]}`, emoji: '📶', size: 2.0 };
       case 'stockerCap': return { title: `Taşıyıcı ${def.value}`, emoji: '🛒' };
       case 'door': return { title: '2. kapı', emoji: '🚪' };
@@ -153,6 +161,9 @@ export class Game {
       case 'manager': return { title: 'Müdür', emoji: '💼' };
       case 'ads': return def.target === 'billboard' ? { title: 'Reklam panosu', emoji: '🪧' } : { title: 'Reklamcı', emoji: '📣' };
       case 'security': return { title: 'Güvenlik', emoji: '👮' };
+      case 'wholesaler': return { title: 'Toptancıyı al', emoji: '🏢' };
+      case 'room3': return { title: '3. salon', emoji: '🏗️' };
+      case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
       case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
       case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
@@ -226,6 +237,16 @@ export class Game {
         this.adBoost += ADS[def.target];
         if (def.target === 'advertiser') this.workers.push(new Advertiser(this, 6.5, 15.4));
         else this.world.addBillboard(12.5, 11.6);
+        break;
+      case 'wholesaler':
+        this.supply.buyWholesaler();
+        break;
+      case 'room3':
+        this.room3Open = true;
+        this.world.openRoom3();
+        break;
+      case 'producer':
+        this.producers.push(new Producer(this, def.target, def.pos[0], def.pos[1]));
         break;
       case 'security': {
         const [x, z] = GUARD_SPOTS[def.target];
@@ -318,7 +339,10 @@ export class Game {
   }
 
   doors() {
-    return this.door2Open ? [[DOOR_X, 4], [DOOR2_X, 4]] : [[DOOR_X, 4]];
+    const d = [[DOOR_X, 4]];
+    if (this.door2Open) d.push([DOOR2_X, 4]);
+    if (this.room3Open) d.push([DOOR3_X, 4]);
+    return d;
   }
 
   nearestDoor(x) {
@@ -369,7 +393,9 @@ export class Game {
     const shelf = pool[Math.floor(Math.random() * pool.length)];
     const qty = 1 + Math.floor(Math.random() * Math.min(3, 1 + this.shelves.length / 2));
     const model = CHARACTER_NAMES.filter((n) => n !== 'Barbarian')[Math.floor(Math.random() * 4)];
-    const door = shelf.x > ROOM2.minX && this.door2Open ? [DOOR2_X, 4] : [DOOR_X, 4];
+    let door = [DOOR_X, 4];
+    if (shelf.x > ROOM2.minX && this.door2Open) door = [DOOR2_X, 4];
+    if (shelf.x < ROOM3.maxX) door = [DOOR3_X, 4];
     const c = new Customer(this, model, shelf, qty, door, slot);
     // Yoğun saatlerde bazı yaya müşteriler hırsız
     if (!slot && this.level >= THEFT.fromLevel) {
@@ -412,12 +438,13 @@ export class Game {
     for (const co of this.checkouts) co.update(dt);
     this.depot.update(dt);
     this.traffic.update(dt);
+    for (const pr of this.producers) pr.update(dt);
 
     // Para ve mal tamamen bittiyse toptancı hediye gönderir (oyun kilitlenmesin)
     this.timers.gift -= dt;
     if (this.timers.gift <= 0) {
       this.timers.gift = 3;
-      const cheapest = Math.min(...[...this.depot.pallets.keys()].map((k) => PRODUCTS[k].cost));
+      const cheapest = Math.min(...[...this.depot.pallets.keys()].map((k) => this.supply.costOf(k)));
       if (this.money < cheapest * 3 && this.isBroke()) {
         this.depot.order({ tomato: 6 }, { free: true });
         this.hud.toast('🎁 Toptancıdan hediye domates!');
@@ -513,7 +540,7 @@ export class Game {
     const emptyShelf = [...this.shelves].sort((a, b) => a.count - b.count)[0];
 
     if (carried) {
-      const shelf = this.shelves.find((s) => s.product === carried.product);
+      const shelf = this.shelves.find((s) => s.product === carried.product && s.space > 0);
       if (shelf && shelf.space > 0) {
         target = [shelf.x, shelf.z];
         hint = `Kasaları ${PRODUCTS[carried.product].emoji} reyonuna bırak`;
@@ -607,6 +634,7 @@ export class Game {
       rating: Math.round(this.rating.value),
       dirt: this.dirt.serialize(),
       depot: this.depot.serialize(),
+      supply: this.supply.serialize(),
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -648,6 +676,7 @@ export class Game {
     }
     for (const s of this.shelves) s.fillStock(data.shelves?.[s.id] ?? 0);
     this.day.restore(data.day);
+    this.supply.restore(data.supply);
     if (data.rating !== undefined) this.rating.value = data.rating;
     this.dirt.restore(data.dirt);
     if (data.depot) this.depot.restore(data.depot);

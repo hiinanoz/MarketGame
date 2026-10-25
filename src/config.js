@@ -70,8 +70,11 @@ export function rushFactor(hour) {
 export const ROOM1 = { minX: -12, maxX: 12, minZ: -16, maxZ: 4 };
 export const ROOM2 = { minX: 12, maxX: 28, minZ: -16, maxZ: 4 };
 export const DEPOT = { minX: -12, maxX: 12, minZ: -28, maxZ: -16 };
+export const ROOM3 = { minX: -28, maxX: -12, minZ: -16, maxZ: 4 };   // sol salon (Sv.14)
+export const YARD = { minX: -30, maxX: -12, minZ: -30, maxZ: -16 };   // üretimhane bahçesi
 export const DOOR_X = 0;          // ön kapının ortası
 export const DOOR2_X = 20;        // ikinci kapı (satın alınınca)
+export const DOOR3_X = -20;       // üçüncü salonun kapısı
 export const STREET_Z = 16;       // müşterilerin geldiği/gittiği yer
 
 // Otopark (mağazanın sol önü). Her yer = bir arabalı müşteri. Yaya müşteri sayısı sınırlı.
@@ -94,6 +97,11 @@ export const SHELVES = [
   { id: 'bun',     product: 'bun',     pos: [15.5, -6.5] },
   { id: 'ham',     product: 'ham',     pos: [20, -6.5] },
   { id: 'steak',   product: 'steak',   pos: [15.5, -1.0] },
+  // Üçüncü salon: çok satan ürünler için ikinci reyonlar
+  { id: 'tomato2',  product: 'tomato',  pos: [-25.5, -6.5] },
+  { id: 'cheese2',  product: 'cheese',  pos: [-21, -6.5] },
+  { id: 'lettuce2', product: 'lettuce', pos: [-25.5, -1.0] },
+  { id: 'bun2',     product: 'bun',     pos: [-21, -1.0] },
 ];
 
 // Reyon kapasite aşamaları: 1. aşama küçük masa, sonra geniş masa.
@@ -113,11 +121,12 @@ export const START_DEPOT_STOCK = { tomato: 12 };
 export const CHECKOUTS = [
   { id: 'checkout1', pos: [8, -3], cashierSpot: [10.1, -4], queueStart: [6.0, -3], cashPile: [8, -0.6] },
   { id: 'checkout2', pos: [25, -4], cashierSpot: [27.0, -5], queueStart: [23.0, -4], cashPile: [25, -1.6] },
+  { id: 'checkout3', pos: [-16, -4], cashierSpot: [-13.9, -5], queueStart: [-18.0, -4], cashPile: [-16, -0.6] },
 ];
 
 // ---- Satın alınabilenler ------------------------------------------------------------
 // level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
-// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security | wholesaler | room3 | producer
 export const UNLOCKS = [
   { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
   { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
@@ -146,12 +155,36 @@ export const UNLOCKS = [
   { id: 'security1',     type: 'security',  target: 'door1', cost: 1200, pos: [3.4, 6.6], level: 10, requires: [] },
   { id: 'security2',     type: 'security',  target: 'door2', cost: 1200, pos: [23.4, 6.6], level: 10, requires: ['door2'] },
   { id: 'billboard',     type: 'ads',       target: 'billboard', cost: 3000, pos: [12.5, 10], level: 13, requires: ['advertiser'] },
+  { id: 'wholesaler',    type: 'wholesaler', cost: 5000, pos: [10, -22.6], level: 12, requires: [] },
+  { id: 'room3',         type: 'room3',     cost: 4500, pos: [-7, -13.4], level: 14, requires: ['expansion'] },
+  { id: 'checkout3',     type: 'checkout',  target: 'checkout3', cost: 2500, level: 14, requires: ['room3'] },
+  { id: 'cashier3',      type: 'cashier',   target: 'checkout3', cost: 1500, level: 14, requires: ['checkout3'] },
+  { id: 'shelf_tomato2', type: 'shelf',     target: 'tomato2',   cost: 1800, level: 14, requires: ['room3'] },
+  { id: 'shelf_cheese2', type: 'shelf',     target: 'cheese2',   cost: 2400, level: 15, requires: ['room3'] },
+  { id: 'shelf_lettuce2', type: 'shelf',    target: 'lettuce2',  cost: 3000, level: 16, requires: ['room3', 'shelf_lettuce'] },
+  { id: 'shelf_bun2',    type: 'shelf',     target: 'bun2',      cost: 3600, level: 17, requires: ['room3', 'shelf_bun'] },
+  { id: 'greenhouse',    type: 'producer',  target: 'greenhouse', cost: 6000,  pos: [-17.5, -19.5], level: 18, requires: [] },
+  { id: 'dairy',         type: 'producer',  target: 'dairy',      cost: 7000,  pos: [-25, -19.5],   level: 18, requires: ['shelf_cheese'] },
+  { id: 'bakery',        type: 'producer',  target: 'bakery',     cost: 8000,  pos: [-17.5, -26],   level: 19, requires: ['shelf_bun'] },
+  { id: 'butcher',       type: 'producer',  target: 'butcher',    cost: 10000, pos: [-25, -26],     level: 20, requires: ['shelf_ham'] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },
   { id: 'parking2',      type: 'parking',   value: 2, cost: 3500, pos: [-22, 8.8], level: 14, requires: ['parking1'] },
   { id: 'stockerCap3',   type: 'stockerCap', value: 10, cost: 1400, pos: [-10.3, -10.6], level: 12, requires: ['stockerCap2'] },
 ];
+
+// Üretimhaneler: ürettikleri ürünler ve bir kasa üretme süresi (sn). Üretilen mal bedavadır.
+export const PRODUCERS = {
+  greenhouse: { name: 'Sera',   emoji: '🌱', products: ['tomato', 'lettuce', 'carrot', 'potato', 'onion'], interval: 3.5 },
+  dairy:      { name: 'Mandıra', emoji: '🐄', products: ['cheese'], interval: 4 },
+  bakery:     { name: 'Fırın',  emoji: '🥖', products: ['bun'], interval: 4 },
+  butcher:    { name: 'Kasap',  emoji: '🔪', products: ['ham', 'steak'], interval: 5 },
+};
+
+// Toptancı satın alınınca alış fiyatları düşer. Tedarik krizleri Sv.16'dan itibaren.
+export const WHOLESALER_DISCOUNT = 0.7;
+export const CRISIS = { fromLevel: 16, chance: 0.4, priceMult: 1.8, shortageLimit: 10 };
 
 // Reyon kapasite yükseltmeleri her reyon için otomatik eklenir (2. aşama Sv.2, 3. aşama Sv.5).
 SHELVES.forEach((s, i) => {

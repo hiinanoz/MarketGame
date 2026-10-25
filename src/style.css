@@ -277,3 +277,19 @@ html, body {
 #rating-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; white-space: nowrap; color: #ffd34d; }
 #rating-fill::before { content: '★★★★★'; }
 .pill.rating.low { background: rgba(140, 40, 30, 0.8); }
+
+.pill.crisis {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  right: 12px;
+  left: auto;
+  max-width: calc(100vw - 150px);
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+  background: rgba(150, 70, 0, 0.85);
+  z-index: 5;
+  pointer-events: none;
+}
+.o-crisis { color: #c0392b; font-weight: 900; }
