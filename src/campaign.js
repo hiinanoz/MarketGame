@@ -30,14 +30,29 @@ export class Campaign {
   }
 
   /** Yarın için kampanya hazırla. */
-  prepare(product, qty) {
+  prepare(product, qty, { by = 'player' } = {}) {
     if (this.scheduled || !this.unlocked) return false;
     const total = this.costFor(product, qty);
     if (this.game.money < total) return false;
     this.game.spend(total);
-    this.scheduled = { product, qty };
-    this.game.hud.toast(`📢 Yarın ${PRODUCTS[product].emoji} kampanyası!`);
+    this.scheduled = { product, qty, paid: total, by };
+    const who = by === 'accountant' ? '🧾 Muhasebeci: ' : '';
+    this.game.hud.toast(`${who}📢 Yarın ${PRODUCTS[product].emoji} kampanyası!`);
     this.game.audio.play('unlock');
+    this.game.save();
+    return true;
+  }
+
+  /** Planlanan kampanyayı iptal et: ödenen para iade edilir. */
+  cancel() {
+    if (!this.scheduled) return false;
+    const refund = this.scheduled.paid ?? 0;
+    this.game.money += refund;
+    this.game.hud.setMoney(this.game.money);
+    this.game.hud.toast(`❌ Kampanya iptal edildi (+$${refund} iade)`);
+    this.scheduled = null;
+    for (const c of this.doorQueue) c.leaveQuietly();
+    this.doorQueue = [];
     this.game.save();
     return true;
   }
@@ -153,6 +168,7 @@ export class Campaign {
     }
     const loss = left * PRODUCTS[product].cost;
     today.campaign = { product, qty: a.qty, sold: a.sold, left, loss, extra: a.spawned };
+    this.lastResult = { ...today.campaign, unhappy: today.campaignUnhappy ?? 0 };
     this.game.depot.removePallet(product);
     for (const t of this.game.depot.trucks) t.cargo = t.cargo.filter((c) => c !== product);
     this.removeStand();
@@ -164,12 +180,13 @@ export class Campaign {
   }
 
   serialize() {
-    return { scheduled: this.scheduled };
+    return { scheduled: this.scheduled, lastResult: this.lastResult ?? null };
   }
 
   restore(d) {
     // Aktif kampanya gün ortasında kaydedildiyse sabah yeniden başlamaz (gün kaydı sabaha döner)
     this.scheduled = d?.scheduled ?? null;
+    this.lastResult = d?.lastResult ?? null;
   }
 }
 

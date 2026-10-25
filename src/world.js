@@ -160,12 +160,13 @@ export class World {
 
     // Ağaçlar ve çalılar
     const rng = mulberry(7);
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 120; i++) {
       const x = -60 + rng() * 120;
-      const z = -55 + rng() * 67;
+      const z = -110 + rng() * 122;
       if (x > -17 && x < 32 && z > -30 && z < 8) continue; // mağaza ve depo
       if (x > -52 && x < -11 && z > 2 && z < 14) continue; // otopark
       if (x > -34 && x < -11 && z > -32 && z < 2) continue; // 3. salon, üretimhaneler
+      if (x > -46 && x < 36 && z < -34) continue; // tedarik vadisi arsaları
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }

@@ -14,12 +14,14 @@ import { Supply, Producer } from './production.js';
 import { Office } from './office.js';
 import { Bank } from './bank.js';
 import { Campaign } from './campaign.js';
+import { MarketAccountant } from './accountant.js';
+import { Holding } from './holding.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY,
+  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -86,6 +88,7 @@ export class Game {
     this.bank = new Bank(this);
     this.campaign = new Campaign(this);
     this.traffic = new Traffic(this);
+    this.holding = new Holding(this);
 
     // Oyuncu
     this.player = new Character(this, 'Barbarian', { speed: PLAYER_SPEED, capacity: START_CAPACITY });
@@ -175,6 +178,7 @@ export class Game {
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
       case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
       case 'valet': return { title: 'Otopark görevlisi', emoji: '🦺' };
+      case 'accountant': return { title: 'Muhasebeci', emoji: '🧑‍💼' };
       case 'cashier': return { title: def.value === 2 ? '2. kasiyer' : 'Kasiyer', emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
       case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
@@ -242,6 +246,12 @@ export class Game {
         break;
       case 'parking':
         this.traffic.lot.setStage(def.value);
+        break;
+      case 'accountant':
+        this.accountant = new MarketAccountant(this);
+        this.workers.push(this.accountant);
+        if (this.savedAccountant) this.accountant.restore(this.savedAccountant);
+        if (!silent) this.hud.toast('🧑‍💼 Muhasebeci işe başladı — muhasebe odasından ayarla');
         break;
       case 'valet':
         this.traffic.lot.valet = true;
@@ -357,9 +367,15 @@ export class Game {
 
   /** Ödeme yapıp çıkan her müşteri. */
   onCustomerPaid() {
-    this.xp++;
     this.rating.add(RATING.paid);
     this.day.today.customers++;
+    this.gainXp(1);
+  }
+
+  /** XP ekle (müşteri, işletme kârı, satın alım). Seviye atlarsa yeni alanları göster. */
+  gainXp(n) {
+    if (n <= 0) return;
+    this.xp += n;
     let leveled = false;
     while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) {
       this.level++;
@@ -479,6 +495,7 @@ export class Game {
     this.office.update();
     this.campaign.update(dt);
     this.traffic.update(dt);
+    this.holding.update(dt);
     for (let i = this.later.length - 1; i >= 0; i--) {
       const l = this.later[i];
       l.t -= dt;
@@ -530,7 +547,7 @@ export class Game {
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
     p.position.x = THREE.MathUtils.clamp(p.position.x, -49, 45);
-    p.position.z = THREE.MathUtils.clamp(p.position.z, -27.4, 17.5);
+    p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 22 ? -96 : -31, 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
 
@@ -688,6 +705,8 @@ export class Game {
       supply: this.supply.serialize(),
       bank: this.bank.serialize(),
       campaign: this.campaign.serialize(),
+      accountant: this.accountant?.serialize() ?? null,
+      holding: this.holding.serialize(),
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -709,6 +728,9 @@ export class Game {
       data = null;
     }
     if (!data || data.v !== 2) {
+      // Yeni oyun: kuruluş kredisiyle market alındı
+      this.bank.startDebt = START_LOAN.amount;
+      this.isNewGame = true;
       this.shelves[0].fillStock(4);
       for (const [k, n] of Object.entries(START_DEPOT_STOCK)) {
         const pal = this.depot.pallets.get(k);
@@ -722,6 +744,7 @@ export class Game {
     while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) this.level++;
     this.stats.sold = data.sold ?? 0;
     this.savedPads = data.pads ?? {};
+    this.savedAccountant = data.accountant ?? null;
     // Bağımlılık sırasıyla uygula
     const ids = new Set(data.unlocked ?? []);
     for (const def of UNLOCKS) {
@@ -734,6 +757,7 @@ export class Game {
     this.campaign.restore(data.campaign);
     if (data.rating !== undefined) this.rating.value = data.rating;
     this.dirt.restore(data.dirt);
+    this.holding.restore(data.holding);
     if (data.depot) this.depot.restore(data.depot);
     else {
       // v1'den geçiş: her ürüne biraz stok

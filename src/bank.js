@@ -1,4 +1,4 @@
-import { BANK } from './config.js';
+import { BANK, START_LOAN } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Banka: kredi (günlük faizli borç) ve mevduat (günlük faiz getiren birikim).
@@ -6,8 +6,13 @@ import { formatMoney } from './hud.js';
 export class Bank {
   constructor(game) {
     this.game = game;
-    this.debt = 0;
+    this.debt = 0;       // normal kredi (%4/gün)
+    this.startDebt = 0;  // kuruluş kredisi (marketi alırken, %1/gün)
     this.deposit = 0;
+  }
+
+  get totalDebt() {
+    return this.debt + this.startDebt;
   }
 
   get limit() {
@@ -27,13 +32,16 @@ export class Bank {
     return n;
   }
 
-  /** Borç öde: en fazla elindeki nakit kadar. Ödenen tutar borçtan aynen düşer. */
+  /** Borç öde: en fazla elindeki nakit kadar. Önce yüksek faizli kredi kapanır. */
   repay(amount) {
-    const n = Math.floor(Math.min(amount, this.debt, Math.max(0, this.game.money)));
+    const n = Math.floor(Math.min(amount, this.totalDebt, Math.max(0, this.game.money)));
     if (n <= 0) return 0;
-    this.debt -= n;
+    const a = Math.min(n, this.debt);
+    this.debt -= a;
+    this.startDebt -= n - a;
     this.game.money -= n;
-    this.changed(this.debt === 0 ? `✅ $${n} ödendi · borç kapandı` : `🏦 $${n} ödendi · kalan borç $${this.debt}`);
+    const left = this.totalDebt;
+    this.changed(left === 0 ? `✅ $${n} ödendi · borç kapandı` : `🏦 $${n} ödendi · kalan borç $${left}`);
     return n;
   }
 
@@ -67,21 +75,23 @@ export class Bank {
 
   /** Gün sonu: borca faiz eklenir, mevduat faiz kazanır. */
   endOfDay(today) {
-    const interest = Math.round(this.debt * BANK.loanRate);
+    const interest = Math.round(this.debt * BANK.loanRate + this.startDebt * START_LOAN.rate);
     const earned = Math.floor(this.deposit * BANK.depositRate);
-    this.debt += interest;
+    this.debt += Math.round(this.debt * BANK.loanRate);
+    this.startDebt += Math.round(this.startDebt * START_LOAN.rate);
     this.deposit += earned;
     today.interestPaid = interest;
     today.interestEarned = earned;
   }
 
   serialize() {
-    return { debt: this.debt, deposit: this.deposit };
+    return { debt: this.debt, startDebt: this.startDebt, deposit: this.deposit };
   }
 
   restore(d) {
     if (!d) return;
     this.debt = d.debt ?? 0;
+    this.startDebt = d.startDebt ?? 0;
     this.deposit = d.deposit ?? 0;
   }
 }

@@ -105,7 +105,9 @@ html, body {
   top: 24%;
   left: 50%;
   transform: translate(-50%, -50%);
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 92vw;
+  text-align: center;
   background: var(--accent);
   color: #3a2600;
   border-radius: 16px;
@@ -320,3 +322,48 @@ html, body {
 
 .panel button:disabled { opacity: 0.5; }
 .bank-log { background: #e4f3e1; border-radius: 10px; padding: 6px 10px; font-weight: 700; }
+
+.panel.intro { width: min(90vw, 380px); gap: 10px; }
+.panel.intro p { margin: 0; font-size: 15px; line-height: 1.4; }
+.panel.intro .small { font-size: 13px; opacity: 0.75; }
+.intro-art { font-size: 44px; text-align: center; letter-spacing: 6px; }
+
+.tabs button.hidden { display: none; }
+.row.toggle { align-items: center; gap: 10px; }
+.row.toggle span { display: flex; flex-direction: column; font-weight: 800; }
+.row.toggle small { font-weight: 600; font-size: 12px; opacity: 0.7; }
+.row.toggle input { width: 22px; height: 22px; flex: none; }
+.acc-log { display: flex; flex-direction: column; gap: 4px; font-size: 12px; background: #f1ead9; border-radius: 10px; padding: 8px 10px; max-height: 140px; overflow-y: auto; }
+button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; font-weight: 800; font-family: inherit; background: #ece4d3; }
+
+.side-btns {
+  position: fixed;
+  right: 12px;
+  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 5;
+}
+.side-btns .round.hidden { display: none; }
+.pill.crisis { right: 64px; }
+.panel.holding { width: min(94vw, 440px); max-height: 84vh; padding: 14px; gap: 10px; }
+#holding-body { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.biz { background: #f1ead9; border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.biz.owned { background: #e8f3e3; }
+.biz.locked { opacity: 0.6; }
+.biz-head { display: flex; gap: 10px; align-items: center; }
+.biz-head b { font-size: 16px; }
+.biz-head small { display: block; font-size: 12px; opacity: 0.75; font-weight: 600; }
+.biz-e { font-size: 28px; }
+.biz-row { display: grid; grid-template-columns: 96px 1fr auto; align-items: center; gap: 6px; font-size: 14px; }
+.biz-row small { font-size: 11px; opacity: 0.7; }
+.biz-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.biz button, .region { border: none; border-radius: 10px; padding: 7px 10px; font-weight: 800; font-family: inherit; background: #fff; color: var(--ink); font-size: 13px; }
+.biz button.primary { background: var(--green); color: #fff; }
+.biz button:disabled { opacity: 0.4; }
+.lock { font-size: 12px; font-weight: 700; opacity: 0.7; }
+.regions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.region { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; background: #f1ead9; }
+.region small { font-size: 11px; opacity: 0.7; }
+.region.locked { opacity: 0.5; }

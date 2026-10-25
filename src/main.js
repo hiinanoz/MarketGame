@@ -10,12 +10,22 @@ async function start() {
   const game = new Game(document.getElementById('app'));
   window.game = game; // tarayıcı konsolundan hata ayıklama için
   document.getElementById('loading').classList.add('hidden');
+  if (game.isNewGame) {
+    const intro = document.getElementById('intro');
+    intro.classList.remove('hidden');
+    game.paused = true; // hikâye okunurken gün ilerlemesin
+    intro.addEventListener('pointerdown', (e) => e.stopPropagation());
+    document.getElementById('intro-start').addEventListener('click', () => {
+      intro.classList.add('hidden');
+      game.paused = false;
+    });
+  }
 
   let last = performance.now();
   const loop = (now) => {
     const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
     last = now;
-    game.update(dt);
+    if (!game.paused) game.update(dt);
     game.render();
     requestAnimationFrame(loop);
   };

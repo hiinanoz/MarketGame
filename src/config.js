@@ -22,6 +22,12 @@ export const SPECIALS = Object.keys(PRODUCTS).filter((k) => PRODUCTS[k].special)
 // ---- Seviyeler ----------------------------------------------------------------
 // Ödeme yapıp çıkan her müşteri 1 XP. LEVELS[i] = (i+1). seviyeye ulaşmak için gereken toplam XP.
 export const LEVELS = [0, 15, 40, 80, 130, 200, 280, 380, 500, 650, 800, 1000, 1250, 1500, 1800, 2200, 2600, 3000, 3500, 4000];
+// Sv.21–100: her seviye %7,5 daha fazla XP (ayrıntı: docs/LEVELS.md)
+for (let l = 21; l <= 100; l++) LEVELS.push(Math.round((4000 * 1.075 ** (l - 20)) / 50) * 50);
+export const MAX_LEVEL = 100;
+// Sv.20 sonrası XP kaynakları: market müşterisi 1 XP + diğer işletmelerin kârı + satın alımlar
+export const XP_PER_PROFIT = 100;   // diğer işletmelerin günlük kârında her $100 = 1 XP
+export const XP_PER_PURCHASE = 100; // işletme/arsa alımında her $100 = 1 XP
 
 // ---- Memnuniyet ve temizlik --------------------------------------------------------
 export const RATING = {
@@ -159,7 +165,7 @@ export const CHECKOUTS = [
 
 // ---- Satın alınabilenler ------------------------------------------------------------
 // level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
-// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security | wholesaler | room3 | producer | valet
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security | wholesaler | room3 | producer | valet | accountant
 export const UNLOCKS = [
   { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
   { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
@@ -203,6 +209,7 @@ export const UNLOCKS = [
   { id: 'cashier1b',     type: 'cashier',   target: 'checkout1', value: 2, cost: 900,  level: 6,  requires: ['cashier1'] },
   { id: 'cashier2b',     type: 'cashier',   target: 'checkout2', value: 2, cost: 1400, level: 11, requires: ['cashier2'] },
   { id: 'cashier3b',     type: 'cashier',   target: 'checkout3', value: 2, cost: 2000, level: 15, requires: ['cashier3'] },
+  { id: 'accountant',    type: 'accountant', cost: 3000, pos: [6, -13.2], level: 21, requires: [] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },
@@ -234,6 +241,66 @@ SHELVES.forEach((s, i) => {
     { id: `stage3_${s.id}`, type: 'shelfStage', target: s.id, value: 2, cost: Math.round(260 * mult / 10) * 10, level: 5, requires: [`stage2_${s.id}`] },
   );
 });
+
+// ---- Holding (Sv.21+) ----------------------------------------------------------------
+// Tedarik vadisi: arka yolun kuzeyi. Her işletmenin bir arsa şeridi var; ön cephe yola bakar,
+// modüller arkaya (−z) doğru eklenir. Başta başkalarına aittir, seviye gelince satın alınır.
+export const VALLEY_FRONT_Z = -37;  // arsaların ön kenarı
+export const MODULE_DEPTH = 10;     // her modülün derinliği
+export const BUSINESSES = {
+  farm: {
+    name: 'Yeşil Vadi Çiftliği', emoji: '🌾', owner: 'Hüseyin Bey', kind: 'field',
+    plot: { x: -15, w: 18 }, price: 12000, level: 22,
+    products: ['tomato', 'carrot', 'lettuce', 'potato', 'onion'],
+    modules: [{ level: 22 }, { level: 23, cost: 6000 }, { level: 28, cost: 12000 }, { level: 30, cost: 20000 }, { level: 48, cost: 40000 }],
+    interval: 2.5, // tam kadroyla bir modülün bir kasa üretme süresi (sn)
+  },
+  dairy: {
+    name: 'Ak Süt Mandırası', emoji: '🐄', owner: 'Ayşe Hanım', kind: 'barn',
+    plot: { x: 5, w: 16 }, price: 18000, level: 24,
+    products: ['cheese'],
+    modules: [{ level: 24 }, { level: 26, cost: 9000 }, { level: 29, cost: 15000 }, { level: 30, cost: 24000 }, { level: 48, cost: 45000 }],
+    interval: 3,
+  },
+  bakery: {
+    name: 'Altın Başak Fırını', emoji: '🥖', owner: 'Mehmet Usta', kind: 'hall',
+    plot: { x: 23, w: 14 }, price: 24000, level: 26,
+    products: ['bun'],
+    modules: [{ level: 26 }, { level: 27, cost: 12000 }, { level: 29, cost: 18000 }, { level: 30, cost: 28000 }, { level: 48, cost: 50000 }],
+    interval: 3,
+  },
+  meat: {
+    name: 'Kasaba Et Tesisi', emoji: '🥩', owner: 'Kemal Bey', kind: 'hall',
+    plot: { x: -34, w: 14 }, price: 32000, level: 28,
+    products: ['ham', 'steak'],
+    modules: [{ level: 28 }, { level: 29, cost: 16000 }, { level: 30, cost: 24000 }, { level: 30, cost: 34000 }, { level: 48, cost: 60000 }],
+    interval: 3.5,
+  },
+};
+export const STAFF = {
+  workersPerModule: 2,
+  wage: { worker: 40, manager: 120, accountant: 100 }, // günlük maaş
+  hire: { worker: 150, manager: 1200, accountant: 1000 }, // işe alım ücreti
+  levels: { manager: 25, accountant: 25 },               // tedarikçilere müdür/muhasebeci
+  noManagerRate: 0.4,  // müdür yok ve oyuncu da orada değilken üretim hızı
+  storage: 60,         // işletme deposu (kasa)
+  surplusPrice: 0.9,   // fazlanın satış fiyatı (alış fiyatına oranla)
+};
+
+// Harita bölgeleri (hızlı geçiş). level: açıldığı seviye.
+export const REGIONS = [
+  { id: 'market', name: 'Market', emoji: '🛒', pos: [0, 1], level: 1 },
+  { id: 'depot', name: 'Arka depo', emoji: '📦', pos: [0, -18.5], level: 1 },
+  { id: 'office', name: 'Muhasebe odası', emoji: '🧾', pos: [8.4, -10.6], level: 1 },
+  { id: 'valley', name: 'Tedarik vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
+  { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [0, -110], level: 31, soon: true },
+  { id: 'east', name: 'Doğu mahalleleri', emoji: '🏘️', pos: [60, 0], level: 36, soon: true },
+  { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-80, 0], level: 51, soon: true },
+  { id: 'port', name: 'Liman', emoji: '⚓', pos: [0, 40], level: 69, soon: true },
+];
+
+// Başlangıç: banka kuruluş kredisiyle market alınır (yeni oyunlarda)
+export const START_LOAN = { amount: 1500, rate: 0.01 };
 
 export const OVERTIME_PAY = [30, 60]; // gece ek mesaisinde çalışan başına ödeme aralığı
 

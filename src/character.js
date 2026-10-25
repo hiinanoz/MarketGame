@@ -32,7 +32,7 @@ export function makeCrate(productId) {
  * Oyuncu, müşteri ve işçiler bundan türetilir.
  */
 export class Character {
-  constructor(game, modelName, { speed = 4, capacity = 4, look = null } = {}) {
+  constructor(game, modelName, { speed = 4, capacity = 4, look = null, cap = 'yellow' } = {}) {
     this.game = game;
     this.root = new THREE.Group();
     this.model = character(modelName, look);
@@ -55,7 +55,7 @@ export class Character {
     this.model.traverse((o) => {
       if (o.isBone) this.bones[o.name] = o;
     });
-    if (look === 'uniform') this.addCap();
+    if (look === 'uniform') this.addCap(cap);
 
     // Yığın, karakterin önünde (yerel +z) durur.
     this.stackAnchor = new THREE.Group();
@@ -69,19 +69,25 @@ export class Character {
   }
 
   /** Market üniformasının şapkası (baş kemiğine bağlı). */
-  addCap() {
+  /** Şapka rengi rolü gösterir: sarı işçi, kırmızı müdür, mavi muhasebeci. */
+  addCap(color = 'yellow') {
     const head = this.bones.head;
     if (!head) return;
     if (!capParts) {
       capParts = {
-        mat: new THREE.MeshStandardMaterial({ color: 0xffc928, roughness: 0.6 }),
+        mats: {
+          yellow: new THREE.MeshStandardMaterial({ color: 0xffc928, roughness: 0.6 }),
+          red: new THREE.MeshStandardMaterial({ color: 0xe03a2f, roughness: 0.6 }),
+          blue: new THREE.MeshStandardMaterial({ color: 0x2f7be0, roughness: 0.6 }),
+        },
         dome: new THREE.CylinderGeometry(0.42, 0.46, 0.22, 16),
         brim: new THREE.BoxGeometry(0.5, 0.05, 0.36),
       };
     }
     const cap = new THREE.Group();
-    const dome = new THREE.Mesh(capParts.dome, capParts.mat);
-    const brim = new THREE.Mesh(capParts.brim, capParts.mat);
+    const mat = capParts.mats[color] ?? capParts.mats.yellow;
+    const dome = new THREE.Mesh(capParts.dome, mat);
+    const brim = new THREE.Mesh(capParts.brim, mat);
     brim.position.set(0, -0.08, 0.42);
     cap.add(dome, brim);
     cap.position.set(0, CAP_Y, 0.02);

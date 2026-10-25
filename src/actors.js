@@ -508,7 +508,7 @@ export class Cleaner extends Character {
 
 export class Manager extends Character {
   constructor(game, x, z) {
-    super(game, 'Knight', { speed: WORKER_SPEED * 1.1, look: 'uniform' });
+    super(game, 'Knight', { speed: WORKER_SPEED * 1.1, look: 'uniform', cap: 'red' });
     this.position.set(x, 0, z);
     this.home = [x, z];
     this.root.add(workerBadge('💼'));

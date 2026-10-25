@@ -86,6 +86,8 @@ export class DayCycle {
 
   endDay() {
     this.game.campaign.endOfDay(this.today);
+    this.game.holding.endOfDay(this.today);
+    this.game.accountant?.endOfDay();
     this.game.bank.endOfDay(this.today);
     this.phase = 'night';
     this.nightT = 0;

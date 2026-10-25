@@ -21,6 +21,22 @@
         <button id="menu-btn" class="round" aria-label="Menü">☰</button>
       </div>
     </div>
+    <div class="side-btns">
+      <button id="map-btn" class="round" aria-label="Harita">🗺️</button>
+      <button id="holding-btn" class="round hidden" aria-label="Holding">💼</button>
+    </div>
+    <div id="holding" class="overlay hidden">
+      <div class="panel holding">
+        <div class="sheet-head">
+          <div class="tabs">
+            <button data-tab="biz" class="active">💼 İşletmeler</button>
+            <button data-tab="map">🗺️ Harita</button>
+          </div>
+          <button id="holding-close" class="x" aria-label="Kapat">✕</button>
+        </div>
+        <div id="holding-body"></div>
+      </div>
+    </div>
     <div id="rating" class="pill rating" title="Memnuniyet"><span class="stars"><span id="rating-fill"></span></span><b id="rating-value">4.0</b></div>
     <div id="crisis" class="pill crisis hidden"></div>
     <div id="hint" class="hint hidden"></div>
@@ -34,6 +50,7 @@
           <button data-tab="order" class="active">🚚 Sipariş</button>
           <button data-tab="bank">🏦 Banka</button>
           <button data-tab="campaign">📢 Kampanya</button>
+          <button data-tab="acc" class="hidden">🧑‍💼</button>
         </div>
         <button id="office-close" class="x" aria-label="Kapat">✕</button>
       </div>
@@ -48,6 +65,7 @@
       </section>
       <section data-sec="bank" id="bank-sec" class="sec hidden"></section>
       <section data-sec="campaign" id="campaign-sec" class="sec hidden"></section>
+      <section data-sec="acc" id="acc-sec" class="sec hidden"></section>
     </div>
 
     <div id="summary" class="overlay hidden">
@@ -76,6 +94,17 @@
         <button id="reset-btn" class="danger">Oyunu sıfırla</button>
         <button id="close-menu" class="primary">Devam et</button>
         <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0)</p>
+      </div>
+    </div>
+
+    <div id="intro" class="overlay hidden">
+      <div class="panel intro">
+        <div class="intro-art">🚌 🏪 🏦</div>
+        <h2>Kasabaya hoş geldin!</h2>
+        <p>Cebinde birkaç kuruş, aklında büyük hayaller var. Banka sana <b>$1.500 kuruluş kredisi</b> verdi; sen de bu parayla kasabanın küçük marketini satın aldın.</p>
+        <p>Hedefin: marketi büyütmek, tedarikçileri, santralleri ve arazileri almak, sonunda <b>şehrin tamamının sahibi</b> olmak. Ne kadar az günde başarırsan derecen o kadar yüksek olur.</p>
+        <p class="small">Kredinin faizi günlük %1. Muhasebe odasından istediğin zaman ödeyebilirsin.</p>
+        <button id="intro-start" class="primary">Marketi aç</button>
       </div>
     </div>
 

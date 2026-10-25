@@ -107,6 +107,10 @@ class OfficePanel {
     this.el.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => this.setTab(b.dataset.tab)));
     document.getElementById('bank-sec').addEventListener('click', (e) => this.onBank(e));
     document.getElementById('campaign-sec').addEventListener('click', (e) => this.onCampaign(e));
+    document.getElementById('acc-sec').addEventListener('change', (e) => {
+      const k = e.target.dataset.set;
+      if (k && this.game.accountant) this.game.accountant.settings[k] = e.target.checked;
+    });
   }
 
   get orders() {
@@ -127,7 +131,9 @@ class OfficePanel {
   }
 
   setTab(tab) {
+    if (tab === 'acc' && !this.game.accountant) tab = 'order';
     this.tab = tab;
+    this.el.querySelector('.tabs button[data-tab="acc"]').classList.toggle('hidden', !this.game.accountant);
     this.el.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
     this.el.querySelectorAll('[data-sec]').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.sec !== tab));
     if (tab === 'order') this.orders.show();
@@ -152,6 +158,21 @@ class OfficePanel {
   render() {
     if (this.tab === 'bank') this.renderBank();
     if (this.tab === 'campaign') this.renderCampaign();
+    if (this.tab === 'acc') this.renderAccountant();
+  }
+
+  renderAccountant() {
+    const a = this.game.accountant;
+    const sec = document.getElementById('acc-sec');
+    if (!a) return;
+    const t = (k, label, desc) => `<label class="row toggle"><span>${label}<small>${desc}</small></span><input type="checkbox" data-set="${k}" ${a.settings[k] ? 'checked' : ''} /></label>`;
+    sec.innerHTML = `
+      <p class="note">Muhasebeci bu işleri senin yerine yapar. Kapattığın işi sen yönetirsin; istediğin zaman diğer sekmelerden müdahale edebilirsin.</p>
+      ${t('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
+      ${t('campaign', '📢 Kampanyalar', 'Her akşam 19:00\'da yarının kampanyasına karar verir')}
+      ${t('savings', '🏦 Birikim', 'Gün sonunda borç öder, fazlayı mevduata yatırır')}
+      <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)}</p>
+      <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : '<div>Henüz karar yok.</div>'}</div>`;
   }
 
   // ---- Banka ----
@@ -164,15 +185,16 @@ class OfficePanel {
       <div class="stats">
         ${row('Nakit', m)}
         ${row('Mevduat (+%2/gün)', b.deposit)}
-        ${row('Borç (%4/gün)', b.debt, b.debt ? 'warn' : '')}
+        ${row('Kredi borcu (%4/gün)', b.debt, b.debt ? 'warn' : '')}
+        ${b.startDebt ? row('Kuruluş kredisi (%1/gün)', b.startDebt, 'warn') : ''}
         ${row('Kredi limiti', b.available)}
       </div>
       <div class="bank-group"><span>Kredi çek</span>
         ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
       </div>
       <div class="bank-group"><span>Borç öde</span>
-        <button data-act="repay" data-n="500" ${!b.debt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(500, b.debt, Math.max(0, Math.floor(m))))}</button>
-        <button data-act="repay" data-n="all" ${!b.debt || m <= 0 ? 'disabled' : ''}>${m >= b.debt ? 'Borcun tamamı' : 'Elimdekini öde'} ($${formatMoney(Math.min(b.debt, Math.max(0, Math.floor(m))))})</button>
+        <button data-act="repay" data-n="500" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(500, b.totalDebt, Math.max(0, Math.floor(m))))}</button>
+        <button data-act="repay" data-n="all" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>${m >= b.totalDebt ? 'Borcun tamamı' : 'Elimdekini öde'} ($${formatMoney(Math.min(b.totalDebt, Math.max(0, Math.floor(m))))})</button>
       </div>
       <div class="bank-group"><span>Para yatır</span>
         <button data-act="put" data-n="500" ${m < 1 ? 'disabled' : ''}>$500</button>
@@ -206,7 +228,9 @@ class OfficePanel {
     }
     if (c.scheduled) {
       const info = PRODUCTS[c.scheduled.product];
-      sec.innerHTML = `<p class="note big">${info.emoji} Yarın <b>${info.name}</b> kampanyası hazır.<br>${c.scheduled.qty} kasa stok. Sabah kapıda kuyruk olacak!</p>`;
+      const who = c.scheduled.by === 'accountant' ? 'Muhasebeci hazırladı. ' : '';
+      sec.innerHTML = `<p class="note big">${info.emoji} Yarın <b>${info.name}</b> kampanyası hazır.<br>${who}${c.scheduled.qty} kasa stok. Sabah kapıda kuyruk olacak!</p>
+        <button id="camp-cancel" class="ghost wide">Kampanyayı iptal et ($${formatMoney(c.scheduled.paid ?? 0)} iade)</button>`;
       return;
     }
     const active = c.active ? `<p class="note">Bugün: ${PRODUCTS[c.active.product].emoji} kampanyası sürüyor (${c.active.sold} kasa satıldı).</p>` : '';
@@ -234,6 +258,7 @@ class OfficePanel {
     const q = e.target.closest('[data-q]');
     if (q) this.campaignQty = Math.max(20, Math.min(300, this.campaignQty + Number(q.dataset.q)));
     if (e.target.closest('#camp-go')) this.game.campaign.prepare(this.campaignPick, this.campaignQty);
+    if (e.target.closest('#camp-cancel')) this.game.campaign.cancel();
     this.renderCampaign();
   }
 }

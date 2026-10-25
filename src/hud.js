@@ -89,6 +89,10 @@ export class Hud {
       if (st.campaignUnhappy) extra.push(`<div class="bad"><span>😠 Ürün bulamayan kampanya müşterisi</span><b>${st.campaignUnhappy}</b></div>`);
       extra.push(`<div class="${c.left ? 'bad' : 'good'}"><span>📦 Kalan stok zararı (${c.left} kasa)</span><b>${c.left ? `−$${formatMoney(c.loss)}` : '$0'}</b></div>`);
     }
+    if (st.holding) {
+      const h = st.holding;
+      extra.push(`<div class="${h.profit >= 0 ? 'good' : 'bad'}"><span>💼 ${h.count} işletme kârı (maaş $${formatMoney(h.wages)} dahil)</span><b>${h.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(h.profit))}</b></div>`);
+    }
     document.getElementById('sum-extra').innerHTML = extra.join('');
     // Gece çalışmak isteyen çalışanlara ek mesai ödenir
     const ot = this.game.planOvertime();

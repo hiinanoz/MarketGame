@@ -59,13 +59,22 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 
 | Sürüm | Seviyeler | İçerik | Bitince |
 |---|---|---|---|
-| **S1** | 21–25 | Holding tableti, işletme çekirdeği, müdür/muhasebeci rolleri ve şapkalar, market muhasebecisi, kuzey harita genişlemesi, ulaşım, başlangıç hikâyesi, ilk tedarikçi (çiftlik) | Oynat + geri bildirim |
+| **S1** ✅ | 21–25 | Holding tableti, işletme çekirdeği, müdür/muhasebeci rolleri ve şapkalar, market muhasebecisi, kuzey harita genişlemesi, ulaşım, başlangıç hikâyesi, ilk tedarikçi (çiftlik) | Oynat + geri bildirim |
 | **S2** | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
 | **S3** | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
 | **S4** | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
 | **S5** | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
 | **S6** | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
 | **S7** | 81–100 | Bölge bölge satın alma, mega projeler, final, derece ekranı | |
+
+## S1'de yapılanlar (Sv.21–25)
+
+- Seviyeler 100'e çıktı (eşikler Sv.20 sonrası her seviyede %7,5 artar); XP: müşteri + işletme kârı ($100 = 1 XP) + satın alımlar ($100 = 1 XP).
+- Yeni oyun: giriş hikâyesi ve $1.500 **kuruluş kredisi** (%1/gün, bankada ayrı satır; ödemelerde önce %4'lük kredi kapanır).
+- Şapkalar: işçi sarı, müdür kırmızı, muhasebeci mavi.
+- **Market muhasebecisi** (Sv.21, $3.000): siparişler (%45 altına inen paletleri %85'e tamamlar), kampanya kararı (her akşam 19:00, son kampanya sonucuna göre stok), birikim (gün sonu borç öder, fazlayı yatırır). Her biri muhasebe odasındaki 🧑‍💼 sekmesinden açılıp kapatılır; kampanya iptal edilebilir (para iade).
+- **Holding tableti** (💼, Sv.21) ve **harita** (🗺️): bölgelere hızlı geçiş.
+- **Tedarik vadisi** (arka yolun kuzeyi): Yeşil Vadi Çiftliği (Sv.22), Ak Süt Mandırası (Sv.24), Altın Başak Fırını (Sv.26), Kasaba Et Tesisi (Sv.28). Satın al → modül ekle (arkaya doğru, en fazla 5) → işçi (modül başına 2), müdür ve muhasebeci (Sv.25). Ürün kamyonla markete gider; fazlası depoda birikir, muhasebeci satar. Gün sonu maaşlar ödenir, kâr özetle gösterilir.
 
 ## Bitirme ve derece
 

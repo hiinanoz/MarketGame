@@ -107,7 +107,7 @@ export class Depot {
     for (const t of [...this.trucks]) t.update(dt);
 
     // Otomatik sipariş (depo yükseltmesi): stoğu %30'un altına düşen paletleri doldur
-    if (this.autoOrder && this.level > 0) {
+    if (this.autoOrder && this.level > 0 && !this.game.accountant?.settings.order) {
       this.autoTimer -= dt;
       if (this.autoTimer <= 0) {
         this.autoTimer = 4;

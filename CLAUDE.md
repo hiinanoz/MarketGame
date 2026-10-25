@@ -9,3 +9,5 @@
 - `npm run build:single` çıktısı 5 MB'ın altında kalmalı (reklam ağları sınırı).
 - Çalışanlar `look: 'uniform'` ile, müşteriler `look: 0..5` renk çeşidiyle oluşturulur (`assets.js` → `character()`); yeni işçi eklerken üniforma kullan.
 - Oyun zamanıyla gecikmeli iş için `setTimeout` değil `game.later.push({ t, fn })` kullan (testlerde `game.update` ile hızlandırılan simülasyonda da çalışsın).
+- Sv.21+ holding: `src/business.js` (tedarikçi işletmesi), `src/holding.js` (tablet + hızlı geçiş), `src/accountant.js` (market muhasebecisi). İşletme tanımları `config.js` → `BUSINESSES`, kadro → `STAFF`, bölgeler → `REGIONS`. Tasarım: `docs/LEVELS.md`, sıra: `docs/ROADMAP.md`.
+- Şapka renkleri: işçi `cap: 'yellow'`, müdür `'red'`, muhasebeci `'blue'`.
