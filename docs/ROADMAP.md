@@ -2,6 +2,13 @@
 
 Seviye seviye içerik: [LEVELS.md](LEVELS.md). Bu belge **nasıl yapılacağını** ve **hangi sırayla** yapılacağını anlatır. Her sürümden sonra oynanabilir hâle getirilir, kritik kararlar sorulur.
 
+## Verilen kararlar
+
+- **Ulaşım:** şehir haritasından hızlı geçiş + bölge içinde joystick ile yürüme.
+- **Oynanış:** tedarikçi, santral ve konutlar yönetim odaklı. Üretim kendiliğinden yürür; müdür yokken oyuncu işletmedeyse üretim hızlanır. Market elle oynanan kısım olarak kalır.
+- **XP (Sv.20 sonrası):** market müşterisi 1 XP + diğer işletmelerin günlük kârı + satın alımlar.
+- **Derece:** şehrin tamamının kaçıncı oyun gününde alındığına göre.
+
 ## Temel fikir: işletmeyi kur → büyüt → devret
 
 Market elle oynanan kısım olarak kalır. Diğer her şey (tedarikçiler, santraller, konutlar, banka) **işletme** olarak çalışır:
