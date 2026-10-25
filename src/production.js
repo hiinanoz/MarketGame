@@ -41,7 +41,7 @@ export class Supply {
       g.hud.setCrisis(null);
       return;
     }
-    const candidates = [...g.depot.pallets.keys()];
+    const candidates = g.depot.regularPallets().map(([k]) => k);
     if (!candidates.length) return;
     const product = candidates[Math.floor(Math.random() * candidates.length)];
     const type = Math.random() < 0.5 ? 'price' : 'shortage';

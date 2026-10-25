@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Character } from './character.js';
+import { CUSTOMER_LOOKS } from './assets.js';
 import { bubbleTexture } from './fx.js';
 import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT } from './config.js';
 
@@ -32,8 +33,12 @@ function workerBadge(emoji) {
 // Durumlar: toShelf → atShelf (ürün bekler) → toQueue → inQueue → leaving
 
 export class Customer extends Character {
-  constructor(game, modelName, shelf, qty, entry, slot = null) {
-    super(game, modelName, { speed: CUSTOMER_SPEED * (0.9 + Math.random() * 0.25), capacity: qty });
+  constructor(game, modelName, shelf, qty, entry, slot = null, { waitAt = null } = {}) {
+    super(game, modelName, {
+      speed: CUSTOMER_SPEED * (0.9 + Math.random() * 0.25),
+      capacity: qty,
+      look: Math.floor(Math.random() * CUSTOMER_LOOKS),
+    });
     this.shelf = shelf;
     this.want = qty;
     this.state = 'toShelf';
@@ -52,7 +57,9 @@ export class Customer extends Character {
     this.root.add(this.bubble);
 
     this.slot = slot; // arabayla geldiyse otopark yeri
-    if (slot) {
+    if (waitAt) {
+      this.position.set(waitAt[0], 0, waitAt[1]);
+    } else if (slot) {
       this.position.set(slot.x + 1.2, 0, slot.z);
     } else {
       const sx = entry[0] + (Math.random() - 0.5) * 30;
@@ -62,8 +69,22 @@ export class Customer extends Character {
 
     this.spotIndex = shelf.waiting.length;
     shelf.waiting.push(this);
+    if (waitAt) {
+      // Sabah kapı kuyruğu: mağaza açılınca release() ile içeri girer
+      this.state = 'atDoor';
+      this.heading = Math.PI;
+      this.setBubble(PRODUCTS[shelf.product].emoji, qty);
+    } else {
+      this.release();
+    }
+  }
+
+  release() {
+    const shelf = this.shelf;
     const [x, z] = shelf.customerSpot(this.spotIndex);
-    this.goVia([[entry[0], entry[1] + 2.5]], x, z, () => {
+    this.state = 'toShelf';
+    const viaDoor = shelf.z < 4; // içerideki reyonlar için önce kapıdan geç
+    this.goVia(viaDoor ? [[this.entry[0], this.entry[1] + 2.5]] : [], x, z, () => {
       this.state = 'atShelf';
       this.faceTowards(shelf.x, shelf.z);
     });
@@ -240,7 +261,12 @@ export class Customer extends Character {
 
   leaveAngry() {
     this.game.day.today.angry++;
-    this.game.rating.add(RATING.angry, 'ürün bulamayan müşteri');
+    if (this.campaign) {
+      this.game.day.today.campaignUnhappy = (this.game.day.today.campaignUnhappy ?? 0) + 1;
+      this.game.rating.add(RATING.angry / 6, 'kampanya stoğu yetmedi');
+    } else {
+      this.game.rating.add(RATING.angry, 'ürün bulamayan müşteri');
+    }
     this.releaseShelfSpot();
     this.setBubble('😠');
     this.state = 'leaving';
@@ -274,7 +300,7 @@ export class Customer extends Character {
 
 export class Cashier extends Character {
   constructor(game, checkout) {
-    super(game, 'Mage', { speed: WORKER_SPEED });
+    super(game, 'Mage', { speed: WORKER_SPEED, look: 'uniform' });
     this.position.set(checkout.cashierSpot[0], 0, checkout.cashierSpot[1]);
     this.heading = -Math.PI / 2;
     this.root.rotation.y = this.heading;
@@ -290,7 +316,7 @@ export class Cashier extends Character {
 
 export class Stocker extends Character {
   constructor(game, x, z) {
-    super(game, 'Knight', { speed: WORKER_SPEED, capacity: WORKER_CAPACITY });
+    super(game, 'Knight', { speed: WORKER_SPEED, capacity: WORKER_CAPACITY, look: 'uniform' });
     this.position.set(x, 0, z);
     this.home = [x, z];
     this.root.add(workerBadge('📦'));
@@ -394,7 +420,7 @@ export class Stocker extends Character {
 
 export class Cleaner extends Character {
   constructor(game, x, z) {
-    super(game, 'Rogue_Hooded', { speed: WORKER_SPEED * 0.9 });
+    super(game, 'Rogue_Hooded', { speed: WORKER_SPEED * 0.9, look: 'uniform' });
     this.position.set(x, 0, z);
     this.home = [x, z];
     this.root.add(workerBadge('🧹'));
@@ -441,7 +467,7 @@ export class Cleaner extends Character {
 
 export class Manager extends Character {
   constructor(game, x, z) {
-    super(game, 'Knight', { speed: WORKER_SPEED * 1.1 });
+    super(game, 'Knight', { speed: WORKER_SPEED * 1.1, look: 'uniform' });
     this.position.set(x, 0, z);
     this.home = [x, z];
     this.root.add(workerBadge('💼'));
@@ -477,7 +503,7 @@ export class Manager extends Character {
 
 export class Guard extends Character {
   constructor(game, x, z) {
-    super(game, 'Knight', { speed: WORKER_SPEED });
+    super(game, 'Knight', { speed: WORKER_SPEED, look: 'uniform' });
     this.position.set(x, 0, z);
     this.home = [x, z];
     this.heading = -Math.PI / 2;
@@ -511,7 +537,7 @@ export class Guard extends Character {
 
 export class Advertiser extends Character {
   constructor(game, x, z) {
-    super(game, 'Rogue', { speed: 2 });
+    super(game, 'Rogue', { speed: 2, look: 'uniform' });
     this.position.set(x, 0, z);
     this.heading = 0;
     this.root.add(workerBadge('📣'));
@@ -556,6 +582,32 @@ export class Advertiser extends Character {
     const cheer = this.t % 6 < 1.6;
     this.busyAnim = cheer;
     if (cheer) this.play('Cheer');
+    super.update(dt);
+  }
+}
+
+// ---- Otopark görevlisi: girişte arabaları yönlendirir, karışıklığı önler -------------------------
+
+export class Valet extends Character {
+  constructor(game, x, z) {
+    super(game, 'Rogue', { speed: 2, look: 'uniform' });
+    this.position.set(x, 0, z);
+    this.heading = Math.PI / 2;
+    this.root.rotation.y = this.heading;
+    this.root.add(workerBadge('🦺'));
+    // Turuncu yön çubuğu
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9), new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0x662200 }));
+    stick.position.set(0.45, 1.3, 0.2);
+    stick.rotation.z = 0.6;
+    this.stick = stick;
+    this.root.add(stick);
+    game.scene.add(this.root);
+    this.t = 0;
+  }
+
+  update(dt) {
+    this.t += dt;
+    this.stick.rotation.z = 0.6 + Math.sin(this.t * 4) * 0.5;
     super.update(dt);
   }
 }

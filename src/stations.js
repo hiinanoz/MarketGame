@@ -242,7 +242,7 @@ export class Pallet {
   }
 
   get capacity() {
-    return this.game.depot.palletCapacity;
+    return this.customCapacity ?? this.game.depot.palletCapacity;
   }
 
   get space() {
@@ -330,44 +330,6 @@ export class Pallet {
     this.redraw();
     this.game.audio.play('pick');
     return true;
-  }
-}
-
-// ---- Sipariş noktası ------------------------------------------------------------------
-
-export class OrderKiosk {
-  constructor(game, x, z) {
-    this.game = game;
-    this.x = x;
-    this.z = z;
-    const root = new THREE.Group();
-    root.position.set(x, 0, z);
-    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.1, 0.4), new THREE.MeshStandardMaterial({ color: 0x3c4552 }));
-    stand.position.set(0, 0.55, -1.2);
-    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.08), new THREE.MeshStandardMaterial({ color: 0x9be7ff, emissive: 0x2a6f84 }));
-    screen.position.set(0, 1.3, -1.15);
-    screen.rotation.x = -0.4;
-    for (const m of [stand, screen]) { m.castShadow = true; root.add(m); }
-    const cv = padCanvas(256, 256);
-    const ctx = cv.getContext('2d');
-    drawZone(ctx, 256, 256, { color: '#b9f6ca', fill: 'rgba(60,200,120,0.35)' });
-    ctx.font = '84px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🚚', 128, 104);
-    ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.fillText('Sipariş', 128, 190);
-    const tex = new THREE.CanvasTexture(cv);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const zone = flatPlane([2.2, 2.2], tex);
-    root.add(zone);
-    game.scene.add(root);
-    game.nav.setBox('kiosk', { minX: x - 0.4, maxX: x + 0.4, minZ: z - 1.5, maxZ: z - 0.9 });
-  }
-
-  inRange(p) {
-    return inZone(p, this.x, this.z, 1.1, 1.1);
   }
 }
 
@@ -527,6 +489,7 @@ export class Checkout {
         },
       });
       this.game.stats.sold++;
+      this.game.campaign.onSold(e.product);
       this.game.day.today.crates++;
       return;
     }

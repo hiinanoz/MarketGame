@@ -4,6 +4,7 @@
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Restaurant-Bits-1.0
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0
+//   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0
 //   node tools/build-assets.mjs <bu klasörlerin bulunduğu dizin>
 //
 // Çıktı: src/assets/characters/*.glb, src/assets/characters/anims.glb ve src/assets/props.glb
@@ -66,21 +67,21 @@ for (const name of CHARACTERS) {
 // ---- Dekor / ürünler: tek dosyada, her model adıyla bir kök düğüm --------
 const REST = path.join(SRC, 'KayKit-Restaurant-Bits-1.0/addons/kaykit_restaurant_bits/Assets/gltf');
 const FURN = path.join(SRC, 'KayKit-Furniture-Bits-1.0/addons/kaykit_furniture_bits/Assets/gltf');
+const CITY = path.join(SRC, 'KayKit-City-Builder-Bits-1.0/addons/kaykit_city_builder_bits/Assets/gltf');
 const PROPS = {
   [REST]: [
-    'crate', 'crate_tomatoes', 'crate_carrots', 'crate_cheese', 'crate_lettuce', 'crate_onions',
+    'crate', 'crate_lid', 'crate_tomatoes', 'crate_carrots', 'crate_cheese', 'crate_lettuce', 'crate_onions',
     'crate_potatoes', 'crate_ham', 'crate_steak', 'crate_buns',
-    'food_ingredient_tomato', 'food_ingredient_carrot', 'food_ingredient_cheese', 'food_ingredient_lettuce',
-    'food_ingredient_onion', 'food_ingredient_potato', 'food_ingredient_ham', 'food_ingredient_steak',
-    'food_ingredient_bun',
-    'kitchentable_A', 'kitchentable_A_large', 'kitchentable_B', 'kitchentable_B_large',
-    'kitchencounter_straight_A', 'kitchencounter_straight_B',
-    'fridge_A', 'fridge_B', 'floor_kitchen', 'wall', 'wall_window_closed', 'wall_doorway',
-    'jar_A_large', 'jar_B_large', 'ketchup', 'mustard', 'menu', 'papertowel', 'shelf_papertowel_decorated',
+    'kitchentable_B', 'kitchentable_B_large', 'kitchentable_A_large', 'kitchencounter_straight_B',
+    'fridge_A', 'fridge_B', 'wall', 'wall_window_closed', 'wall_half',
+    'jar_A_large', 'jar_B_large', 'ketchup', 'mustard', 'food_burger', 'stew_bowl', 'shelf_papertowel_decorated',
   ],
   [FURN]: [
-    'shelf_A_big', 'shelf_B_large', 'shelf_B_large_decorated', 'cactus_medium_A', 'cactus_small_B',
-    'lamp_standing', 'rug_rectangle_stripes_A', 'table_medium_long',
+    'cactus_medium_A', 'rug_rectangle_stripes_A', 'rug_rectangle_A', 'table_medium', 'chair_A',
+    'cabinet_medium_decorated', 'lamp_table', 'book_set', 'pictureframe_large_A', 'shelf_B_large_decorated',
+  ],
+  [CITY]: [
+    'car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_police', 'streetlight', 'bench', 'bush',
   ],
 };
 

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { PARKING } from './config.js';
+import { prop } from './assets.js';
+import { bubbleTexture } from './fx.js';
 
 // Ön caddede araç trafiği + otopark. Otoparktaki her yer bir arabalı müşteri demek.
 
@@ -7,49 +9,25 @@ const LANE_EAST = 18.6;  // +x yönüne giden şerit
 const LANE_WEST = 21.4;  // −x yönüne giden şerit
 const ROAD_END = 95;
 
-const COLORS = [0xe74c3c, 0x3498db, 0xf1c40f, 0x2ecc71, 0xecf0f1, 0x9b59b6, 0xe67e22, 0x34495e, 0x1abc9c];
-let parts;
+const MODELS = ['car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_sedan', 'car_hatchback'];
 
-function carMesh(color) {
-  if (!parts) {
-    parts = {
-      body: new THREE.BoxGeometry(3.4, 0.75, 1.65),
-      cabin: new THREE.BoxGeometry(1.9, 0.7, 1.45),
-      glass: new THREE.BoxGeometry(1.95, 0.45, 1.5),
-      wheel: new THREE.CylinderGeometry(0.36, 0.36, 0.3, 10),
-      dark: new THREE.MeshStandardMaterial({ color: 0x22262c, roughness: 0.7 }),
-      glassMat: new THREE.MeshStandardMaterial({ color: 0x9ad0ec, roughness: 0.2 }),
-      lights: new THREE.MeshStandardMaterial({ color: 0xfff2b3, emissive: 0x665500 }),
-      lightGeo: new THREE.BoxGeometry(0.06, 0.18, 0.35),
-      mats: new Map(),
-    };
-  }
-  if (!parts.mats.has(color)) parts.mats.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1 }));
-  const mat = parts.mats.get(color);
+/** KayKit City Builder araba modeli (+x yönüne bakacak şekilde sarılı). */
+function carMesh(kind) {
+  const name = kind ?? (Math.random() < 0.04 ? 'car_police' : MODELS[Math.floor(Math.random() * MODELS.length)]);
   const g = new THREE.Group();
-  const add = (geo, m, x, y, z) => {
-    const mesh = new THREE.Mesh(geo, m);
-    mesh.position.set(x, y, z);
-    mesh.castShadow = true;
-    g.add(mesh);
-    return mesh;
-  };
-  add(parts.body, mat, 0, 0.62, 0);
-  add(parts.cabin, mat, -0.25, 1.32, 0);
-  add(parts.glass, parts.glassMat, -0.25, 1.3, 0);
-  for (const z of [-0.5, 0.5]) add(parts.lightGeo, parts.lights, 1.71, 0.7, z);
-  for (const x of [-1.1, 1.1]) for (const z of [-0.82, 0.82]) {
-    const w = add(parts.wheel, parts.dark, x, 0.36, z);
-    w.rotation.x = Math.PI / 2;
-  }
-  g.scale.setScalar(0.85);
-  return g; // +x yönüne bakar
+  const m = prop(name);
+  m.scale.setScalar(3.4);
+  m.rotation.y = Math.PI / 2;
+  m.position.y = 0.2;
+  m.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  g.add(m);
+  return g;
 }
 
 /** Ara noktalar boyunca giden araç. */
 class Car {
-  constructor(scene, color, points, speed) {
-    this.mesh = carMesh(color);
+  constructor(scene, kind, points, speed) {
+    this.mesh = carMesh(kind);
     this.scene = scene;
     this.points = points.map((p) => new THREE.Vector2(p[0], p[1]));
     this.speed = speed;
@@ -119,12 +97,11 @@ export class Traffic {
       this.timers[lane] -= dt;
       if (this.timers[lane] <= 0) {
         this.timers[lane] = interval * (0.6 + Math.random() * 0.9);
-        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
         const speed = 10 + Math.random() * 5;
         const route = lane === 0
           ? [[-ROAD_END, LANE_EAST], [ROAD_END, LANE_EAST]]
           : [[ROAD_END, LANE_WEST], [-ROAD_END, LANE_WEST]];
-        this.cars.push(new Car(this.game.scene, color, route, speed));
+        this.cars.push(new Car(this.game.scene, null, route, speed));
       }
     }
     for (let i = this.cars.length - 1; i >= 0; i--) {
@@ -144,7 +121,8 @@ export class Traffic {
 export class ParkingLot {
   constructor(game) {
     this.game = game;
-    this.stage = 0; // 0: yok, 1: 6 yer, 2: 12 yer
+    this.stage = 0; // 0: yok, her aşama 6 yer (en fazla 4 aşama = 24 yer)
+    this.valet = false; // otopark görevlisi
     this.slots = []; // { x, z, rowZ, car, customer }
     this.group = new THREE.Group();
     game.scene.add(this.group);
@@ -168,29 +146,32 @@ export class ParkingLot {
 
   buildRow(stage) {
     const L = PARKING;
-    if (stage === 1) {
-      const asphalt = new THREE.Mesh(
-        new THREE.PlaneGeometry(L.maxX - L.minX, L.maxZ - L.minZ),
-        new THREE.MeshStandardMaterial({ color: 0x6a717c, roughness: 1 }),
-      );
+    if (stage === 1 || stage === 3) {
+      const x0 = stage === 1 ? L.minX : L.extMinX;
+      const x1 = stage === 1 ? L.maxX : L.minX;
+      this.asphaltMat ??= new THREE.MeshStandardMaterial({ color: 0x6a717c, roughness: 1 });
+      const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, L.maxZ - L.minZ), this.asphaltMat);
       asphalt.rotation.x = -Math.PI / 2;
-      asphalt.position.set((L.minX + L.maxX) / 2, -0.006, (L.minZ + L.maxZ) / 2);
+      asphalt.position.set((x0 + x1) / 2, -0.006, (L.minZ + L.maxZ) / 2);
       asphalt.receiveShadow = true;
       this.group.add(asphalt);
+    }
+    if (stage === 1) {
       // Girişten yola bağlantı
-      const link = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 5), asphalt.material);
+      const link = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 5), this.asphaltMat);
       link.rotation.x = -Math.PI / 2;
       link.position.set(L.entryX, -0.007, L.maxZ + 2.4);
       this.group.add(link);
     }
-    const rowZ = stage === 1 ? L.rowA : L.rowB;
+    const rowZ = stage % 2 === 1 ? L.rowA : L.rowB;
+    const startX = stage <= 2 ? L.minX + 1.6 : L.extMinX + 1.6;
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xf5f5f5 });
     for (let i = 0; i < L.perRow; i++) {
-      const x = L.minX + 1.6 + i * L.spacing;
+      const x = startX + i * L.spacing;
       this.slots.push({ x, z: rowZ, car: null, customer: null });
     }
     for (let i = 0; i <= L.perRow; i++) {
-      const x = L.minX + 1.6 - L.spacing / 2 + i * L.spacing;
+      const x = startX - L.spacing / 2 + i * L.spacing;
       const line = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 3.2), lineMat);
       line.rotation.x = -Math.PI / 2;
       line.position.set(x, 0.0, rowZ);
@@ -203,13 +184,14 @@ export class ParkingLot {
     const slot = this.slots.find((s) => !s.car);
     if (!slot) return false;
     const L = PARKING;
-    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    const car = new Car(this.game.scene, color, [
+    const car = new Car(this.game.scene, null, [
       [-ROAD_END, LANE_EAST], [L.entryX - 3, LANE_EAST], [L.entryX, L.maxZ + 1], [L.entryX, L.aisle],
       [slot.x, L.aisle], [slot.x, slot.z],
     ], 11);
     slot.car = car;
     car.onPark = () => cb(slot);
+    // Büyük otoparkta görevli yoksa girişte karışıklık: araba bekler, müşteri memnuniyeti düşer
+    if (!this.valet && this.capacity >= L.jamFromSlots && Math.random() < L.jamChance) car.jam = L.jamTime;
     this.cars.push(car);
     return true;
   }
@@ -231,6 +213,24 @@ export class ParkingLot {
     for (let i = this.cars.length - 1; i >= 0; i--) {
       const c = this.cars[i];
       if (c.parked) continue;
+      // Tıkanma: giriş kapısına gelince (kalan 3 nokta) bekle
+      if (c.jam > 0 && !c.leaving && c.points.length === 3) {
+        if (!c.bubble) {
+          c.bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: bubbleTexture('😤'), depthTest: false }));
+          c.bubble.renderOrder = 5;
+          c.bubble.scale.setScalar(1.1);
+          c.bubble.position.y = 2.6;
+          c.mesh.add(c.bubble);
+          this.game.rating.add(PARKING.jamRating, 'otopark karmaşası');
+          this.game.day.today.jams = (this.game.day.today.jams ?? 0) + 1;
+        }
+        c.jam -= dt;
+        if (c.jam <= 0) {
+          c.mesh.remove(c.bubble);
+          c.bubble.material.map.dispose();
+        }
+        continue;
+      }
       c.update(dt);
       if (c.done) {
         if (c.leaving) {

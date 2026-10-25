@@ -40,6 +40,11 @@ export class DayCycle {
     return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
 
+  /** Kapanışa kalan açık süre (sn). */
+  get remaining() {
+    return this.phase === 'open' ? DAY.length - this.t : 0;
+  }
+
   get isOpen() {
     return this.phase === 'open';
   }
@@ -73,12 +78,15 @@ export class DayCycle {
       if (inside === 0) this.endDay();
     } else if (this.phase === 'night') {
       if (!this.game.hud.summaryOpen) this.nightT += dt;
+      if (this.nightT > DAY.night - 6) this.game.campaign.beforeOpening();
       if (this.nightT >= DAY.night) this.startDay();
     }
     this.applyLighting();
   }
 
   endDay() {
+    this.game.campaign.endOfDay(this.today);
+    this.game.bank.endOfDay(this.today);
     this.phase = 'night';
     this.nightT = 0;
     this.game.hud.showSummary(this.day, this.today);
@@ -96,6 +104,7 @@ export class DayCycle {
     this.today = blankStats();
     this.game.hud.toast(`☀️ Gün ${this.day} başladı`);
     this.game.supply.rollCrisis();
+    this.game.campaign.startDay();
     this.game.save();
   }
 

@@ -127,9 +127,24 @@ export class World {
       if (Math.abs(x - DOOR2_X) < 2.1) this.door2Walls.push({ mesh: w, id });
     }
 
+    // Kaldırım: sokak lambaları ve banklar
+    for (let x = -44; x <= 40; x += 12) {
+      if ([0, 20, -20, -14].some((d) => Math.abs(x - d) < 2.5)) continue;
+      const l = prop('streetlight');
+      l.scale.setScalar(4);
+      l.position.set(x, 0, 14.25);
+      l.rotation.y = -Math.PI / 2; // kol caddeye doğru
+      s.add(l);
+    }
+    for (const x of [-5.5, 9.5, 27]) {
+      const b = prop('bench');
+      b.scale.setScalar(4);
+      b.position.set(x, 0, 14.7);
+      s.add(b);
+    }
+
     // Dekor (salon 1)
     this.addDecor('fridge_A', -10.6, -14.6, 0, s, true);
-    this.addDecor('fridge_B', 10.6, -14.6, 0, s, true);
     this.addDecor('shelf_papertowel_decorated', -11.6, -13.2, Math.PI / 2, s, false, 1.6);
     this.addDecor('cactus_medium_A', -11.2, 3.2, 0, s, true);
     this.addDecor('cactus_medium_A', 11, 3, 0, s, true);
@@ -149,7 +164,8 @@ export class World {
       const x = -60 + rng() * 120;
       const z = -55 + rng() * 67;
       if (x > -17 && x < 32 && z > -30 && z < 8) continue; // mağaza ve depo
-      if (x > -34 && x < -11 && z > -32 && z < 14) continue; // otopark, 3. salon, üretimhaneler
+      if (x > -52 && x < -11 && z > 2 && z < 14) continue; // otopark
+      if (x > -34 && x < -11 && z > -32 && z < 2) continue; // 3. salon, üretimhaneler
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }

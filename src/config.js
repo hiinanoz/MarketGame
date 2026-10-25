@@ -11,7 +11,13 @@ export const PRODUCTS = {
   bun:     { name: 'Ekmek',   emoji: '🍞', crate: 'crate_buns',     cost: 13, price: 33 },
   ham:     { name: 'But',     emoji: '🍖', crate: 'crate_ham',      cost: 16, price: 40 },
   steak:   { name: 'Biftek',  emoji: '🥩', crate: 'crate_steak',    cost: 20, price: 50 },
+  // Özel ürünler: yalnızca kampanya günlerinde, kampanya standında satılır
+  burger:  { name: 'Burger',      emoji: '🍔', crate: 'crate', item: 'food_burger', cost: 6, price: 18, special: true },
+  jam:     { name: 'Reçel',       emoji: '🍯', crate: 'crate', item: 'jar_A_large', cost: 4, price: 13, special: true },
+  sauce:   { name: 'Sos seti',    emoji: '🥫', crate: 'crate', item: 'ketchup',     cost: 3, price: 10, special: true },
+  soup:    { name: 'Hazır çorba', emoji: '🍲', crate: 'crate', item: 'stew_bowl',   cost: 5, price: 15, special: true },
 };
+export const SPECIALS = Object.keys(PRODUCTS).filter((k) => PRODUCTS[k].special);
 
 // ---- Seviyeler ----------------------------------------------------------------
 // Ödeme yapıp çıkan her müşteri 1 XP. LEVELS[i] = (i+1). seviyeye ulaşmak için gereken toplam XP.
@@ -47,6 +53,27 @@ export const THEFT = {
 };
 export const GUARD_SPOTS = { door1: [3.4, 2.6], door2: [23.4, 2.6] };
 
+// ---- Muhasebe odası, banka, kampanya --------------------------------------------------
+export const OFFICE = { minX: 7.5, maxX: 12, minZ: -16, maxZ: -10.5, door: [8.4, -11.8] };
+export const BANK = {
+  loanRate: 0.04,       // günlük kredi faizi
+  depositRate: 0.02,    // günlük mevduat faizi
+  limitBase: 500,       // kredi limiti = limitBase + seviye × limitPerLevel
+  limitPerLevel: 800,
+};
+export const CAMPAIGN = {
+  fromLevel: 4,
+  feeBase: 200,         // hazırlık ücreti = feeBase + seviye × feePerLevel
+  feePerLevel: 40,
+  extraMin: 50,         // kampanya günü gelen ek müşteri
+  extraMax: 250,
+  rushBoost: 1.4,       // genel yoğunluk artışı
+  doorQueue: 14,        // sabah kapıda bekleyen kişi
+  patience: 25,         // kampanya müşterisi stok beklerken sabır (sn)
+  standPos: [-6, 7.6],  // mağazanın önündeki kampanya standı
+  maxActive: 60,        // aynı anda en fazla müşteri (performans)
+};
+
 // ---- Gün döngüsü ----------------------------------------------------------------
 export const DAY = {
   length: 240,       // açık kalma süresi (sn) = 08:00 → 22:00
@@ -81,7 +108,13 @@ export const STREET_Z = 16;       // müşterilerin geldiği/gittiği yer
 export const PARKING = {
   minX: -31, maxX: -12.5, minZ: 4.8, maxZ: 12.8,
   rowA: 6.6, rowB: 11.0, aisle: 8.8, perRow: 6, spacing: 2.6, entryX: -14,
+  extMinX: -47,          // 3. ve 4. aşamada otopark sola doğru büyür
+  jamFromSlots: 12,      // bu kadar yerden sonra görevli yoksa girişte tıkanma olur
+  jamChance: 0.35,
+  jamTime: 5,
+  jamRating: -1.5,
 };
+export const VALET_SPOT = [-12.9, 14.0];
 export const WALK_IN_CAP = 12;   // aynı anda en fazla yaya müşteri
 export const BACK_ROAD_Z = -32;   // toptancı kamyonlarının yolu
 
@@ -112,7 +145,7 @@ export const PALLETS = {
   tomato:  [-9, -25.5], carrot: [-5, -25.5], cheese: [-1, -25.5], lettuce: [3, -25.5], onion: [7, -25.5],
   potato:  [-9, -20.5], bun:    [-5, -20.5], ham:    [-1, -20.5], steak:   [3, -20.5],
 };
-export const ORDER_KIOSK = [8.5, -19.6];
+export const SPECIAL_PALLET = [8.5, -20.5]; // kampanya ürününün depo yeri
 export const DEPOT_CAPACITY = [20, 40];  // palet başına kasa (depo yükseltmesiyle 40)
 export const TRUCK_CAPACITY = 40;        // bir kamyonun taşıdığı kasa sayısı
 export const START_DEPOT_STOCK = { tomato: 12 };
@@ -126,7 +159,7 @@ export const CHECKOUTS = [
 
 // ---- Satın alınabilenler ------------------------------------------------------------
 // level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
-// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security | wholesaler | room3 | producer
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security | wholesaler | room3 | producer | valet
 export const UNLOCKS = [
   { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
   { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
@@ -171,6 +204,9 @@ export const UNLOCKS = [
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },
   { id: 'parking2',      type: 'parking',   value: 2, cost: 3500, pos: [-22, 8.8], level: 14, requires: ['parking1'] },
+  { id: 'valet',         type: 'valet',     cost: 1500, pos: [-17, 14.6], level: 12, requires: ['parking1'] },
+  { id: 'parking3',      type: 'parking',   value: 3, cost: 6000, pos: [-38, 8.8], level: 15, requires: ['parking2'] },
+  { id: 'parking4',      type: 'parking',   value: 4, cost: 9000, pos: [-38, 8.8], level: 18, requires: ['parking3'] },
   { id: 'stockerCap3',   type: 'stockerCap', value: 10, cost: 1400, pos: [-10.3, -10.6], level: 12, requires: ['stockerCap2'] },
 ];
 

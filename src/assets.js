@@ -92,11 +92,78 @@ export function prop(name) {
   return tpl.clone(true);
 }
 
-/** İskeletli karakter kopyası + animasyon klipleri. */
-export function character(name) {
+/**
+ * İskeletli karakter kopyası.
+ * @param {string} name model adı
+ * @param {null|'uniform'|number} look null: orijinal, 'uniform': market üniforması, sayı: kıyafet renk çeşidi
+ */
+export function character(name, look = null) {
   const tpl = characters.get(name);
   if (!tpl) throw new Error(`Karakter bulunamadı: ${name}`);
-  return SkeletonUtils.clone(tpl);
+  const model = SkeletonUtils.clone(tpl);
+  // Çalışanlar şapka/miğfer yerine market şapkası takar; şövalye müşterilerin yarısı miğfersiz
+  const hideHat = look === 'uniform' || (name === 'Knight' && typeof look === 'number' && look % 2 === 1);
+  if (hideHat) model.traverse((o) => { if (o.isMesh && /Hat|Helmet/.test(o.name)) o.visible = false; });
+  if (look !== null && look !== undefined) {
+    model.traverse((o) => {
+      if (o.isMesh && o.material?.map) o.material = variantMaterial(name, o.material, look);
+    });
+  }
+  return model;
+}
+
+// ---- Kıyafet renkleri ------------------------------------------------------------------
+// KayKit karakterleri küçük bir renk paleti dokusu kullanır. Ten rengini koruyup kıyafet
+// renklerini döndürerek aynı modelden farklı görünümler üretiyoruz.
+
+const variantCache = new Map();
+export const CUSTOMER_LOOKS = 6;
+
+function variantMaterial(name, base, look) {
+  const key = `${name}|${base.uuid}|${look}`;
+  if (variantCache.has(key)) return variantCache.get(key);
+  const img = base.map.image;
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height);
+  const d = data.data;
+  const hsl = { h: 0, s: 0, l: 0 };
+  const col = new THREE.Color();
+  for (let i = 0; i < d.length; i += 4) {
+    col.setRGB(d[i] / 255, d[i + 1] / 255, d[i + 2] / 255);
+    col.getHSL(hsl);
+    const hueDeg = hsl.h * 360;
+    const skin = hueDeg > 8 && hueDeg < 40 && hsl.s > 0.25 && hsl.l > 0.55;
+    if (skin) continue;
+    if (look === 'uniform') {
+      if (hsl.s < 0.12 && (hsl.l > 0.85 || hsl.l < 0.15)) continue; // beyaz/siyah ayrıntılar
+      if (hueDeg > 5 && hueDeg < 50 && hsl.s > 0.2) continue;        // saç ve deri tonları
+      // Koyu tonlar lacivert pantolon, açık tonlar yeşil üniforma
+      if (hsl.l < 0.32) col.setHSL(0.6, 0.45, Math.max(0.16, hsl.l));
+      else col.setHSL(0.36, 0.55, THREE.MathUtils.clamp(hsl.l, 0.38, 0.62));
+    } else {
+      if (hsl.s < 0.12) continue; // gri/metal kısımlar aynı kalsın
+      col.setHSL((hsl.h + look / CUSTOMER_LOOKS + 0.07) % 1, Math.min(1, hsl.s * 1.05), hsl.l);
+    }
+    d[i] = Math.round(col.r * 255);
+    d[i + 1] = Math.round(col.g * 255);
+    d[i + 2] = Math.round(col.b * 255);
+  }
+  ctx.putImageData(data, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.flipY = base.map.flipY;
+  tex.colorSpace = base.map.colorSpace;
+  tex.magFilter = base.map.magFilter;
+  tex.minFilter = base.map.minFilter;
+  tex.wrapS = base.map.wrapS;
+  tex.wrapT = base.map.wrapT;
+  const mat = base.clone();
+  mat.map = tex;
+  variantCache.set(key, mat);
+  return mat;
 }
 
 export function animationClips() {

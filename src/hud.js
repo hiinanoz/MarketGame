@@ -78,6 +78,16 @@ export class Hud {
     document.getElementById('sum-spent').textContent = `$${formatMoney(st.spent)}`;
     document.getElementById('sum-angry').textContent = st.angry;
     document.getElementById('sum-stolen').textContent = st.stolen ?? 0;
+    const extra = [];
+    if (st.interestPaid) extra.push(`<div class="bad"><span>🏦 Kredi faizi</span><b>−$${formatMoney(st.interestPaid)}</b></div>`);
+    if (st.interestEarned) extra.push(`<div class="good"><span>🏦 Mevduat faizi</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);
+    if (st.campaign) {
+      const c = st.campaign;
+      extra.push(`<div><span>📢 Kampanya: satılan / stok</span><b>${c.sold} / ${c.qty}</b></div>`);
+      if (st.campaignUnhappy) extra.push(`<div class="bad"><span>😠 Ürün bulamayan kampanya müşterisi</span><b>${st.campaignUnhappy}</b></div>`);
+      extra.push(`<div class="${c.left ? 'bad' : 'good'}"><span>📦 Kalan stok zararı (${c.left} kasa)</span><b>${c.left ? `−$${formatMoney(c.loss)}` : '$0'}</b></div>`);
+    }
+    document.getElementById('sum-extra').innerHTML = extra.join('');
     this.summary.classList.remove('hidden');
     this.summaryOpen = true;
   }

@@ -2,12 +2,26 @@ import * as THREE from 'three';
 import { character, animationClips, prop } from './assets.js';
 import { PRODUCTS } from './config.js';
 
+let capParts = null;
+const CAP_Y = 0.95; // baş kemiği uzayında şapka yüksekliği
 const CRATE_SCALE = 0.42;          // 2x2 birimlik kasa → ~0.84 birim
 export const CRATE_HEIGHT = 0.36;  // yığında bir katın yüksekliği
 
 /** Taşınan/rafta duran tek bir ürün kasası. */
 export function makeCrate(productId) {
-  const mesh = prop(PRODUCTS[productId].crate);
+  const info = PRODUCTS[productId];
+  const mesh = prop(info.crate);
+  if (info.item) {
+    // Özel ürün: boş kasanın içinde ürün modelleri
+    const n = info.item === 'food_burger' || info.item === 'stew_bowl' ? 2 : 4;
+    for (let i = 0; i < n; i++) {
+      const it = prop(info.item);
+      const sc = n === 2 ? 1.15 : 1.5;
+      it.scale.setScalar(sc);
+      it.position.set(n === 2 ? (i ? 0.45 : -0.45) : (i % 2 ? 0.45 : -0.45), 0.25, n === 2 ? 0 : (i < 2 ? -0.45 : 0.45));
+      mesh.add(it);
+    }
+  }
   mesh.scale.setScalar(CRATE_SCALE);
   mesh.userData.product = productId;
   return mesh;
@@ -18,10 +32,10 @@ export function makeCrate(productId) {
  * Oyuncu, müşteri ve işçiler bundan türetilir.
  */
 export class Character {
-  constructor(game, modelName, { speed = 4, capacity = 4 } = {}) {
+  constructor(game, modelName, { speed = 4, capacity = 4, look = null } = {}) {
     this.game = game;
     this.root = new THREE.Group();
-    this.model = character(modelName);
+    this.model = character(modelName, look);
     this.model.scale.setScalar(0.62);
     this.root.add(this.model);
     this.speed = speed;
@@ -41,6 +55,7 @@ export class Character {
     this.model.traverse((o) => {
       if (o.isBone) this.bones[o.name] = o;
     });
+    if (look === 'uniform') this.addCap();
 
     // Yığın, karakterin önünde (yerel +z) durur.
     this.stackAnchor = new THREE.Group();
@@ -51,6 +66,28 @@ export class Character {
 
     this.path = null;
     this.onArrive = null;
+  }
+
+  /** Market üniformasının şapkası (baş kemiğine bağlı). */
+  addCap() {
+    const head = this.bones.head;
+    if (!head) return;
+    if (!capParts) {
+      capParts = {
+        mat: new THREE.MeshStandardMaterial({ color: 0xffc928, roughness: 0.6 }),
+        dome: new THREE.CylinderGeometry(0.42, 0.46, 0.22, 16),
+        brim: new THREE.BoxGeometry(0.5, 0.05, 0.36),
+      };
+    }
+    const cap = new THREE.Group();
+    const dome = new THREE.Mesh(capParts.dome, capParts.mat);
+    const brim = new THREE.Mesh(capParts.brim, capParts.mat);
+    brim.position.set(0, -0.08, 0.42);
+    cap.add(dome, brim);
+    cap.position.set(0, CAP_Y, 0.02);
+    cap.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    head.add(cap);
+    this.cap = cap;
   }
 
   get position() {

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { Pallet, OrderKiosk } from './stations.js';
-import { PRODUCTS, PALLETS, ORDER_KIOSK, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z } from './config.js';
+import { Pallet } from './stations.js';
+import { PRODUCTS, PALLETS, SPECIAL_PALLET, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z } from './config.js';
 
 // Arka depo: ürün paletleri, sipariş noktası, sipariş paneli ve toptancı kamyonları.
 
@@ -15,9 +15,13 @@ export class Depot {
     this.level = 0;            // 0: palet 20 kasa, 1: 40 kasa + otomatik sipariş
     this.autoOrder = false;
     this.trucks = [];
-    this.kiosk = new OrderKiosk(game, ORDER_KIOSK[0], ORDER_KIOSK[1]);
     this.panel = new OrderPanel(this);
     this.autoTimer = 0;
+  }
+
+  /** Siparişler muhasebe odasından verilir. */
+  get kiosk() {
+    return this.game.office;
   }
 
   get palletCapacity() {
@@ -29,12 +33,30 @@ export class Depot {
     for (const p of this.pallets.values()) p.redraw();
   }
 
-  addPallet(product) {
+  addPallet(product, customCapacity = null) {
     if (this.pallets.has(product)) return this.pallets.get(product);
-    const [x, z] = PALLETS[product];
+    const [x, z] = PRODUCTS[product].special ? SPECIAL_PALLET : PALLETS[product];
     const p = new Pallet(this.game, product, x, z);
+    if (customCapacity) {
+      p.customCapacity = customCapacity;
+      p.redraw();
+    }
     this.pallets.set(product, p);
     return p;
+  }
+
+  /** Kampanya ürününün paleti gün sonunda kaldırılır. */
+  removePallet(product) {
+    const p = this.pallets.get(product);
+    if (!p) return;
+    this.game.scene.remove(p.root);
+    this.game.nav.setBox(`pallet-${product}`, null);
+    this.pallets.delete(product);
+  }
+
+  /** Normal (kampanya dışı) ürün paletleri. */
+  regularPallets() {
+    return [...this.pallets].filter(([k]) => !PRODUCTS[k].special);
   }
 
   /** Yolda olan (henüz indirilmemiş) kasa sayısı. */
@@ -83,7 +105,6 @@ export class Depot {
 
   update(dt) {
     for (const t of [...this.trucks]) t.update(dt);
-    this.panel.update();
 
     // Otomatik sipariş (depo yükseltmesi): stoğu %30'un altına düşen paletleri doldur
     if (this.autoOrder && this.level > 0) {
@@ -92,7 +113,7 @@ export class Depot {
         this.autoTimer = 4;
         const items = {};
         let cost = 0;
-        for (const [product, p] of this.pallets) {
+        for (const [product, p] of this.regularPallets()) {
           if (p.stock + this.incoming(product) < p.capacity * 0.3) {
             const n = this.room(product);
             const price = this.game.supply.costOf(product);
@@ -121,7 +142,7 @@ export class Depot {
 
   serialize() {
     const stock = {};
-    for (const [k, p] of this.pallets) stock[k] = p.stock + this.incoming(k); // yoldaki mal teslim edilmiş sayılır
+    for (const [k, p] of this.regularPallets()) stock[k] = p.stock + this.incoming(k); // yoldaki mal teslim edilmiş sayılır
     return { level: this.level, autoOrder: this.autoOrder, stock };
   }
 
@@ -233,7 +254,7 @@ class OrderPanel {
   constructor(depot) {
     this.depot = depot;
     this.game = depot.game;
-    this.el = document.getElementById('order-panel');
+    this.el = document.getElementById('office-panel');
     this.list = document.getElementById('order-list');
     this.totalEl = document.getElementById('order-total');
     this.buyBtn = document.getElementById('order-buy');
@@ -244,8 +265,6 @@ class OrderPanel {
     this.open = false;
     this.dismissed = false;
 
-    this.el.addEventListener('pointerdown', (e) => e.stopPropagation());
-    document.getElementById('order-close').addEventListener('click', () => this.hide(true));
     this.buyBtn.addEventListener('click', () => this.buy());
     this.fillBtn.addEventListener('click', () => this.fill());
     this.autoBox.addEventListener('change', () => { depot.autoOrder = this.autoBox.checked; });
@@ -259,26 +278,18 @@ class OrderPanel {
     });
   }
 
+  /** Muhasebe panelinde Sipariş sekmesi açılınca/kapanınca. */
   show() {
     this.open = true;
     this.qty = {};
-    this.el.classList.remove('hidden');
     this.render();
   }
 
-  hide(byUser = false) {
+  hide() {
     this.open = false;
-    this.dismissed = byUser;
-    this.el.classList.add('hidden');
   }
 
   update() {
-    const inZone = this.depot.kiosk.inRange(this.game.player.position);
-    if (inZone && !this.open && !this.dismissed) this.show();
-    if (!inZone) {
-      this.dismissed = false;
-      if (this.open) this.hide();
-    }
     if (this.open) {
       this.renderTimer = (this.renderTimer ?? 0) + 1;
       if (this.renderTimer % 20 === 0) this.render(); // stok değişimlerini göster
@@ -294,7 +305,7 @@ class OrderPanel {
   render() {
     const rows = [];
     const crisis = this.game.supply.crisis?.product;
-    for (const [product, pallet] of this.depot.pallets) {
+    for (const [product, pallet] of this.depot.regularPallets()) {
       const info = PRODUCTS[product];
       const q = this.qty[product] ?? 0;
       const inc = this.depot.incoming(product);
@@ -328,7 +339,7 @@ class OrderPanel {
   fill() {
     let budget = this.game.money;
     const items = {};
-    const products = [...this.depot.pallets.keys()].sort((a, b) => this.depot.pallets.get(a).stock - this.depot.pallets.get(b).stock);
+    const products = this.depot.regularPallets().map(([k]) => k).sort((a, b) => this.depot.pallets.get(a).stock - this.depot.pallets.get(b).stock);
     for (const p of products) {
       const n = Math.min(this.depot.room(p), Math.floor(budget / this.game.supply.costOf(p)));
       if (n > 0) {

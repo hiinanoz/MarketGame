@@ -28,18 +28,26 @@
 
     <div id="joystick" class="hidden"><div id="joystick-knob"></div></div>
 
-    <div id="order-panel" class="sheet hidden">
+    <div id="office-panel" class="sheet hidden">
       <div class="sheet-head">
-        <h3>🚚 Toptancı siparişi</h3>
-        <button id="order-close" class="x" aria-label="Kapat">✕</button>
+        <div class="tabs" role="tablist">
+          <button data-tab="order" class="active">🚚 Sipariş</button>
+          <button data-tab="bank">🏦 Banka</button>
+          <button data-tab="campaign">📢 Kampanya</button>
+        </div>
+        <button id="office-close" class="x" aria-label="Kapat">✕</button>
       </div>
-      <div id="order-list"></div>
-      <label id="order-auto-row" class="row hidden"><span>Otomatik sipariş</span><input id="order-auto" type="checkbox" /></label>
-      <div class="sheet-foot">
-        <button id="order-fill" class="ghost">Paletleri doldur</button>
-        <span class="o-total">Toplam <b id="order-total">$0</b></span>
-        <button id="order-buy" class="primary">Sipariş ver</button>
-      </div>
+      <section data-sec="order" class="sec">
+        <div id="order-list"></div>
+        <label id="order-auto-row" class="row hidden"><span>Otomatik sipariş</span><input id="order-auto" type="checkbox" /></label>
+        <div class="sheet-foot">
+          <button id="order-fill" class="ghost">Paletleri doldur</button>
+          <span class="o-total">Toplam <b id="order-total">$0</b></span>
+          <button id="order-buy" class="primary">Sipariş ver</button>
+        </div>
+      </section>
+      <section data-sec="bank" id="bank-sec" class="sec hidden"></section>
+      <section data-sec="campaign" id="campaign-sec" class="sec hidden"></section>
     </div>
 
     <div id="summary" class="overlay hidden">
@@ -53,6 +61,7 @@
           <div><span>Kızgın ayrılan</span><b id="sum-angry">0</b></div>
           <div><span>Çalınan kasa</span><b id="sum-stolen">0</b></div>
         </div>
+        <div id="sum-extra" class="sum-extra"></div>
         <button id="sum-night" class="ghost">Gece çalış (raf doldur)</button>
         <button id="sum-skip" class="primary">Sabahı bekleme ☀️</button>
       </div>

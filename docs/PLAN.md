@@ -40,6 +40,14 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 6. ✅ Reklam görevlisi (+%35), reklam panosu (Sv.13, +%25), hırsızlık + kapı güvenliği
 7. ✅ Toptancı satın alma, tedarik krizleri, üretimhaneler (depo yanındaki bahçede), 3. salon
 
+## Ek özellikler (2. tur)
+- ✅ **Çalışan üniforması**: yeşil iş kıyafeti + sarı şapka + görev rozeti. Müşteriler 4 modelin 6 renk çeşidinden (24 görünüm) gelir, şövalyelerin yarısı miğfersiz.
+- ✅ **Muhasebe odası** (salon 1 arka sağ köşe): Sipariş / Banka / Kampanya sekmeleri. Depodaki sipariş noktası buraya taşındı.
+- ✅ **Banka**: kredi (limit = 500 + seviye × 800, günlük %4 faiz), mevduat (günlük %2 faiz). Faizler gün sonunda işlenir ve özette görünür.
+- ✅ **Kampanya** (Sv.4+): bir gün önceden özel ürün (🍔 Burger, 🍯 Reçel, 🥫 Sos seti, 🍲 Hazır çorba) ve stok seçilir, hazırlık ücreti + stok ödenir. Kampanya günü: gece sonunda kapıda kuyruk, gün boyu 50–250 ek müşteri, yoğunluk ×1.4. Stand mağazanın önünde, ilk 24 kasa hazır, kalanı kamyonla depoya gelir. Stok yetmezse müşteriler mutsuz gider; gün sonunda kalan stok zarar yazılır.
+- ✅ **Otopark** 4 aşama (6/12/18/24 yer, alan sola büyür) + **otopark görevlisi** (Sv.12): 12+ yerde görevli yoksa girişte tıkanma olur, memnuniyet düşer.
+- ✅ Trafik ve otoparkta KayKit City Builder araba modelleri, kaldırımda sokak lambaları ve banklar.
+
 ## Sonraki fikirler
 - Seviye 20 sonrası: 4. salon / ikinci şube, müşteri alışveriş listeleri (birden çok ürün)
 - Ürün fiyatı/kâr marjı yükseltmeleri, işçi hız yükseltmeleri

@@ -25,6 +25,7 @@ Kontroller: ekrana dokunup sürükle (yüzen joystick) ya da WASD / ok tuşları
 | `src/upkeep.js` | Kir lekeleri ve memnuniyet puanı |
 | `src/traffic.js` | Cadde trafiği ve otopark |
 | `src/production.js` | Toptancı indirimi, tedarik krizleri, üretimhaneler |
+| `src/office.js`, `src/bank.js`, `src/campaign.js` | Muhasebe odası ve paneli, banka, kampanya günleri |
 | `src/game.js` | Ana oyun sınıfı: döngü, ekonomi, müşteri üretimi, kamera, rehber ok, kayıt |
 | `src/stations.js` | Reyon (`Shelf`), depo (`SupplyPoint`), kasa (`Checkout`), para yığını, satın alma alanı (`UnlockPad`) |
 | `src/actors.js` | Müşteri (ve hırsız), kasiyer, taşıyıcı, temizlikçi, müdür, güvenlik, reklamcı |
@@ -39,7 +40,7 @@ Yeni ürün eklemek: `PRODUCTS`, `SHELVES` ve `UNLOCKS` listelerine birer satır
 ## Modeller
 
 Tüm 3D modeller [KayKit — Kay Lousberg](https://kaylousberg.com) paketlerinden (CC0, ticari kullanım serbest):
-Character Pack: Adventurers, Restaurant Bits, Furniture Bits. `src/assets/` altındaki dosyalar `tools/build-assets.mjs` ile üretildi: kullanılmayan animasyonlar ve silahlar atıldı, tüm karakterler tek bir animasyon dosyasını paylaşıyor (18 MB → 1.9 MB).
+Character Pack: Adventurers, Restaurant Bits, Furniture Bits, City Builder Bits. `src/assets/` altındaki dosyalar `tools/build-assets.mjs` ile üretildi: kullanılmayan animasyonlar ve silahlar atıldı, tüm karakterler tek bir animasyon dosyasını paylaşıyor (18 MB → 1.9 MB).
 
 ## Yol haritası
 
@@ -53,4 +54,5 @@ Ayrıntılı seviye tablosu ve aşamalar: [docs/PLAN.md](docs/PLAN.md)
 - [x] Araç trafiği + otopark
 - [x] Reklam görevlisi, hırsızlık + güvenlik
 - [x] Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon
+- [x] Muhasebe odası (sipariş, banka kredisi/mevduat, kampanyalar), özel ürünler, çalışan üniformaları, otopark görevlisi
 - [ ] Sonraki fikirler: [docs/PLAN.md](docs/PLAN.md#sonraki-fikirler)
