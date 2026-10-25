@@ -1,0 +1,521 @@
+import * as THREE from 'three';
+import { Nav } from './nav.js';
+import { Fx } from './fx.js';
+import { Audio } from './audio.js';
+import { Hud } from './hud.js';
+import { Input } from './input.js';
+import { World } from './world.js';
+import { Character } from './character.js';
+import { Shelf, SupplyPoint, Checkout, UnlockPad } from './stations.js';
+import { Customer, Cashier, Stocker } from './actors.js';
+import { CHARACTER_NAMES } from './assets.js';
+import {
+  PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2, DOOR_X,
+} from './config.js';
+
+const SAVE_KEY = 'marketgame-save-v1';
+
+export class Game {
+  constructor(container) {
+    this.container = container;
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.05;
+    container.appendChild(this.renderer.domElement);
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x9ad3f0);
+    this.scene.fog = new THREE.Fog(0x9ad3f0, 45, 90);
+    this.camera = new THREE.PerspectiveCamera(42, 1, 0.5, 200);
+
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x7a8f6a, 1.7);
+    this.scene.add(hemi);
+    this.sun = new THREE.DirectionalLight(0xfff3dd, 2.2);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(2048, 2048);
+    const sc = this.sun.shadow.camera;
+    sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 70;
+    this.sun.shadow.bias = -0.0005;
+    this.sun.shadow.normalBias = 0.03;
+    this.scene.add(this.sun, this.sun.target);
+
+    this.nav = new Nav({ minX: -15, maxX: 31, minZ: -18, maxZ: 21 });
+    this.fx = new Fx(this.scene);
+    this.audio = new Audio();
+    this.input = new Input(this.renderer.domElement);
+    this.hud = new Hud(this);
+    this.stats = { sold: 0 };
+
+    this.shelves = [];
+    this.supplies = new Map();
+    this.checkouts = [];
+    this.customers = [];
+    this.workers = [];
+    this.pads = new Map();
+    this.unlocked = new Set();
+    this.room2Open = false;
+    this.money = START_MONEY;
+
+    this.world = new World(this);
+
+    // Oyuncu
+    this.player = new Character(this, 'Barbarian', { speed: PLAYER_SPEED, capacity: START_CAPACITY });
+    this.player.position.set(DOOR_X, 0, 0);
+    this.player.heading = Math.PI;
+    this.scene.add(this.player.root);
+    this.playerRing = makeRing();
+    this.scene.add(this.playerRing);
+
+    // Başlangıçta açık olanlar: domates reyonu + ilk kasa
+    this.addShelf('tomato');
+    this.addCheckout('checkout1');
+
+    this.loadSave();
+    this.refreshPads();
+    this.hud.setMoney(this.money);
+    this.hud.displayed = this.money - 1;
+
+    this.guide = makeGuideArrow();
+    this.scene.add(this.guide);
+    this.pointer = makeGroundPointer();
+    this.scene.add(this.pointer);
+
+    this.spawnTimer = 1.5;
+    this.timers = { supply: 0, shelf: 0, save: 0 };
+
+    window.addEventListener('resize', () => this.resize());
+    this.resize();
+    this.cameraTarget = this.player.position.clone();
+    this.updateCamera(1);
+  }
+
+  // ---- Kurulum ---------------------------------------------------------------
+
+  addShelf(id) {
+    const def = SHELVES.find((s) => s.id === id);
+    const shelf = new Shelf(this, def);
+    this.shelves.push(shelf);
+    this.supplies.set(def.product, new SupplyPoint(this, def));
+    return shelf;
+  }
+
+  addCheckout(id) {
+    const def = CHECKOUTS.find((c) => c.id === id);
+    const co = new Checkout(this, def);
+    this.checkouts.push(co);
+    return co;
+  }
+
+  padPosition(def) {
+    switch (def.type) {
+      case 'shelf':
+        return SHELVES.find((s) => s.id === def.target).pos;
+      case 'cashier': {
+        const co = CHECKOUTS.find((c) => c.id === def.target);
+        return [co.cashierSpot[0] + 0.3, co.cashierSpot[1] + 5.4];
+      }
+      case 'checkout':
+        return CHECKOUTS.find((c) => c.id === def.target).pos;
+      default:
+        return def.pos;
+    }
+  }
+
+  padLabel(def) {
+    switch (def.type) {
+      case 'shelf': return { title: PRODUCTS[def.target].name, emoji: PRODUCTS[def.target].emoji };
+      case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
+      case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
+      case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
+      case 'expansion': return { title: 'Genişlet', emoji: '🏗️' };
+      case 'checkout': return { title: 'Yeni kasa', emoji: '🛒' };
+      default: return { title: def.id, emoji: '⭐' };
+    }
+  }
+
+  refreshPads() {
+    for (const def of UNLOCKS) {
+      if (this.unlocked.has(def.id) || this.pads.has(def.id)) continue;
+      if (!def.requires.every((r) => this.unlocked.has(r))) continue;
+      const [x, z] = this.padPosition(def);
+      const pad = new UnlockPad(this, def, x, z, this.padLabel(def));
+      if (this.savedPads?.[def.id]) {
+        pad.paid = Math.min(this.savedPads[def.id], def.cost - 1);
+        pad.redraw();
+      }
+      this.pads.set(def.id, pad);
+    }
+  }
+
+  applyUnlock(def, silent = false) {
+    this.unlocked.add(def.id);
+    switch (def.type) {
+      case 'shelf': {
+        const shelf = this.addShelf(def.target);
+        if (!silent) shelf.fillStock(2);
+        break;
+      }
+      case 'cashier': {
+        const co = this.checkouts.find((c) => c.id === def.target);
+        this.workers.push(new Cashier(this, co));
+        break;
+      }
+      case 'stocker': {
+        const [x, z] = def.pos;
+        this.workers.push(new Stocker(this, x, z));
+        break;
+      }
+      case 'capacity':
+        this.player.capacity = Math.max(this.player.capacity, def.value);
+        break;
+      case 'expansion':
+        this.room2Open = true;
+        this.world.openRoom2();
+        break;
+      case 'checkout':
+        this.addCheckout(def.target);
+        break;
+    }
+    if (!silent) {
+      const l = this.padLabel(def);
+      this.hud.toast(`${l.emoji} ${l.title} açıldı!`);
+      this.audio.play('unlock');
+      this.save();
+    }
+  }
+
+  // ---- Ekonomi ---------------------------------------------------------------
+
+  earn(amount, pos) {
+    this.money += amount;
+    this.hud.setMoney(this.money);
+    this.hud.bump();
+    this.fx.floatText(pos, `+$${amount}`);
+    this.audio.play('coin');
+  }
+
+  spend(amount, pos) {
+    this.money -= amount;
+    this.hud.setMoney(this.money);
+    if (pos) this.fx.floatText(pos, `-$${amount}`, '#e04b3a');
+  }
+
+  /** Hiç para ve stok kalmadıysa oyuncu takılı kalmasın: depodan bedava ürün verilir. */
+  isBroke() {
+    return (
+      this.player.carrying === 0 &&
+      this.shelves.every((s) => s.count === 0 && s.incoming === 0) &&
+      this.checkouts.every((c) => c.cash.value === 0 && c.queue.length === 0) &&
+      !this.customers.some((c) => c.carrying > 0)
+    );
+  }
+
+  // ---- Müşteriler ------------------------------------------------------------
+
+  doors() {
+    return this.room2Open ? [[DOOR_X, 4], [20, 4]] : [[DOOR_X, 4]];
+  }
+
+  nearestDoor(x) {
+    return this.doors().reduce((best, d) => (Math.abs(d[0] - x) < Math.abs(best[0] - x) ? d : best));
+  }
+
+  pickCheckout(customer) {
+    let best = null;
+    let bestScore = Infinity;
+    for (const co of this.checkouts) {
+      const d = Math.hypot(co.x - customer.position.x, co.z - customer.position.z);
+      const score = co.queue.length * 4 + d * 0.3;
+      if (score < bestScore) {
+        bestScore = score;
+        best = co;
+      }
+    }
+    return best;
+  }
+
+  spawnCustomer() {
+    if (!this.shelves.length) return;
+    // Biraz da stoklu raflara yönelsinler
+    const stocked = this.shelves.filter((s) => s.count > 0);
+    const pool = stocked.length && Math.random() < 0.7 ? stocked : this.shelves;
+    const shelf = pool[Math.floor(Math.random() * pool.length)];
+    const qty = 1 + Math.floor(Math.random() * Math.min(3, 1 + this.shelves.length / 2));
+    const model = CHARACTER_NAMES.filter((n) => n !== 'Barbarian')[Math.floor(Math.random() * 4)];
+    const door = shelf.x > ROOM2.minX ? [20, 4] : [DOOR_X, 4];
+    this.customers.push(new Customer(this, model, shelf, qty, door));
+  }
+
+  removeCustomer(c) {
+    const i = this.customers.indexOf(c);
+    if (i >= 0) this.customers.splice(i, 1);
+  }
+
+  // ---- Döngü -----------------------------------------------------------------
+
+  update(dt) {
+    this.input.update();
+    this.updatePlayer(dt);
+
+    // Müşteri üretimi
+    const maxCustomers = 3 + this.shelves.length * 2;
+    const interval = Math.max(1.4, 5.5 - this.shelves.length * 0.55);
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0) {
+      this.spawnTimer = interval * (0.7 + Math.random() * 0.6);
+      if (this.customers.length < maxCustomers) this.spawnCustomer();
+    }
+
+    for (const c of [...this.customers]) c.update(dt);
+    for (const w of this.workers) w.update(dt);
+    for (const co of this.checkouts) co.update(dt);
+
+    // Satın alma alanları
+    for (const [id, pad] of this.pads) {
+      if (pad.update(dt, this.player)) {
+        pad.dispose();
+        this.pads.delete(id);
+        this.applyUnlock(pad.def);
+        this.refreshPads();
+      }
+    }
+
+    this.fx.update(dt);
+    this.hud.update(dt);
+    this.updateGuide(dt);
+    this.updateCamera(dt);
+
+    this.timers.save += dt;
+    if (this.timers.save > 4) {
+      this.timers.save = 0;
+      this.save();
+    }
+  }
+
+  updatePlayer(dt) {
+    const p = this.player;
+    const m = this.input.move;
+    p.velocity.set(m.x * p.speed, 0, m.z * p.speed);
+    p.position.x += p.velocity.x * dt;
+    p.position.z += p.velocity.z * dt;
+    this.nav.collide(p.position, 0.45);
+    p.position.x = THREE.MathUtils.clamp(p.position.x, -40, 45);
+    p.position.z = THREE.MathUtils.clamp(p.position.z, -15.4, 17.5);
+    p.update(dt);
+    this.playerRing.position.set(p.position.x, 0.04, p.position.z);
+
+    // Depodan al
+    this.timers.supply -= dt;
+    if (this.timers.supply <= 0) {
+      for (const sup of this.supplies.values()) {
+        if (!sup.inRange(p.position) || p.full) continue;
+        const cost = PRODUCTS[sup.product].cost;
+        const free = this.money < cost && this.isBroke();
+        if (sup.sellTo(p, { free })) {
+          this.timers.supply = 0.13;
+          if (free) this.hud.toast('🎁 Toptancıdan hediye!');
+        } else if (this.money < cost && !this.warnedNoMoney) {
+          this.warnedNoMoney = true;
+          this.hud.toast('Paran yetmiyor 💸');
+          setTimeout(() => (this.warnedNoMoney = false), 2500);
+        }
+        break;
+      }
+    }
+
+    // Rafa bırak
+    this.timers.shelf -= dt;
+    if (this.timers.shelf <= 0) {
+      for (const s of this.shelves) {
+        if (s.playerInRange(p.position) && s.receiveFrom(p)) {
+          this.timers.shelf = 0.1;
+          break;
+        }
+      }
+    }
+
+    // Para topla
+    for (const co of this.checkouts) {
+      if (co.cash.value > 0 && co.cash.playerInRange(p.position)) co.cash.collect(p);
+    }
+  }
+
+  /** Oyuncuya sıradaki hedefi gösteren ok + ipucu metni. */
+  updateGuide(dt) {
+    const p = this.player;
+    let target = null;
+    let hint = '';
+    const carried = p.stack.find((e) => !e.landing);
+    const unserved = this.checkouts.find((c) => !c.cashier && c.queue.length > 0 && c.queue[0].readyToPay);
+    const cash = this.checkouts.find((c) => c.cash.value > 0);
+    const affordable = [...this.pads.values()]
+      .filter((pad) => this.money >= pad.remaining)
+      .sort((a, b) => a.remaining - b.remaining)[0];
+    const emptyShelf = [...this.shelves].sort((a, b) => a.count - b.count)[0];
+
+    if (carried) {
+      const shelf = this.shelves.find((s) => s.product === carried.product);
+      if (shelf && shelf.space > 0) {
+        target = [shelf.x, shelf.z];
+        hint = `Kasaları ${PRODUCTS[carried.product].emoji} reyonuna bırak`;
+      }
+    }
+    if (!target && unserved && this.stats.sold < 400) {
+      target = unserved.cashierSpot;
+      hint = 'Kasaya geç, müşterilerden ödeme al 💳';
+    }
+    if (!target && cash) {
+      target = [cash.cash.x, cash.cash.z];
+      hint = 'Paraları topla 💵';
+    }
+    if (!target && affordable) {
+      target = [affordable.x, affordable.z];
+      hint = `${affordable.emoji} ${affordable.title} — üzerinde durarak satın al`;
+    }
+    if (!target && emptyShelf && emptyShelf.count < emptyShelf.capacity / 2 && !p.full) {
+      const sup = this.supplies.get(emptyShelf.product);
+      target = [sup.x, sup.zoneZ];
+      hint = `Depodan ${PRODUCTS[emptyShelf.product].emoji} al`;
+    }
+
+    if (!hint && this.stats.sold < 3) hint = 'Ekrana dokunup sürükleyerek yürü 👆';
+    // Oyuncu ilerledikçe ipuçlarını kapat
+    this.hud.hint(this.stats.sold < 25 ? hint : '');
+
+    const near = !target || Math.hypot(target[0] - p.position.x, target[1] - p.position.z) < 1.6;
+    this.guide.visible = !near;
+    this.pointer.visible = !near;
+    if (target && !near) {
+      const t = performance.now() / 1000;
+      this.guide.position.set(target[0], 2.9 + Math.sin(t * 5) * 0.25, target[1]);
+      this.guide.rotation.y += dt * 2;
+      const ang = Math.atan2(target[0] - p.position.x, target[1] - p.position.z);
+      this.pointer.position.set(p.position.x + Math.sin(ang) * 1.4, 0.06, p.position.z + Math.cos(ang) * 1.4);
+      this.pointer.rotation.y = ang;
+    }
+  }
+
+  resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.renderer.setSize(w, h);
+    const aspect = w / h;
+    this.camera.aspect = aspect;
+    // Dikey ekranda dar yatay açı yüzünden daha geniş FOV + uzaklık gerekir.
+    this.camera.fov = aspect < 1 ? 50 : 40;
+    const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    this.camDistance = Math.max(8.5 / (t * aspect), 9.5 / t);
+    this.camera.updateProjectionMatrix();
+  }
+
+  updateCamera(dt) {
+    const p = this.player.position;
+    this.cameraTarget.lerp(p, Math.min(1, dt * 6));
+    const off = new THREE.Vector3(0, 0.8, 0.6).multiplyScalar(this.camDistance);
+    this.camera.position.copy(this.cameraTarget).add(off);
+    this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - 1);
+    this.sun.position.set(p.x + 9, 24, p.z + 12);
+    this.sun.target.position.set(p.x, 0, p.z);
+  }
+
+  render() {
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  // ---- Kayıt -----------------------------------------------------------------
+
+  save() {
+    const data = {
+      v: 1,
+      money: this.money,
+      unlocked: [...this.unlocked],
+      shelves: Object.fromEntries(this.shelves.map((s) => [s.id, s.count])),
+      pads: Object.fromEntries([...this.pads].filter(([, p]) => p.paid > 0).map(([id, p]) => [id, p.paid])),
+      sold: this.stats.sold,
+    };
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch {
+      /* gizli mod vb. — kayıt olmadan devam */
+    }
+  }
+
+  loadSave() {
+    let data = null;
+    try {
+      data = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    } catch {
+      data = null;
+    }
+    if (!data || data.v !== 1) {
+      this.shelves[0].fillStock(4);
+      return;
+    }
+    this.money = data.money ?? START_MONEY;
+    this.stats.sold = data.sold ?? 0;
+    this.savedPads = data.pads ?? {};
+    // Bağımlılık sırasıyla uygula
+    for (const def of UNLOCKS) {
+      if (data.unlocked?.includes(def.id)) this.applyUnlock(def, true);
+    }
+    for (const s of this.shelves) s.fillStock(data.shelves?.[s.id] ?? 0);
+  }
+
+  reset() {
+    try {
+      localStorage.removeItem(SAVE_KEY);
+    } catch {
+      /* yok say */
+    }
+    this.resetting = true;
+    location.reload();
+  }
+}
+
+// ---- Küçük görsel yardımcılar -----------------------------------------------------
+
+function makeRing() {
+  const m = new THREE.Mesh(
+    new THREE.RingGeometry(0.55, 0.72, 32),
+    new THREE.MeshBasicMaterial({ color: 0x4fc3ff, transparent: true, opacity: 0.8, depthWrite: false }),
+  );
+  m.rotation.x = -Math.PI / 2;
+  m.renderOrder = 2;
+  return m;
+}
+
+function makeGuideArrow() {
+  const mat = new THREE.MeshStandardMaterial({ color: 0x35b8ff, emissive: 0x0d4f7a, roughness: 0.4 });
+  const g = new THREE.Group();
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.8, 4), mat);
+  head.rotation.x = Math.PI;
+  g.add(head);
+  const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.7, 0.42), mat);
+  shaft.position.y = 0.7;
+  g.add(shaft);
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  return g;
+}
+
+function makeGroundPointer() {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0.45);
+  shape.lineTo(0.38, -0.2);
+  shape.lineTo(0, -0.05);
+  shape.lineTo(-0.38, -0.2);
+  shape.closePath();
+  const m = new THREE.Mesh(
+    new THREE.ShapeGeometry(shape),
+    new THREE.MeshBasicMaterial({ color: 0x35b8ff, transparent: true, opacity: 0.9, depthWrite: false }),
+  );
+  m.rotation.x = -Math.PI / 2;
+  const g = new THREE.Group();
+  // Şekil +y yönünü gösteriyor → yere yatırınca -z; grubun +z'ye bakması için çevir
+  m.rotation.z = Math.PI;
+  g.add(m);
+  m.renderOrder = 3;
+  return g;
+}

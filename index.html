@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#7cc46a" />
+    <title>Market Tycoon</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="hud">
+      <div id="money" class="pill"><span class="bill"></span><span id="money-value">0</span></div>
+      <button id="menu-btn" class="round" aria-label="Menü">☰</button>
+    </div>
+    <div id="hint" class="hint hidden"></div>
+    <div id="toast" class="toast hidden"></div>
+
+    <div id="joystick" class="hidden"><div id="joystick-knob"></div></div>
+
+    <div id="menu" class="overlay hidden">
+      <div class="panel">
+        <h2>Market Tycoon</h2>
+        <label class="row"><span>Ses</span><input id="opt-sound" type="checkbox" checked /></label>
+        <button id="reset-btn" class="danger">Oyunu sıfırla</button>
+        <button id="close-menu" class="primary">Devam et</button>
+        <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0)</p>
+      </div>
+    </div>
+
+    <div id="loading" class="overlay">
+      <div class="panel">
+        <h2>Market Tycoon</h2>
+        <div class="bar"><div id="loading-bar"></div></div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
