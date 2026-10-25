@@ -15,7 +15,7 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 | 6 | 200 | Depo 40 + otomatik sipariş, 2. taşıyıcı | ✅ |
 | 7 | 280 | Patates, müdür (kasadaki paraları toplar) | ✅ |
 | 8 | 380 | 2. salon, 2. giriş kapısı, taşıyıcı kapasitesi 8 | ✅ |
-| 9 | 500 | Ekmek, 2. kasa + kasiyer, otopark | Ekmek/kasa ✅ · otopark ⏳ |
+| 9 | 500 | Ekmek, 2. kasa + kasiyer, otopark, 2. temizlikçi | ✅ |
 | 10 | 650 | 3. taşıyıcı, reklam görevlisi, hırsızlık + güvenlik | taşıyıcı ✅ · ⏳ |
 | 11 | 800 | But, taşıma 14 | ✅ |
 | 12 | 1000 | Biftek, taşıyıcı kapasitesi 10, toptancıyı satın alma | Biftek/kapasite ✅ · ⏳ |
@@ -32,6 +32,6 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 2. ✅ Reyon kapasitesi (8/16/24), taşıyıcı kapasitesi (4/6/8/10), 2. kapı
 3. ✅ Arka depo, paletler, sipariş paneli, toptancı kamyonu, otomatik sipariş
 4. ✅ Kirlenme + temizlikçi (2 kişi), müdür, memnuniyet puanı (yıldız)
-5. ⏳ Araç trafiği + otopark
+5. ✅ Araç trafiği + otopark (yaya müşteri sınırı 12; otopark 6 + 6 yer)
 6. ⏳ Reklam görevlisi, hırsızlık + güvenlik
 7. ⏳ Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon

@@ -32,7 +32,7 @@ function workerBadge(emoji) {
 // Durumlar: toShelf → atShelf (ürün bekler) → toQueue → inQueue → leaving
 
 export class Customer extends Character {
-  constructor(game, modelName, shelf, qty, entry) {
+  constructor(game, modelName, shelf, qty, entry, slot = null) {
     super(game, modelName, { speed: CUSTOMER_SPEED * (0.9 + Math.random() * 0.25), capacity: qty });
     this.shelf = shelf;
     this.want = qty;
@@ -51,8 +51,13 @@ export class Customer extends Character {
     this.bubble.position.y = 2.2;
     this.root.add(this.bubble);
 
-    const sx = entry[0] + (Math.random() - 0.5) * 30;
-    this.position.set(sx, 0, STREET_Z + 1 + Math.random() * 1.5);
+    this.slot = slot; // arabayla geldiyse otopark yeri
+    if (slot) {
+      this.position.set(slot.x + 1.2, 0, slot.z);
+    } else {
+      const sx = entry[0] + (Math.random() - 0.5) * 30;
+      this.position.set(sx, 0, STREET_Z + 1 + Math.random() * 1.5);
+    }
     game.scene.add(this.root);
 
     this.spotIndex = shelf.waiting.length;
@@ -98,6 +103,13 @@ export class Customer extends Character {
       } else if (this.waitTimer > this.patience) {
         if (this.carrying > 0) this.leaveShelf();
         else this.leaveAngry();
+      }
+    }
+    if (this.state === 'cheering') {
+      this.cheerT -= dt;
+      if (this.cheerT <= 0) {
+        this.busyAnim = false;
+        this.walkOut();
       }
     }
     if (this.state === 'inQueue' || this.state === 'toQueue') {
@@ -154,14 +166,11 @@ export class Customer extends Character {
 
   paid() {
     this.readyToPay = false;
-    this.state = 'leaving';
+    this.state = 'cheering'; // kısa bir sevinçten sonra çıkışa yürür
+    this.cheerT = 0.7;
     this.setBubble('😊');
     this.play('Cheer');
     this.busyAnim = true;
-    setTimeout(() => {
-      this.busyAnim = false;
-      this.walkOut();
-    }, 700);
   }
 
   /** Kapanışta: ürünleri bırakıp sessizce çıkar. */
@@ -192,6 +201,13 @@ export class Customer extends Character {
   walkOut() {
     this.state = 'leaving';
     const door = this.game.nearestDoor(this.position.x);
+    if (this.slot) {
+      const slot = this.slot;
+      this.goVia([[door[0], door[1] - 1], [door[0], door[1] + 2.5]], slot.x + 1.2, slot.z, () => {
+        this.game.traffic.lot.depart(slot);
+      });
+      return;
+    }
     const tx = door[0] + (Math.random() - 0.5) * 30;
     this.goVia([[door[0], door[1] - 1], [door[0], door[1] + 2.5]], tx, STREET_Z + 2, null);
   }

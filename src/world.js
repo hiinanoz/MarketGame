@@ -117,10 +117,11 @@ export class World {
       const x = -60 + rng() * 120;
       const z = -55 + rng() * 67;
       if (x > -17 && x < 32 && z > -30 && z < 8) continue; // mağaza ve depo
+      if (x > -34 && x < -11 && z > 2 && z < 14) continue; // otopark alanı
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 11; i++) {
       this.addTree(-16 - rng() * 3, -27 + i * 2.6, 0.55, rng, true);
     }
     // Mağazanın sağı, salon 2 açılana kadar ağaçlık

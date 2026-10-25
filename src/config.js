@@ -60,6 +60,13 @@ export const DEPOT = { minX: -12, maxX: 12, minZ: -28, maxZ: -16 };
 export const DOOR_X = 0;          // ön kapının ortası
 export const DOOR2_X = 20;        // ikinci kapı (satın alınınca)
 export const STREET_Z = 16;       // müşterilerin geldiği/gittiği yer
+
+// Otopark (mağazanın sol önü). Her yer = bir arabalı müşteri. Yaya müşteri sayısı sınırlı.
+export const PARKING = {
+  minX: -31, maxX: -12.5, minZ: 4.8, maxZ: 12.8,
+  rowA: 6.6, rowB: 11.0, aisle: 8.8, perRow: 6, spacing: 2.6, entryX: -14,
+};
+export const WALK_IN_CAP = 12;   // aynı anda en fazla yaya müşteri
 export const BACK_ROAD_Z = -32;   // toptancı kamyonlarının yolu
 
 // Reyonlar: masa konumu. Müşteri masanın önünde (+z) durur, yükseltme alanı arkasında (−z).
@@ -97,7 +104,7 @@ export const CHECKOUTS = [
 
 // ---- Satın alınabilenler ------------------------------------------------------------
 // level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
-// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking
 export const UNLOCKS = [
   { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
   { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
@@ -119,11 +126,13 @@ export const UNLOCKS = [
   { id: 'shelf_bun',     type: 'shelf',     target: 'bun',       cost: 900,  level: 9, requires: ['expansion'] },
   { id: 'checkout2',     type: 'checkout',  target: 'checkout2', cost: 800,  level: 9, requires: ['expansion'] },
   { id: 'cashier2',      type: 'cashier',   target: 'checkout2', cost: 600,  level: 9, requires: ['checkout2'] },
+  { id: 'parking1',      type: 'parking',   value: 1, cost: 1500, pos: [-22, 8.8], level: 9, requires: [] },
   { id: 'cleaner2',      type: 'cleaner',   cost: 700,  pos: [-10.3, -3.9], level: 9, requires: ['cleaner1'] },
   { id: 'stocker3',      type: 'stocker',   cost: 1000, pos: [25.5, -9.5], level: 10, requires: ['stocker2', 'expansion'] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },
+  { id: 'parking2',      type: 'parking',   value: 2, cost: 3500, pos: [-22, 8.8], level: 14, requires: ['parking1'] },
   { id: 'stockerCap3',   type: 'stockerCap', value: 10, cost: 1400, pos: [-10.3, -10.6], level: 12, requires: ['stockerCap2'] },
 ];
 

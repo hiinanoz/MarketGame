@@ -9,12 +9,13 @@ import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker, Cleaner, Manager } from './actors.js';
 import { Rating, DirtSystem } from './upkeep.js';
+import { Traffic } from './traffic.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT,
+  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -47,7 +48,7 @@ export class Game {
     this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
 
-    this.nav = new Nav({ minX: -15, maxX: 31, minZ: -30, maxZ: 21 });
+    this.nav = new Nav({ minX: -34, maxX: 31, minZ: -30, maxZ: 21 });
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
     this.input = new Input(this.renderer.domElement);
@@ -72,6 +73,7 @@ export class Game {
 
     this.world = new World(this);
     this.depot = new Depot(this);
+    this.traffic = new Traffic(this);
 
     // Oyuncu
     this.player = new Character(this, 'Barbarian', { speed: PLAYER_SPEED, capacity: START_CAPACITY });
@@ -148,6 +150,7 @@ export class Game {
       case 'depot': return { title: 'Depo 40', emoji: '🏭' };
       case 'cleaner': return { title: 'Temizlikçi', emoji: '🧹' };
       case 'manager': return { title: 'Müdür', emoji: '💼' };
+      case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
       case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
       case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
@@ -212,6 +215,9 @@ export class Game {
         break;
       case 'manager':
         this.workers.push(new Manager(this, def.pos[0], def.pos[1]));
+        break;
+      case 'parking':
+        this.traffic.lot.setStage(def.value);
         break;
       case 'depot':
         this.depot.upgrade();
@@ -320,8 +326,30 @@ export class Game {
     return best;
   }
 
-  spawnCustomer() {
-    if (!this.shelves.length) return;
+  /** Yaya ya da arabalı müşteri. Yaya kapasitesi dolarsa otopark gerekir. */
+  trySpawn() {
+    const lot = this.traffic.lot;
+    const walkers = this.customers.filter((c) => !c.slot).length;
+    const useCar = lot.free > 0 && (walkers >= WALK_IN_CAP || Math.random() < 0.55);
+    if (useCar) {
+      lot.reserve((slot) => {
+        if (!this.day.isOpen) { lot.depart(slot); return; }
+        slot.customer = this.spawnCustomer(slot);
+      });
+    } else if (walkers < WALK_IN_CAP) {
+      this.spawnCustomer();
+    } else {
+      this.turnaways = (this.turnaways ?? 0) + 1;
+      const now = performance.now();
+      if (!this.lastTurnawayToast || now - this.lastTurnawayToast > 45000) {
+        this.lastTurnawayToast = now;
+        this.hud.toast(lot.capacity ? '🚗 Otopark dolu — müşteriler geri döndü' : '🚗 Park yeri yok — müşteriler geri döndü');
+      }
+    }
+  }
+
+  spawnCustomer(slot = null) {
+    if (!this.shelves.length) return null;
     // Biraz da stoklu raflara yönelsinler
     const stocked = this.shelves.filter((s) => s.count > 0);
     const pool = stocked.length && Math.random() < 0.7 ? stocked : this.shelves;
@@ -329,7 +357,9 @@ export class Game {
     const qty = 1 + Math.floor(Math.random() * Math.min(3, 1 + this.shelves.length / 2));
     const model = CHARACTER_NAMES.filter((n) => n !== 'Barbarian')[Math.floor(Math.random() * 4)];
     const door = shelf.x > ROOM2.minX && this.door2Open ? [DOOR2_X, 4] : [DOOR_X, 4];
-    this.customers.push(new Customer(this, model, shelf, qty, door));
+    const c = new Customer(this, model, shelf, qty, door, slot);
+    this.customers.push(c);
+    return c;
   }
 
   removeCustomer(c) {
@@ -355,7 +385,7 @@ export class Game {
     this.spawnTimer -= dt;
     if (rush > 0 && this.spawnTimer <= 0) {
       this.spawnTimer = interval * (0.7 + Math.random() * 0.6);
-      if (this.customers.length < maxCustomers) this.spawnCustomer();
+      if (this.customers.length < maxCustomers) this.trySpawn();
     }
     this.spawnTimer = Math.min(this.spawnTimer, interval * 1.3);
 
@@ -363,6 +393,7 @@ export class Game {
     for (const w of this.workers) w.update(dt);
     for (const co of this.checkouts) co.update(dt);
     this.depot.update(dt);
+    this.traffic.update(dt);
 
     // Para ve mal tamamen bittiyse toptancı hediye gönderir (oyun kilitlenmesin)
     this.timers.gift -= dt;
@@ -404,7 +435,7 @@ export class Game {
     p.position.x += p.velocity.x * dt;
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
-    p.position.x = THREE.MathUtils.clamp(p.position.x, -40, 45);
+    p.position.x = THREE.MathUtils.clamp(p.position.x, -33, 45);
     p.position.z = THREE.MathUtils.clamp(p.position.z, -27.4, 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
