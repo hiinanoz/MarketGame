@@ -44,7 +44,7 @@ Character Pack: Adventurers, Restaurant Bits, Furniture Bits, City Builder Bits.
 
 ## Yol haritası
 
-Ayrıntılı seviye tablosu ve aşamalar: [docs/PLAN.md](docs/PLAN.md)
+Uygulanan seviyeler (1–20): [docs/PLAN.md](docs/PLAN.md) · 100 seviyelik tasarım: [docs/LEVELS.md](docs/LEVELS.md) · Sv.21–100 yol haritası: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 - [x] Joystick/klavye kontrol, kasa taşıma, reyon doldurma, müşteriler, kasa, para toplama
 - [x] Seviye sistemi, gün/saat döngüsü (4 dk), saate göre yoğunluk, gün sonu özeti, gece molası
