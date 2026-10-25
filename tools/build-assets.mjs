@@ -74,7 +74,8 @@ const PROPS = {
     'crate_potatoes', 'crate_ham', 'crate_steak', 'crate_buns',
     'kitchentable_B', 'kitchentable_B_large', 'kitchentable_A_large', 'kitchencounter_straight_B',
     'fridge_A', 'fridge_B', 'wall', 'wall_window_closed', 'wall_half',
-    'jar_A_large', 'jar_B_large', 'ketchup', 'mustard', 'food_burger', 'stew_bowl', 'shelf_papertowel_decorated',
+    'jar_A_large', 'jar_B_large', 'jar_C_large', 'jar_D_large', 'ketchup', 'mustard', 'food_burger', 'stew_bowl',
+    'food_vegetableburger', 'food_dinner', 'pan_A', 'shelf_papertowel_decorated',
   ],
   [FURN]: [
     'cactus_medium_A', 'rug_rectangle_stripes_A', 'rug_rectangle_A', 'table_medium', 'chair_A',

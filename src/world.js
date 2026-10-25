@@ -136,7 +136,7 @@ export class World {
       l.rotation.y = -Math.PI / 2; // kol caddeye doğru
       s.add(l);
     }
-    for (const x of [9.5, 27]) {
+    for (const x of [15.5, 33]) {
       const b = prop('bench');
       b.scale.setScalar(4);
       b.position.set(x, 0, 14.7);

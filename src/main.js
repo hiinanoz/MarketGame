@@ -9,6 +9,11 @@ async function start() {
   });
   const game = new Game(document.getElementById('app'));
   window.game = game; // tarayıcı konsolundan hata ayıklama için
+  const zoomBtn = document.getElementById('zoom-btn');
+  zoomBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  zoomBtn.addEventListener('click', () => game.cycleZoom());
+  // Masaüstü: fare tekerleği ile yakınlaş/uzaklaş
+  window.addEventListener('wheel', (e) => game.setZoom((game.zoomTarget ?? 1) * (e.deltaY > 0 ? 1.12 : 1 / 1.12)), { passive: true });
   document.getElementById('loading').classList.add('hidden');
   if (game.isNewGame) {
     const intro = document.getElementById('intro');

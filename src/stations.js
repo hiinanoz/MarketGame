@@ -189,7 +189,7 @@ export class Shelf {
   customerSpot(index) {
     const front = [this.x, this.z + 1.7];
     if (index === 0) return front;
-    if (this.id === 'campaign') {
+    if (this.id.startsWith('campaign')) {
       // Zikzak kuyruk: 5 sıra × 5 kişi, sıralar arasında bariyer ipi
       const k = Math.min(index - 1, QUEUE_COLS * QUEUE_ROWS - 1);
       const row = Math.floor(k / QUEUE_COLS);

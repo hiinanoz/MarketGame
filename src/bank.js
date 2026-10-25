@@ -15,8 +15,25 @@ export class Bank {
     return this.debt + this.startDebt;
   }
 
+  /**
+   * Kredi limiti ekonomine göre değişir: seviye + sahip olduğun işletmelerin değeri +
+   * son günlerin ortalama kazancı. Yeni işletme aldıkça kredi hakkın artar.
+   */
+  get limitParts() {
+    const g = this.game;
+    const assets = g.holding ? g.holding.businesses.reduce((a, b) => a + b.value, 0) : 0;
+    const hist = this.history ?? [];
+    const avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
+    return {
+      base: BANK.limitBase + g.level * BANK.limitPerLevel,
+      assets: Math.round(assets * BANK.assetRatio),
+      income: Math.round(Math.max(0, avg) * BANK.incomeDays),
+    };
+  }
+
   get limit() {
-    return BANK.limitBase + this.game.level * BANK.limitPerLevel;
+    const p = this.limitParts;
+    return p.base + p.assets + p.income;
   }
 
   get available() {
@@ -73,8 +90,11 @@ export class Bank {
     this.game.save();
   }
 
-  /** Gün sonu: borca faiz eklenir, mevduat faiz kazanır. */
+  /** Gün sonu: borca faiz eklenir, mevduat faiz kazanır, kazanç geçmişi (limit için) güncellenir. */
   endOfDay(today) {
+    this.history ??= [];
+    this.history.push((today.revenue ?? 0) + (today.holding?.profit ?? 0));
+    if (this.history.length > 3) this.history.shift();
     const interest = Math.round(this.debt * BANK.loanRate + this.startDebt * START_LOAN.rate);
     const earned = Math.floor(this.deposit * BANK.depositRate);
     this.debt += Math.round(this.debt * BANK.loanRate);
@@ -85,13 +105,14 @@ export class Bank {
   }
 
   serialize() {
-    return { debt: this.debt, startDebt: this.startDebt, deposit: this.deposit };
+    return { debt: this.debt, startDebt: this.startDebt, deposit: this.deposit, history: this.history ?? [] };
   }
 
   restore(d) {
     if (!d) return;
     this.debt = d.debt ?? 0;
     this.startDebt = d.startDebt ?? 0;
+    this.history = d.history ?? [];
     this.deposit = d.deposit ?? 0;
   }
 }

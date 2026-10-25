@@ -16,6 +16,12 @@ export const PRODUCTS = {
   jam:     { name: 'Reçel',       emoji: '🍯', crate: 'crate', item: 'jar_A_large', cost: 4, price: 13, special: true },
   sauce:   { name: 'Sos seti',    emoji: '🥫', crate: 'crate', item: 'ketchup',     cost: 3, price: 10, special: true },
   soup:    { name: 'Hazır çorba', emoji: '🍲', crate: 'crate', item: 'stew_bowl',   cost: 5, price: 15, special: true },
+  vegburger: { name: 'Sebze burger', emoji: '🥗', crate: 'crate', item: 'food_vegetableburger', cost: 7, price: 20, special: true },
+  dinner:  { name: 'Akşam menüsü', emoji: '🍽️', crate: 'crate', item: 'food_dinner',  cost: 9, price: 26, special: true },
+  pickle:  { name: 'Turşu',       emoji: '🥒', crate: 'crate', item: 'jar_C_large', cost: 3, price: 11, special: true },
+  olive:   { name: 'Zeytin',      emoji: '🫒', crate: 'crate', item: 'jar_D_large', cost: 4, price: 14, special: true },
+  mustard: { name: 'Hardal',      emoji: '🌭', crate: 'crate', item: 'mustard',     cost: 2, price: 8,  special: true },
+  pan:     { name: 'Tava seti',   emoji: '🍳', crate: 'crate', item: 'pan_A',       cost: 12, price: 34, special: true },
 };
 export const SPECIALS = Object.keys(PRODUCTS).filter((k) => PRODUCTS[k].special);
 
@@ -66,18 +72,25 @@ export const BANK = {
   depositRate: 0.02,    // günlük mevduat faizi
   limitBase: 500,       // kredi limiti = limitBase + seviye × limitPerLevel
   limitPerLevel: 800,
+  assetRatio: 0.5,      // + sahip olunan işletmelerin değerinin yarısı
+  incomeDays: 3,        // + son 3 günün ortalama kazancının 3 katı
 };
 export const CAMPAIGN = {
   fromLevel: 4,
   feeBase: 200,         // hazırlık ücreti = feeBase + seviye × feePerLevel
   feePerLevel: 40,
-  extraMin: 50,         // kampanya günü gelen ek müşteri
-  extraMax: 250,
-  rushBoost: 1.4,       // genel yoğunluk artışı
-  doorQueue: 14,        // sabah kapıda bekleyen kişi
+  maxCampaigns: 3,      // aynı gün en fazla kampanya
+  minStock: 20,
+  maxStock: 1000,
+  extraMin: 50,         // kampanya başına gelen ek müşteri
+  extraMax: 500,
+  extraShopping: 0.2,   // kampanya müşterilerinin başka ürün de alma olasılığı
+  rushBoost: 1.4,       // genel yoğunluk artışı (her ek kampanya +0.15)
+  doorQueue: 14,        // sabah kapıda bekleyen kişi (her ek kampanya +6)
   patience: 25,         // kampanya müşterisi stok beklerken sabır (sn)
-  standPos: [-6, 7.6],  // mağazanın önündeki kampanya standı
-  maxActive: 60,        // aynı anda en fazla müşteri (performans)
+  stands: [[-6, 7.6], [8, 7.6], [25.5, 7.6]],  // mağazanın önündeki kampanya standları
+  palletOffset: [-4.6, 4.6, 4.3],             // stok paleti standın yanında
+  maxActive: 70,        // aynı anda en fazla müşteri (performans)
 };
 
 // ---- Gün döngüsü ----------------------------------------------------------------
@@ -190,10 +203,10 @@ export const UNLOCKS = [
   { id: 'parking1',      type: 'parking',   value: 1, cost: 1500, pos: [-22, 8.8], level: 9, requires: [] },
   { id: 'cleaner2',      type: 'cleaner',   cost: 700,  pos: [-10.3, -3.9], level: 9, requires: ['cleaner1'] },
   { id: 'stocker3',      type: 'stocker',   cost: 1000, pos: [25.5, -9.5], level: 10, requires: ['stocker2', 'expansion'] },
-  { id: 'advertiser',    type: 'ads',       target: 'advertiser', cost: 1500, pos: [6.5, 10], level: 10, requires: [] },
+  { id: 'advertiser',    type: 'ads',       target: 'advertiser', cost: 1500, pos: [13, 6.8], level: 10, requires: [] },
   { id: 'security1',     type: 'security',  target: 'door1', cost: 1200, pos: [3.4, 6.6], level: 10, requires: [] },
-  { id: 'security2',     type: 'security',  target: 'door2', cost: 1200, pos: [23.4, 6.6], level: 10, requires: ['door2'] },
-  { id: 'billboard',     type: 'ads',       target: 'billboard', cost: 3000, pos: [12.5, 10], level: 13, requires: ['advertiser'] },
+  { id: 'security2',     type: 'security',  target: 'door2', cost: 1200, pos: [22.4, 6.2], level: 10, requires: ['door2'] },
+  { id: 'billboard',     type: 'ads',       target: 'billboard', cost: 3000, pos: [16.5, 9.4], level: 13, requires: ['advertiser'] },
   { id: 'wholesaler',    type: 'wholesaler', cost: 5000, pos: [10, -22.6], level: 12, requires: [] },
   { id: 'room3',         type: 'room3',     cost: 4500, pos: [-7, -13.4], level: 14, requires: ['expansion'] },
   { id: 'checkout3',     type: 'checkout',  target: 'checkout3', cost: 2500, level: 14, requires: ['room3'] },
@@ -210,6 +223,9 @@ export const UNLOCKS = [
   { id: 'cashier2b',     type: 'cashier',   target: 'checkout2', value: 2, cost: 1400, level: 11, requires: ['cashier2'] },
   { id: 'cashier3b',     type: 'cashier',   target: 'checkout3', value: 2, cost: 2000, level: 15, requires: ['cashier3'] },
   { id: 'accountant',    type: 'accountant', cost: 3000, pos: [6, -13.2], level: 21, requires: [] },
+  { id: 'stocker4',      type: 'stocker',   cost: 1800, pos: [25.5, -9.5], level: 13, requires: ['stocker3'] },
+  { id: 'stocker5',      type: 'stocker',   cost: 2600, pos: [-26, -12.4], level: 16, requires: ['stocker4', 'room3'] },
+  { id: 'stocker6',      type: 'stocker',   cost: 3500, pos: [-26, -12.4], level: 19, requires: ['stocker5'] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },

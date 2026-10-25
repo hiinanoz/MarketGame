@@ -118,6 +118,7 @@ export class Holding {
           <div class="biz-row"><span>🟥 Müdür</span><b>${b.manager ? 'var' : 'yok'}</b>${b.manager ? '' : g.level < STAFF.levels.manager ? `<span class="lock">Sv.${STAFF.levels.manager}</span>` : `<button data-hire="${b.id}:manager" ${m < H.manager ? 'disabled' : ''}>Al $${formatMoney(H.manager)}</button>`}</div>
           <div class="biz-row"><span>🟦 Muhasebeci</span><b>${b.accountant ? 'var' : 'yok'}</b>${b.accountant ? '' : g.level < STAFF.levels.accountant ? `<span class="lock">Sv.${STAFF.levels.accountant}</span>` : `<button data-hire="${b.id}:accountant" ${m < H.accountant ? 'disabled' : ''}>Al $${formatMoney(H.accountant)}</button>`}</div>
           <div class="biz-row"><span>📦 Depo</span><b>${b.stored}/${STAFF.storage}</b><button data-sell="${b.id}" ${!b.stored ? 'disabled' : ''}>Fazlayı sat</button></div>
+          ${b.independent ? `<div class="biz-row"><span>🤖 Bağımsız</span><b>işçi alır${b.autoGrow ? ', büyür' : ''}</b><button data-grow="${b.id}">${b.autoGrow ? 'Büyümeyi durdur' : 'Kendi büyüsün'}</button></div>` : ''}
           <div class="biz-row"><span>💵 Dün</span><b>${y ? `${y.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(y.profit))}` : '—'}</b><small>maaş $${b.dailyWages}/gün</small></div>
           <div class="biz-btns">
             ${next ? (g.level < next.level ? `<span class="lock">${b.modules + 1}. modül: Sv.${next.level}</span>` : `<button class="primary" data-expand="${b.id}" ${m < next.cost ? 'disabled' : ''}>🏗️ Büyüt $${formatMoney(next.cost)}</button>`) : '<span class="lock">En büyük boyutta</span>'}
@@ -125,7 +126,7 @@ export class Holding {
           </div>
         </div>`);
     }
-    return `<p class="note">İşçi maaşı $${W_text()} · Müdür yokken işletme sen oradaysan tam hızda, değilsen %${Math.round(STAFF.noManagerRate * 100)} hızda çalışır. Ürünler önce markete gider, fazlası depoda birikir.</p>${cards.join('')}`;
+    return `<p class="note">İşçi maaşı $${W_text()} · Müdür yokken işletme sen oradaysan tam hızda, değilsen %${Math.round(STAFF.noManagerRate * 100)} hızda çalışır. Tarlada/üretimde dolaşırsan sen de üretirsin; 📦 alanından kasa alıp markete kendin taşıyabilirsin. Müdür + muhasebeci olunca işletme bağımsız çalışır.</p>${cards.join('')}`;
   }
 
   renderMap() {
@@ -150,6 +151,10 @@ export class Holding {
     if (d.sell) {
       const r = this.get(d.sell).sellSurplus(0);
       if (r.n) this.game.hud.toast(`💵 ${r.n} kasa satıldı (+$${r.income})`);
+    }
+    if (d.grow) {
+      const b = this.get(d.grow);
+      b.autoGrow = !b.autoGrow;
     }
     if (d.go) this.goTo(d.go);
     if (d.region) this.goTo(d.region);

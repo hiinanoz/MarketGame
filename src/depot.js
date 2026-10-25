@@ -33,9 +33,9 @@ export class Depot {
     for (const p of this.pallets.values()) p.redraw();
   }
 
-  addPallet(product, customCapacity = null) {
+  addPallet(product, customCapacity = null, pos = null) {
     if (this.pallets.has(product)) return this.pallets.get(product);
-    const [x, z] = PRODUCTS[product].special ? SPECIAL_PALLET : PALLETS[product];
+    const [x, z] = pos ?? (PRODUCTS[product].special ? SPECIAL_PALLET : PALLETS[product]);
     const p = new Pallet(this.game, product, x, z);
     if (customCapacity) {
       p.customCapacity = customCapacity;

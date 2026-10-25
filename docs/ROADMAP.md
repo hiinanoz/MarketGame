@@ -76,6 +76,16 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Holding tableti** (💼, Sv.21) ve **harita** (🗺️): bölgelere hızlı geçiş.
 - **Tedarik vadisi** (arka yolun kuzeyi): Yeşil Vadi Çiftliği (Sv.22), Ak Süt Mandırası (Sv.24), Altın Başak Fırını (Sv.26), Kasaba Et Tesisi (Sv.28). Satın al → modül ekle (arkaya doğru, en fazla 5) → işçi (modül başına 2), müdür ve muhasebeci (Sv.25). Ürün kamyonla markete gider; fazlası depoda birikir, muhasebeci satar. Gün sonu maaşlar ödenir, kâr özetle gösterilir.
 
+## S1 sonrası düzeltmeler ve eklemeler
+
+- Taşıyıcılar: en acil (en boş) reyonu seçer; kampanya standları öncelikli ama aynı standa gidenler arttıkça çekiciliği azalır, kampanya günü taşıyıcıların en fazla yarısı standlara gider (normal reyonlarda iş yoksa hepsi). 3 yeni taşıyıcı alanı (Sv.13/16/19).
+- Kampanyalar: aynı gün en fazla 3; 10 özel ürün (burger, sebze burger, akşam menüsü, reçel, turşu, zeytin, sos seti, hardal, hazır çorba, tava seti); stok 20–1000; kampanya başına 50–500 ek müşteri; kampanya müşterilerinin %20'si başka reyondan da alır. Her standın yanında kendi stok paleti var.
+- Market muhasebecisi marketin tüm işlerini takip eder (banka hariç): sipariş, kampanya (3'e kadar, son sonuçlara göre ürün ve stok), yatırım (açılmış market alanlarını yedek bırakarak satın alır).
+- 🔍 Büyüteç: yakın / normal / uzak / çok uzak (masaüstünde fare tekerleği).
+- Tedarikçilerde elle çalışma: tarlada/üretimde dolaşan oyuncu üretir; 📦 alanından kasa alıp depo paletine ya da reyona kendin taşırsın.
+- Müdür + muhasebeci olan işletme bağımsızdır: eksik işçiyi alır, para yetince kendini büyütür (tabletten durdurulabilir).
+- Kredi limiti ekonomiye göre: seviye + işletme değerinin yarısı + son 3 günün ortalama kazancının 3 katı.
+
 ## Bitirme ve derece
 
 Oyun, şehrin son parseli alındığında biter. Final ekranında: toplam gün, toplam oyun süresi, şirket değeri, en büyük işletme, istatistikler ve **derece** (S/A/B/C/D). Derece eşikleri ilk tam oynanış testinden sonra ayarlanır.

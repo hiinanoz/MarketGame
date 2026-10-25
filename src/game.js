@@ -188,6 +188,21 @@ export class Game {
     }
   }
 
+  /** Bir satın alma alanını uzaktan tamamla (muhasebeci yatırımı). Kalan tutar kasadan düşer. */
+  completePad(id) {
+    const pad = this.pads.get(id);
+    if (!pad || pad.locked) return false;
+    const cost = Math.ceil(pad.remaining);
+    if (this.money < cost) return false;
+    this.money -= cost;
+    this.hud.setMoney(this.money);
+    pad.dispose();
+    this.pads.delete(id);
+    this.applyUnlock(pad.def);
+    this.refreshPads();
+    return true;
+  }
+
   /** Sıradaki seviyenin alanları da kilitli (gri) olarak görünür; ulaşınca açılır. */
   refreshPads() {
     for (const [id, pad] of this.pads) pad.setLocked(pad.def.level > this.level);
@@ -259,8 +274,8 @@ export class Game {
         break;
       case 'ads':
         this.adBoost += ADS[def.target];
-        if (def.target === 'advertiser') this.workers.push(new Advertiser(this, 6.5, 15.4));
-        else this.world.addBillboard(12.5, 11.6);
+        if (def.target === 'advertiser') this.workers.push(new Advertiser(this, 12.5, 15.4));
+        else this.world.addBillboard(16.5, 11.6);
         break;
       case 'wholesaler':
         this.supply.buyWholesaler();
@@ -442,7 +457,7 @@ export class Game {
   spawnCustomer(slot = null) {
     if (!this.shelves.length) return null;
     // Biraz da stoklu raflara yönelsinler
-    const regular = this.shelves.filter((s) => s.id !== 'campaign');
+    const regular = this.shelves.filter((s) => !s.id.startsWith('campaign'));
     const stocked = regular.filter((s) => s.count > 0);
     const pool = stocked.length && Math.random() < 0.7 ? stocked : regular;
     const shelf = pool[Math.floor(Math.random() * pool.length)];
@@ -553,9 +568,22 @@ export class Game {
 
     // Depo paletinden al
     this.timers.supply -= dt;
-    if (this.timers.supply <= 0 && !p.full) {
+    if (this.timers.supply <= 0) {
+      if (this.droppedAt && !this.droppedAt.inRange(p.position)) this.droppedAt = null;
       for (const pal of this.depot.pallets.values()) {
         if (!pal.inRange(p.position)) continue;
+        // Elinde bu üründen varsa palete bırak (tedarikçiden getirilen mal), yoksa al
+        if (p.has(pal.product) && pal.space > 0) {
+          const e = p.take(pal.product);
+          e.mesh.removeFromParent();
+          pal.stock++;
+          pal.syncVisual();
+          this.audio.play('drop');
+          this.timers.supply = 0.12;
+          this.droppedAt = pal; // bıraktığın paletten, alandan çıkana kadar geri alma
+          break;
+        }
+        if (this.droppedAt === pal) break;
         if (pal.giveTo(p)) this.timers.supply = 0.12;
         else if (pal.stock === 0 && !this.warnedEmpty) {
           this.warnedEmpty = true;
@@ -673,13 +701,41 @@ export class Game {
     this.camera.updateProjectionMatrix();
   }
 
+  /** Büyüteç: yakın → normal → uzak → çok uzak. */
+  cycleZoom() {
+    const levels = [1, 1.7, 2.6, 0.7];
+    const i = levels.indexOf(this.zoomTarget ?? 1);
+    this.setZoom(levels[(i + 1) % levels.length]);
+  }
+
+  setZoom(z) {
+    this.zoomTarget = THREE.MathUtils.clamp(z, 0.6, 3);
+    const label = this.zoomTarget > 1.2 ? '🔍−' : this.zoomTarget < 0.9 ? '🔍+' : '🔍';
+    document.getElementById('zoom-btn').textContent = label;
+  }
+
   updateCamera(dt) {
     const p = this.player.position;
     this.cameraTarget.lerp(p, Math.min(1, dt * 6));
-    const off = new THREE.Vector3(0, 0.8, 0.6).multiplyScalar(this.camDistance);
+    // Zum: yumuşak geçiş; uzaklaşınca sis ve gölge alanı da büyür
+    const zt = this.zoomTarget ?? 1;
+    this.zoomNow = (this.zoomNow ?? 1) + (zt - (this.zoomNow ?? 1)) * Math.min(1, dt * 6);
+    const zm = this.zoomNow;
+    if (Math.abs(zm - (this.appliedZoom ?? 1)) > 0.01) {
+      this.appliedZoom = zm;
+      this.scene.fog.near = 45 * zm;
+      this.scene.fog.far = 90 * zm;
+      this.camera.far = 200 * zm;
+      this.camera.updateProjectionMatrix();
+      const sc = this.sun.shadow.camera;
+      const e = 22 * Math.max(1, zm);
+      sc.left = -e; sc.right = e; sc.top = e; sc.bottom = -e; sc.far = 70 * Math.max(1, zm);
+      sc.updateProjectionMatrix();
+    }
+    const off = new THREE.Vector3(0, 0.8, 0.6).multiplyScalar(this.camDistance * zm);
     this.camera.position.copy(this.cameraTarget).add(off);
     this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - 1);
-    this.sun.position.set(p.x + 9, 24, p.z + 12);
+    this.sun.position.set(p.x + 9, 24 * Math.max(1, zm), p.z + 12);
     this.sun.target.position.set(p.x, 0, p.z);
   }
 

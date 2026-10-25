@@ -183,6 +183,23 @@ export class Customer extends Character {
   leaveShelf() {
     this.releaseShelfSpot();
     this.bubble.visible = false;
+    // Kampanya müşterilerinin bir kısmı başka bir reyondan da alışveriş yapar
+    if (this.wantsExtra && !this.extraDone && this.state === 'atShelf' && this.game.day.isOpen) {
+      this.extraDone = true;
+      const options = this.game.shelves.filter((s) => !s.id.startsWith('campaign') && s.count > 0);
+      if (options.length) {
+        const shelf = options[Math.floor(Math.random() * options.length)];
+        const more = 1 + Math.floor(Math.random() * 2);
+        this.shelf = shelf;
+        this.want = this.carrying + more;
+        this.capacity = this.want;
+        this.waitTimer = 0;
+        shelf.waiting.push(this);
+        this.setBubble(PRODUCTS[shelf.product].emoji, more);
+        this.release();
+        return;
+      }
+    }
     if (this.thief) {
       this.escape();
       return;
@@ -285,7 +302,10 @@ export class Customer extends Character {
   leaveAngry() {
     this.game.day.today.angry++;
     if (this.campaign) {
-      this.game.day.today.campaignUnhappy = (this.game.day.today.campaignUnhappy ?? 0) + 1;
+      const t = this.game.day.today;
+      t.campaignUnhappy = (t.campaignUnhappy ?? 0) + 1;
+      t.campaignUnhappyBy ??= {};
+      t.campaignUnhappyBy[this.shelf.product] = (t.campaignUnhappyBy[this.shelf.product] ?? 0) + 1;
       this.game.rating.add(RATING.angry / 6, 'kampanya stoğu yetmedi');
     } else {
       this.game.rating.add(RATING.angry, 'ürün bulamayan müşteri');
@@ -394,33 +414,47 @@ export class Stocker extends Character {
     return [shelf.x, shelf.z - 1.6];
   }
 
+  /**
+   * İş seçimi: en acil (en boş) reyon. Kampanya standları biraz öncelikli ama aynı standa
+   * çalışan her taşıyıcı onu daha az çekici yapar; böylece işçiler normal reyonları da doldurur.
+   */
   pickJob() {
     const g = this.game;
-    // Kampanya günü: stant öncelikli, birden çok taşıyıcı birlikte doldurabilir
-    const stand = g.campaign.active ? g.campaign.stand : null;
-    if (stand && stand.space > 0 && g.depot.pallets.get(stand.product)?.stock > 0) {
-      const others = g.workers.filter((w) => w !== this && w.target?.shelf === stand).length;
-      const otherShelvesLow = g.shelves.some((s) => s !== stand && !s.reservedBy && s.count / s.capacity < 0.25 && g.depot.pallets.get(s.product)?.stock > 0);
-      // Çok boş başka reyon varsa her taşıyıcı standa koşmasın
-      if (!otherShelvesLow || others === 0 || stand.count / stand.capacity < 0.5) {
-        this.startJob(stand);
-        return;
+    let best = null;
+    let bestScore = Infinity;
+    // Kampanya standlarına en fazla taşıyıcıların yarısı gider; diğerleri normal reyonlara bakar
+    const stockers = g.workers.filter((w) => w instanceof Stocker);
+    const onStands = stockers.filter((w) => w !== this && w.target?.shelf.id.startsWith('campaign')).length;
+    const standCap = Math.max(1, Math.ceil(stockers.length / 2));
+    // Normal reyonlarda iş yoksa (hepsi yeterince dolu) sınır kalkar: kimse boşta durmasın
+    const regularNeed = g.shelves.some((s) => !s.id.startsWith('campaign') && !s.reservedBy && s.space > 0
+      && s.count / s.capacity <= 0.6 && g.depot.pallets.get(s.product)?.stock > 0);
+    for (const s of g.shelves) {
+      if (s.space <= 0) continue;
+      if (!(g.depot.pallets.get(s.product)?.stock > 0)) continue;
+      const fill = s.count / s.capacity;
+      const isStand = s.id.startsWith('campaign');
+      let score;
+      if (isStand) {
+        if (onStands >= standCap && regularNeed) continue;
+        const crew = g.workers.filter((w) => w !== this && w.target?.shelf === s).length;
+        score = fill - 0.05 + crew * 0.45;
+      } else {
+        if (s.reservedBy) continue;
+        if (fill > 0.6) continue; // yeterince dolu
+        score = fill;
+      }
+      if (score < bestScore) {
+        bestScore = score;
+        best = s;
       }
     }
-    // Depoda stoğu olan, boşalmakta olan bir reyon seç
-    const shelves = g.shelves.filter((s) => s !== stand && !s.reservedBy && s.space > 0 && g.depot.pallets.get(s.product)?.stock > 0);
-    if (!shelves.length) {
+    if (!best || bestScore > 0.85) {
       this.wanderHome();
       return;
     }
-    shelves.sort((a, b) => a.count / a.capacity - b.count / b.capacity);
-    const shelf = shelves[0];
-    if (shelf.count / shelf.capacity > 0.6) {
-      this.wanderHome();
-      return;
-    }
-    shelf.reservedBy = this;
-    this.startJob(shelf);
+    if (!best.id.startsWith('campaign')) best.reservedBy = this;
+    this.startJob(best);
   }
 
   startJob(shelf) {

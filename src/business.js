@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Character } from './character.js';
+import { Character, makeCrate } from './character.js';
 import { textTexture } from './fx.js';
 import { PRODUCTS, BUSINESSES, STAFF, VALLEY_FRONT_Z, MODULE_DEPTH, XP_PER_PROFIT, XP_PER_PURCHASE } from './config.js';
 
@@ -24,6 +24,10 @@ export class Business {
     this.today = blank();
     this.yesterday = null;
     this.staffChars = [];
+    this.autoGrow = true;      // müdür + muhasebeci varken işletme kendini büyütür
+    this.manualT = 0;
+    this.pickT = 0;
+    this.indepT = 3;
 
     const { x, w } = this.def.plot;
     this.x = x;
@@ -52,6 +56,30 @@ export class Business {
   get playerHere() {
     const p = this.game.player.position;
     return Math.abs(p.x - this.x) < this.w / 2 + 1 && p.z < VALLEY_FRONT_Z + 3 && p.z > this.backZ - 2;
+  }
+
+  /** Oyuncu modüllerin içinde mi (elle hasat/üretim). */
+  get playerWorking() {
+    const p = this.game.player.position;
+    return this.owned && Math.abs(p.x - this.x) < this.w / 2 - 0.5 && p.z < VALLEY_FRONT_Z - 6 && p.z > this.backZ;
+  }
+
+  /** İşletme deposundan kasa alma alanı (ön tarafta). */
+  get pickupSpot() {
+    return [this.x + Math.min(this.w / 2 - 2, 5.5), VALLEY_FRONT_Z + 1.6];
+  }
+
+  /** Bağımsız: müdür + muhasebeci varsa işletme kendi kendini yönetir. */
+  get independent() {
+    return this.manager && this.accountant;
+  }
+
+  /** İşletmenin toplam değeri (kredi limiti için). */
+  get value() {
+    if (!this.owned) return 0;
+    let v = this.def.price;
+    for (let i = 1; i < this.modules; i++) v += this.def.modules[i].cost ?? 0;
+    return v;
   }
 
   get backZ() {
@@ -141,6 +169,8 @@ export class Business {
   update(dt) {
     for (const c of this.staffChars) c.update(dt);
     if (!this.owned) return;
+    this.updateManual(dt);
+    this.updateIndependent(dt);
     // Üretim
     const eff = this.efficiency;
     if (eff > 0 && this.stored < STAFF.storage) {
@@ -175,6 +205,56 @@ export class Business {
       if (this.accountant && this.stored > STAFF.storage * 0.5) this.sellSurplus(5);
     }
     this.updateLabel();
+  }
+
+  /** Oyuncu tarlada/üretim hattında çalışırsa ekstra üretim; ön taraftaki alandan kasa alabilir. */
+  updateManual(dt) {
+    const g = this.game;
+    const p = g.player;
+    if (this.playerWorking && this.stored < STAFF.storage) {
+      this.manualT += dt;
+      if (this.manualT >= 1.1) {
+        this.manualT = 0;
+        const prod = this.def.products[this.turn++ % this.def.products.length];
+        this.storage[prod] = (this.storage[prod] ?? 0) + 1;
+        this.today.produced++;
+        g.fx.floatText(p.position.clone(), `+1 ${PRODUCTS[prod].emoji}`, '#2f7a2f');
+        g.audio.play('pick', 0.3);
+      }
+    }
+    // Depodan kasa al (markete ya da reyona kendin taşı)
+    const [px, pz] = this.pickupSpot;
+    if (Math.abs(p.position.x - px) < 1.2 && Math.abs(p.position.z - pz) < 1.2 && !p.full) {
+      this.pickT -= dt;
+      if (this.pickT <= 0) {
+        const prod = Object.keys(this.storage).find((k) => this.storage[k] > 0);
+        if (prod) {
+          this.pickT = 0.15;
+          this.storage[prod]--;
+          const mesh = makeCrate(prod);
+          mesh.position.set(px, 1, pz);
+          g.scene.add(mesh);
+          p.receive(mesh, prod);
+          g.audio.play('pick');
+        }
+      }
+    }
+  }
+
+  /** Müdür + muhasebeci: eksik işçiyi alır, para yetince yeni modül ekler. */
+  updateIndependent(dt) {
+    if (!this.independent) return;
+    this.indepT -= dt;
+    if (this.indepT > 0) return;
+    this.indepT = 5;
+    const g = this.game;
+    const reserve = 1500 + g.level * 100;
+    if (this.workers < this.workerSlots && g.money - STAFF.hire.worker > reserve) {
+      this.hire('worker');
+      return;
+    }
+    const m = this.nextModule();
+    if (this.autoGrow && m && g.level >= m.level && g.money - m.cost > reserve * 2) this.expand();
   }
 
   /** Gün sonu: maaşlar ödenir, kâr hesaplanır, XP. */
@@ -219,6 +299,30 @@ export class Business {
     g.position.set(this.x, 0, VALLEY_FRONT_Z);
     this.root.add(g);
     this.front = g;
+    // Kasa alma alanı
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = 'rgba(255,183,3,0.45)';
+    ctx.strokeStyle = '#ffb703';
+    ctx.lineWidth = 8;
+    ctx.setLineDash([14, 9]);
+    ctx.beginPath();
+    ctx.roundRect(6, 6, 116, 116, 18);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = '54px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('📦', 64, 66);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    this.pickupPad = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    this.pickupPad.rotation.x = -Math.PI / 2;
+    const [ppx, ppz] = this.pickupSpot;
+    this.pickupPad.position.set(ppx, 0.03, ppz);
+    this.pickupPad.visible = false;
+    this.root.add(this.pickupPad);
     this.rebuild();
   }
 
@@ -247,6 +351,7 @@ export class Business {
   }
 
   rebuild() {
+    if (this.pickupPad) this.pickupPad.visible = this.owned;
     // Modüller: arkaya doğru eklenen tarla/ahır/hat şeritleri
     this.moduleGroup.clear();
     const count = Math.max(1, this.modules);
@@ -289,7 +394,7 @@ export class Business {
   serialize() {
     return {
       owned: this.owned, modules: this.modules, workers: this.workers, manager: this.manager,
-      accountant: this.accountant, storage: this.storage, yesterday: this.yesterday,
+      accountant: this.accountant, storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
     };
   }
 
@@ -298,6 +403,7 @@ export class Business {
     Object.assign(this, {
       owned: !!d.owned, modules: d.modules ?? 0, workers: d.workers ?? 0, manager: !!d.manager,
       accountant: !!d.accountant, storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
+      autoGrow: d.autoGrow ?? true,
     });
     this.rebuild();
   }

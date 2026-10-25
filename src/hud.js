@@ -1,3 +1,4 @@
+import { PRODUCTS } from './config.js';
 // DOM tabanlı arayüz: para göstergesi, ipucu, bildirim, menü.
 
 export class Hud {
@@ -83,11 +84,11 @@ export class Hud {
     const extra = [];
     if (st.interestPaid) extra.push(`<div class="bad"><span>🏦 Kredi faizi</span><b>−$${formatMoney(st.interestPaid)}</b></div>`);
     if (st.interestEarned) extra.push(`<div class="good"><span>🏦 Mevduat faizi</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);
-    if (st.campaign) {
-      const c = st.campaign;
-      extra.push(`<div><span>📢 Kampanya: satılan / stok</span><b>${c.sold} / ${c.qty}</b></div>`);
-      if (st.campaignUnhappy) extra.push(`<div class="bad"><span>😠 Ürün bulamayan kampanya müşterisi</span><b>${st.campaignUnhappy}</b></div>`);
-      extra.push(`<div class="${c.left ? 'bad' : 'good'}"><span>📦 Kalan stok zararı (${c.left} kasa)</span><b>${c.left ? `−$${formatMoney(c.loss)}` : '$0'}</b></div>`);
+    for (const c of st.campaigns ?? []) {
+      const info = PRODUCTS[c.product];
+      extra.push(`<div><span>📢 ${info.emoji} ${info.name}: satılan / stok</span><b>${c.sold} / ${c.qty}</b></div>`);
+      if (c.unhappy) extra.push(`<div class="bad"><span>😠 ${info.emoji} ürün bulamayan</span><b>${c.unhappy}</b></div>`);
+      if (c.left) extra.push(`<div class="bad"><span>📦 ${info.emoji} kalan stok zararı (${c.left} kasa)</span><b>−$${formatMoney(c.loss)}</b></div>`);
     }
     if (st.holding) {
       const h = st.holding;
