@@ -85,7 +85,7 @@ html, body {
 
 .hint {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 70px);
+  top: calc(env(safe-area-inset-top, 0px) + 100px);
   left: 50%;
   transform: translateX(-50%);
   max-width: min(92vw, 420px);
@@ -260,3 +260,20 @@ html, body {
 }
 .toast.levelup { top: 38%; background: #7be37f; color: #13451a; box-shadow: 0 4px 0 #3fae4a; font-size: 26px; text-align: center; white-space: normal; max-width: 86vw; }
 .toast.levelup small { display: block; font-size: 14px; font-weight: 700; }
+
+.pill.rating {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  left: 12px;
+  min-width: 0;
+  font-size: 14px;
+  padding: 4px 10px;
+  gap: 6px;
+  z-index: 5;
+  pointer-events: none;
+}
+.stars { position: relative; font-size: 13px; letter-spacing: 1px; color: rgba(255,255,255,0.28); }
+.stars::before { content: '★★★★★'; }
+#rating-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; white-space: nowrap; color: #ffd34d; }
+#rating-fill::before { content: '★★★★★'; }
+.pill.rating.low { background: rgba(140, 40, 30, 0.8); }

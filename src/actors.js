@@ -1,7 +1,32 @@
 import * as THREE from 'three';
 import { Character } from './character.js';
 import { bubbleTexture } from './fx.js';
-import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z } from './config.js';
+import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING } from './config.js';
+
+/** İşçilerin başının üstündeki küçük rozet (müşterilerden ayırt etmek için). */
+function workerBadge(emoji) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 96;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffd34d';
+  ctx.beginPath();
+  ctx.arc(48, 48, 44, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+  ctx.stroke();
+  ctx.font = '54px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, 48, 52);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  s.renderOrder = 5;
+  s.scale.setScalar(0.5);
+  s.position.y = 2.05;
+  return s;
+}
 
 // ---- Müşteri ------------------------------------------------------------------
 // Durumlar: toShelf → atShelf (ürün bekler) → toQueue → inQueue → leaving
@@ -75,7 +100,16 @@ export class Customer extends Character {
         else this.leaveAngry();
       }
     }
+    if (this.state === 'inQueue' || this.state === 'toQueue') {
+      this.queueT = (this.queueT ?? 0) + dt;
+      if (this.queueT > 25 && !this.complainedQueue) {
+        this.complainedQueue = true;
+        this.game.rating.add(RATING.slowQueue, 'uzun kuyruk');
+        this.setBubble('⏳');
+      }
+    }
     this.followPath(dt);
+    if (this.path) this.game.dirt.maybeSpawn(this.position.x, this.position.z, dt);
     super.update(dt);
     if (this.state === 'leaving' && !this.path) this.despawn();
   }
@@ -148,6 +182,7 @@ export class Customer extends Character {
 
   leaveAngry() {
     this.game.day.today.angry++;
+    this.game.rating.add(RATING.angry, 'ürün bulamayan müşteri');
     this.releaseShelfSpot();
     this.setBubble('😠');
     this.state = 'leaving';
@@ -178,6 +213,7 @@ export class Cashier extends Character {
     this.position.set(checkout.cashierSpot[0], 0, checkout.cashierSpot[1]);
     this.heading = -Math.PI / 2;
     this.root.rotation.y = this.heading;
+    this.root.add(workerBadge('💳'));
     game.scene.add(this.root);
     checkout.cashier = this;
     checkout.zone.visible = false;
@@ -192,6 +228,7 @@ export class Stocker extends Character {
     super(game, 'Knight', { speed: WORKER_SPEED, capacity: WORKER_CAPACITY });
     this.position.set(x, 0, z);
     this.home = [x, z];
+    this.root.add(workerBadge('📦'));
     game.scene.add(this.root);
     this.state = 'idle';
     this.target = null;
@@ -285,5 +322,88 @@ export class Stocker extends Character {
   wanderHome() {
     const d = Math.hypot(this.position.x - this.home[0], this.position.z - this.home[1]);
     if (d > 0.5 && !this.path) this.goTo(this.home[0], this.home[1]);
+  }
+}
+
+// ---- Temizlikçi ----------------------------------------------------------------------
+
+export class Cleaner extends Character {
+  constructor(game, x, z) {
+    super(game, 'Rogue_Hooded', { speed: WORKER_SPEED * 0.9 });
+    this.position.set(x, 0, z);
+    this.home = [x, z];
+    this.root.add(workerBadge('🧹'));
+    game.scene.add(this.root);
+    this.state = 'idle';
+    this.spot = null;
+    this.timer = 0;
+  }
+
+  update(dt) {
+    this.timer += dt;
+    if (this.state === 'idle' && this.timer > 0.5) {
+      this.timer = 0;
+      const spot = this.game.dirt.nearest(this.position.x, this.position.z, Infinity, (s) => !s.claimedBy);
+      if (spot) {
+        spot.claimedBy = this;
+        this.spot = spot;
+        this.state = 'going';
+        this.goTo(spot.x, spot.z, () => { this.state = 'cleaning'; });
+      } else {
+        const d = Math.hypot(this.position.x - this.home[0], this.position.z - this.home[1]);
+        if (d > 0.5 && !this.path) this.goTo(this.home[0], this.home[1]);
+      }
+    } else if (this.state === 'cleaning') {
+      this.busyAnim = true;
+      this.play('Interact');
+      if (!this.game.dirt.spots.includes(this.spot) || this.game.dirt.scrub(this.spot, dt, 0.75)) {
+        this.busyAnim = false;
+        this.spot = null;
+        this.state = 'idle';
+      }
+    } else if (this.state === 'going' && !this.game.dirt.spots.includes(this.spot)) {
+      // oyuncu önce temizledi
+      this.stop();
+      this.spot = null;
+      this.state = 'idle';
+    }
+    this.followPath(dt);
+    super.update(dt);
+  }
+}
+
+// ---- Müdür: kasalarda biriken paraları toplar ----------------------------------------------
+
+export class Manager extends Character {
+  constructor(game, x, z) {
+    super(game, 'Knight', { speed: WORKER_SPEED * 1.1 });
+    this.position.set(x, 0, z);
+    this.home = [x, z];
+    this.root.add(workerBadge('💼'));
+    game.scene.add(this.root);
+    this.state = 'idle';
+    this.timer = 0;
+  }
+
+  update(dt) {
+    this.timer += dt;
+    if (this.state === 'idle' && this.timer > 1) {
+      this.timer = 0;
+      const piles = this.game.checkouts.map((c) => c.cash).filter((c) => c.value >= 15);
+      piles.sort((a, b) => b.value - a.value);
+      const pile = piles[0];
+      if (pile) {
+        this.state = 'going';
+        this.goTo(pile.x + 1.1, pile.z + 0.4, () => {
+          pile.collect(this);
+          this.state = 'idle';
+        });
+      } else {
+        const d = Math.hypot(this.position.x - this.home[0], this.position.z - this.home[1]);
+        if (d > 0.5 && !this.path) this.goTo(this.home[0], this.home[1]);
+      }
+    }
+    this.followPath(dt);
+    super.update(dt);
   }
 }

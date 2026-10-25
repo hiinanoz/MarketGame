@@ -10,10 +10,10 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 | 1 | 0 | Domates, havuç, kasa, depo + sipariş, gün/saat | ✅ |
 | 2 | 15 | Peynir, kasiyer, reyon kapasitesi 8→16 | ✅ |
 | 3 | 40 | Taşıyıcı işçi, oyuncu taşıma 7 | ✅ |
-| 4 | 80 | Marul, kirlenme + temizlikçi | Marul ✅ · temizlik ⏳ |
+| 4 | 80 | Marul, kirlenme + temizlikçi | ✅ |
 | 5 | 130 | Soğan, taşıyıcı kapasitesi 6, reyon 16→24, taşıma 10 | ✅ |
 | 6 | 200 | Depo 40 + otomatik sipariş, 2. taşıyıcı | ✅ |
-| 7 | 280 | Patates, müdür (kasadaki paraları toplar) | Patates ✅ · müdür ⏳ |
+| 7 | 280 | Patates, müdür (kasadaki paraları toplar) | ✅ |
 | 8 | 380 | 2. salon, 2. giriş kapısı, taşıyıcı kapasitesi 8 | ✅ |
 | 9 | 500 | Ekmek, 2. kasa + kasiyer, otopark | Ekmek/kasa ✅ · otopark ⏳ |
 | 10 | 650 | 3. taşıyıcı, reklam görevlisi, hırsızlık + güvenlik | taşıyıcı ✅ · ⏳ |
@@ -31,7 +31,7 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 1. ✅ Seviye/XP, gün-saat, yoğunluk, kapanış, gün özeti, gece
 2. ✅ Reyon kapasitesi (8/16/24), taşıyıcı kapasitesi (4/6/8/10), 2. kapı
 3. ✅ Arka depo, paletler, sipariş paneli, toptancı kamyonu, otomatik sipariş
-4. ⏳ Kirlenme + temizlikçi, müdür, memnuniyet puanı
+4. ✅ Kirlenme + temizlikçi (2 kişi), müdür, memnuniyet puanı (yıldız)
 5. ⏳ Araç trafiği + otopark
 6. ⏳ Reklam görevlisi, hırsızlık + güvenlik
 7. ⏳ Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon

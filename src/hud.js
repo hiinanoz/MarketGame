@@ -41,6 +41,15 @@ export class Hud {
     }
   }
 
+  setRating(stars) {
+    const v = stars.toFixed(1);
+    if (this.ratingShown === v) return;
+    this.ratingShown = v;
+    document.getElementById('rating-value').textContent = v;
+    document.getElementById('rating-fill').style.width = `${(stars / 5) * 100}%`;
+    document.getElementById('rating').classList.toggle('low', stars < 2.5);
+  }
+
   setLevel(level, frac) {
     if (this.levelValue.textContent !== String(level)) this.levelValue.textContent = level;
     this.levelFill.style.width = `${Math.round(frac * 100)}%`;

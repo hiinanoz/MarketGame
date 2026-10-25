@@ -17,6 +17,23 @@ export const PRODUCTS = {
 // Ödeme yapıp çıkan her müşteri 1 XP. LEVELS[i] = (i+1). seviyeye ulaşmak için gereken toplam XP.
 export const LEVELS = [0, 15, 40, 80, 130, 200, 280, 380, 500, 650, 800, 1000, 1250, 1500, 1800, 2200, 2600, 3000, 3500, 4000];
 
+// ---- Memnuniyet ve temizlik --------------------------------------------------------
+export const RATING = {
+  start: 75,
+  paid: 0.35,         // ödeyip memnun ayrılan müşteri
+  angry: -6,          // ürün bulamayıp kızgın giden
+  slowQueue: -2,      // kasada 25 sn'den uzun bekleyen
+  cleaned: 0.5,       // leke temizlendi
+  perDirtPerSec: 0.12, // izin verilenin üstündeki her leke için saniyede
+};
+export const DIRT = {
+  fromLevel: 4,
+  chancePerSec: 0.06, // içeride yürüyen müşteri başına saniyede leke olasılığı
+  max: 18,
+  tolerated: 2,
+  cleanTime: 1.2,     // oyuncu için sn (temizlikçi biraz daha yavaş)
+};
+
 // ---- Gün döngüsü ----------------------------------------------------------------
 export const DAY = {
   length: 240,       // açık kalma süresi (sn) = 08:00 → 22:00
@@ -80,7 +97,7 @@ export const CHECKOUTS = [
 
 // ---- Satın alınabilenler ------------------------------------------------------------
 // level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
-// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager
 export const UNLOCKS = [
   { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
   { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
@@ -88,18 +105,21 @@ export const UNLOCKS = [
   { id: 'stocker1',      type: 'stocker',   cost: 200,  pos: [-10.3, -7.4], level: 3, requires: [] },
   { id: 'capacity1',     type: 'capacity',  value: 7,  cost: 90,  pos: [-9, 2.0], level: 3, requires: [] },
   { id: 'shelf_lettuce', type: 'shelf',     target: 'lettuce',   cost: 260,  level: 4, requires: ['shelf_cheese'] },
+  { id: 'cleaner1',      type: 'cleaner',   cost: 250,  pos: [-10.3, -3.9], level: 4, requires: [] },
   { id: 'shelf_onion',   type: 'shelf',     target: 'onion',     cost: 420,  level: 5, requires: ['shelf_lettuce'] },
   { id: 'stockerCap1',   type: 'stockerCap', value: 6,  cost: 300, pos: [-10.3, -10.6], level: 5, requires: ['stocker1'] },
   { id: 'capacity2',     type: 'capacity',  value: 10, cost: 350, pos: [-9, 2.0], level: 5, requires: ['capacity1'] },
   { id: 'depot2',        type: 'depot',     cost: 600,  pos: [10, -25.5], level: 6, requires: [] },
   { id: 'stocker2',      type: 'stocker',   cost: 500,  pos: [-10.3, -7.4], level: 6, requires: ['stocker1'] },
   { id: 'shelf_potato',  type: 'shelf',     target: 'potato',    cost: 650,  level: 7, requires: ['shelf_onion'] },
+  { id: 'manager',       type: 'manager',   cost: 900,  pos: [10.4, 1.4], level: 7, requires: ['cashier1'] },
   { id: 'expansion',     type: 'expansion', cost: 1200, pos: [10.2, -7.6], level: 8, requires: [] },
   { id: 'door2',         type: 'door',      cost: 500,  pos: [DOOR2_X, 6.2], level: 8, requires: ['expansion'] },
   { id: 'stockerCap2',   type: 'stockerCap', value: 8, cost: 700, pos: [-10.3, -10.6], level: 8, requires: ['stockerCap1'] },
   { id: 'shelf_bun',     type: 'shelf',     target: 'bun',       cost: 900,  level: 9, requires: ['expansion'] },
   { id: 'checkout2',     type: 'checkout',  target: 'checkout2', cost: 800,  level: 9, requires: ['expansion'] },
   { id: 'cashier2',      type: 'cashier',   target: 'checkout2', cost: 600,  level: 9, requires: ['checkout2'] },
+  { id: 'cleaner2',      type: 'cleaner',   cost: 700,  pos: [-10.3, -3.9], level: 9, requires: ['cleaner1'] },
   { id: 'stocker3',      type: 'stocker',   cost: 1000, pos: [25.5, -9.5], level: 10, requires: ['stocker2', 'expansion'] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },

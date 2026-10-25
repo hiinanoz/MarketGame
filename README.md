@@ -44,7 +44,7 @@ Ayrıntılı seviye tablosu ve aşamalar: [docs/PLAN.md](docs/PLAN.md)
 - [x] Seviye sistemi, gün/saat döngüsü (4 dk), saate göre yoğunluk, gün sonu özeti, gece molası
 - [x] Arka depo, toptancı siparişi, kamyonla teslimat, otomatik sipariş
 - [x] Reyon kapasitesi 8/16/24, taşıyıcı kapasitesi, 2. salon ve 2. giriş kapısı
-- [ ] Kirlenme + temizlikçi, müdür, memnuniyet puanı
+- [x] Kirlenme + temizlikçi, müdür, memnuniyet puanı
 - [ ] Araç trafiği + otopark
 - [ ] Reklam görevlisi, hırsızlık + güvenlik
 - [ ] Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon

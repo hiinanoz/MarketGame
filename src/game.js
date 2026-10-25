@@ -7,13 +7,14 @@ import { Input } from './input.js';
 import { World } from './world.js';
 import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
-import { Customer, Cashier, Stocker } from './actors.js';
+import { Customer, Cashier, Stocker, Cleaner, Manager } from './actors.js';
+import { Rating, DirtSystem } from './upkeep.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK,
+  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -52,6 +53,8 @@ export class Game {
     this.input = new Input(this.renderer.domElement);
     this.day = new DayCycle(this);
     this.hud = new Hud(this);
+    this.rating = new Rating(this);
+    this.dirt = new DirtSystem(this);
     this.stats = { sold: 0 };
     this.xp = 0;
     this.level = 1;
@@ -143,6 +146,8 @@ export class Game {
       case 'stockerCap': return { title: `Taşıyıcı ${def.value}`, emoji: '🛒' };
       case 'door': return { title: '2. kapı', emoji: '🚪' };
       case 'depot': return { title: 'Depo 40', emoji: '🏭' };
+      case 'cleaner': return { title: 'Temizlikçi', emoji: '🧹' };
+      case 'manager': return { title: 'Müdür', emoji: '💼' };
       case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
       case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
@@ -201,6 +206,12 @@ export class Game {
       case 'door':
         this.door2Open = true;
         this.world.openDoor2();
+        break;
+      case 'cleaner':
+        this.workers.push(new Cleaner(this, def.pos[0], def.pos[1]));
+        break;
+      case 'manager':
+        this.workers.push(new Manager(this, def.pos[0], def.pos[1]));
         break;
       case 'depot':
         this.depot.upgrade();
@@ -269,6 +280,7 @@ export class Game {
   /** Ödeme yapıp çıkan her müşteri. */
   onCustomerPaid() {
     this.xp++;
+    this.rating.add(RATING.paid);
     this.day.today.customers++;
     let leveled = false;
     while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) {
@@ -335,7 +347,9 @@ export class Game {
     this.hud.setClock(this.day.day, this.day.clockText, this.day.phase);
 
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
-    const rush = this.day.rush;
+    this.dirt.enabled = this.level >= DIRT.fromLevel;
+    this.rating.update(dt);
+    const rush = this.day.rush * this.rating.spawnFactor;
     const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
     const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
     this.spawnTimer -= dt;
@@ -421,6 +435,10 @@ export class Game {
       }
     }
 
+    // Kir lekesinin üstünde durarak temizle
+    const spot = this.dirt.nearest(p.position.x, p.position.z, 0.85);
+    if (spot) this.dirt.scrub(spot, dt, 1);
+
     // Para topla
     for (const co of this.checkouts) {
       if (co.cash.value > 0 && co.cash.playerInRange(p.position)) co.cash.collect(p);
@@ -455,6 +473,12 @@ export class Game {
       target = [cash.cash.x, cash.cash.z];
       hint = 'Paraları topla 💵';
     }
+    const hasCleaner = this.workers.some((w) => w instanceof Cleaner);
+    if (!target && !hasCleaner && this.dirt.spots.length > DIRT.tolerated) {
+      const sp = this.dirt.nearest(p.position.x, p.position.z);
+      target = [sp.x, sp.z];
+      hint = 'Kirli zemin müşterileri kaçırıyor — lekenin üstünde dur 🧽';
+    }
     if (!target && affordable) {
       target = [affordable.x, affordable.z];
       hint = `${affordable.emoji} ${affordable.title} — üzerinde durarak satın al`;
@@ -472,7 +496,7 @@ export class Game {
 
     if (!hint && this.stats.sold < 3) hint = 'Ekrana dokunup sürükleyerek yürü 👆';
     // Oyuncu ilerledikçe ipuçlarını kapat
-    this.hud.hint(this.xp < 25 ? hint : '');
+    this.hud.hint(this.xp < 25 || hint.includes('🧽') ? hint : '');
 
     const near = !target || Math.hypot(target[0] - p.position.x, target[1] - p.position.z) < 1.6;
     this.guide.visible = !near;
@@ -526,6 +550,8 @@ export class Game {
       pads: Object.fromEntries([...this.pads].filter(([, p]) => p.paid > 0).map(([id, p]) => [id, p.paid])),
       sold: this.stats.sold,
       day: this.day.serialize(),
+      rating: Math.round(this.rating.value),
+      dirt: this.dirt.serialize(),
       depot: this.depot.serialize(),
     };
     try {
@@ -568,6 +594,8 @@ export class Game {
     }
     for (const s of this.shelves) s.fillStock(data.shelves?.[s.id] ?? 0);
     this.day.restore(data.day);
+    if (data.rating !== undefined) this.rating.value = data.rating;
+    this.dirt.restore(data.dirt);
     if (data.depot) this.depot.restore(data.depot);
     else {
       // v1'den geçiş: her ürüne biraz stok
