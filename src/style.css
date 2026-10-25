@@ -317,3 +317,6 @@ html, body {
 .sum-extra .bad b { color: #c0392b; }
 .sum-extra .good b { color: var(--green-dark); }
 @media (max-width: 420px) { .camp-cards { grid-template-columns: repeat(2, 1fr); } .tabs button { padding: 7px 6px; font-size: 13px; } }
+
+.panel button:disabled { opacity: 0.5; }
+.bank-log { background: #e4f3e1; border-radius: 10px; padding: 6px 10px; font-weight: 700; }

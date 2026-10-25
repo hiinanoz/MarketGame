@@ -200,6 +200,9 @@ export const UNLOCKS = [
   { id: 'dairy',         type: 'producer',  target: 'dairy',      cost: 7000,  pos: [-25, -19.5],   level: 18, requires: ['shelf_cheese'] },
   { id: 'bakery',        type: 'producer',  target: 'bakery',     cost: 8000,  pos: [-17.5, -26],   level: 19, requires: ['shelf_bun'] },
   { id: 'butcher',       type: 'producer',  target: 'butcher',    cost: 10000, pos: [-25, -26],     level: 20, requires: ['shelf_ham'] },
+  { id: 'cashier1b',     type: 'cashier',   target: 'checkout1', value: 2, cost: 900,  level: 6,  requires: ['cashier1'] },
+  { id: 'cashier2b',     type: 'cashier',   target: 'checkout2', value: 2, cost: 1400, level: 11, requires: ['cashier2'] },
+  { id: 'cashier3b',     type: 'cashier',   target: 'checkout3', value: 2, cost: 2000, level: 15, requires: ['cashier3'] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },
@@ -231,6 +234,8 @@ SHELVES.forEach((s, i) => {
     { id: `stage3_${s.id}`, type: 'shelfStage', target: s.id, value: 2, cost: Math.round(260 * mult / 10) * 10, level: 5, requires: [`stage2_${s.id}`] },
   );
 });
+
+export const OVERTIME_PAY = [30, 60]; // gece ek mesaisinde çalışan başına ödeme aralığı
 
 export const START_MONEY = 20;
 export const START_CAPACITY = 4;      // oyuncunun aynı anda taşıyabildiği kasa sayısı

@@ -1,4 +1,5 @@
 import { BANK } from './config.js';
+import { formatMoney } from './hud.js';
 
 // Banka: kredi (günlük faizli borç) ve mevduat (günlük faiz getiren birikim).
 
@@ -18,43 +19,47 @@ export class Bank {
   }
 
   borrow(amount) {
-    const n = Math.min(amount, this.available);
+    const n = Math.floor(Math.min(amount, this.available));
     if (n <= 0) return 0;
     this.debt += n;
     this.game.money += n;
-    this.changed(`🏦 $${n} kredi çekildi`);
+    this.changed(`🏦 $${n} kredi çekildi · toplam borç $${this.debt}`);
     return n;
   }
 
+  /** Borç öde: en fazla elindeki nakit kadar. Ödenen tutar borçtan aynen düşer. */
   repay(amount) {
-    const n = Math.min(amount, this.debt, this.game.money);
+    const n = Math.floor(Math.min(amount, this.debt, Math.max(0, this.game.money)));
     if (n <= 0) return 0;
     this.debt -= n;
     this.game.money -= n;
-    this.changed(this.debt === 0 ? '✅ Borç kapandı' : `🏦 $${n} borç ödendi`);
+    this.changed(this.debt === 0 ? `✅ $${n} ödendi · borç kapandı` : `🏦 $${n} ödendi · kalan borç $${this.debt}`);
     return n;
   }
 
   put(amount) {
-    const n = Math.min(amount, this.game.money);
+    const n = Math.floor(Math.min(amount, Math.max(0, this.game.money)));
     if (n <= 0) return 0;
     this.deposit += n;
     this.game.money -= n;
-    this.changed(`🏦 $${n} yatırıldı`);
+    this.changed(`🏦 $${n} yatırıldı · mevduat $${this.deposit}`);
     return n;
   }
 
   withdraw(amount) {
-    const n = Math.min(amount, this.deposit);
+    const n = Math.floor(Math.min(amount, this.deposit));
     if (n <= 0) return 0;
     this.deposit -= n;
     this.game.money += n;
-    this.changed(`🏦 $${n} çekildi`);
+    this.changed(`🏦 $${n} çekildi · mevduat $${this.deposit}`);
     return n;
   }
 
   changed(msg) {
+    this.lastLog = msg;
     this.game.hud.setMoney(this.game.money);
+    this.game.hud.displayed = this.game.money; // para göstergesi anında güncellensin
+    this.game.hud.moneyValue.textContent = formatMoney(Math.round(this.game.money));
     this.game.hud.toast(msg);
     this.game.audio.play('cash');
     this.game.save();

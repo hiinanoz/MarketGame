@@ -28,7 +28,9 @@ export class Hud {
     this.skipBtn = document.getElementById('skip-night');
     this.levelupEl = document.getElementById('levelup');
     this.summaryOpen = false;
-    document.getElementById('sum-night').addEventListener('click', () => this.closeSummary());
+    document.getElementById('sum-night').addEventListener('click', () => {
+      if (game.payOvertime()) this.closeSummary();
+    });
     document.getElementById('sum-skip').addEventListener('click', () => {
       this.closeSummary();
       game.day.skipNight();
@@ -88,6 +90,12 @@ export class Hud {
       extra.push(`<div class="${c.left ? 'bad' : 'good'}"><span>📦 Kalan stok zararı (${c.left} kasa)</span><b>${c.left ? `−$${formatMoney(c.loss)}` : '$0'}</b></div>`);
     }
     document.getElementById('sum-extra').innerHTML = extra.join('');
+    // Gece çalışmak isteyen çalışanlara ek mesai ödenir
+    const ot = this.game.planOvertime();
+    const btn = document.getElementById('sum-night');
+    btn.textContent = ot.people ? `🌙 Ek mesai: ${ot.people} çalışan gece çalışsın ($${formatMoney(ot.cost)})` : '🌙 Gece kendin çalış (raf doldur)';
+    btn.disabled = ot.cost > this.game.money;
+    if (btn.disabled) btn.textContent = `🌙 Ek mesai için para yetmiyor ($${formatMoney(ot.cost)})`;
     this.summary.classList.remove('hidden');
     this.summaryOpen = true;
   }

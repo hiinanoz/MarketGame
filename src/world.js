@@ -129,14 +129,14 @@ export class World {
 
     // Kaldırım: sokak lambaları ve banklar
     for (let x = -44; x <= 40; x += 12) {
-      if ([0, 20, -20, -14].some((d) => Math.abs(x - d) < 2.5)) continue;
+      if ([0, 20, -20, -14, -8].some((d) => Math.abs(x - d) < 2.5)) continue;
       const l = prop('streetlight');
       l.scale.setScalar(4);
       l.position.set(x, 0, 14.25);
       l.rotation.y = -Math.PI / 2; // kol caddeye doğru
       s.add(l);
     }
-    for (const x of [-5.5, 9.5, 27]) {
+    for (const x of [9.5, 27]) {
       const b = prop('bench');
       b.scale.setScalar(4);
       b.position.set(x, 0, 14.7);

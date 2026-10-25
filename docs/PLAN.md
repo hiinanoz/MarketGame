@@ -48,6 +48,13 @@ Alınan kararlar: **sipariş + kamyon** ile tedarik, **gece molası** (atlanabil
 - ✅ **Otopark** 4 aşama (6/12/18/24 yer, alan sola büyür) + **otopark görevlisi** (Sv.12): 12+ yerde görevli yoksa girişte tıkanma olur, memnuniyet düşer.
 - ✅ Trafik ve otoparkta KayKit City Builder araba modelleri, kaldırımda sokak lambaları ve banklar.
 
+## Ek özellikler (3. tur)
+- ✅ Reyon ve kampanya standında düzenli sıra: sıranın başındaki alır, çıkan olunca arkadakiler ilerler. Kampanya standının önünde iple ayrılmış zikzak kuyruk (25 kişi). Sabır sadece reyon boşken azalır.
+- ✅ Kampanya günü taşıyıcılar standı öncelikli ve birlikte doldurur (başka reyon çok boşalmadıkça).
+- ✅ Ek mesai: gün sonunda "Ek mesai" seçilirse her çalışana 30–60 arası ödeme yapılır, çalışanlar gece çalışır; "Sabahı bekle" seçilirse ödeme yok.
+- ✅ 2. kasiyer: her kasaya ikinci kasiyer (kasa 1: Sv.6, kasa 2: Sv.11, kasa 3: Sv.15), ödemeler iki kat hızlı.
+- ✅ Banka paneli: butonlarda ödenecek tutar yazıyor (ör. "Elimdekini öde ($700)"), işlem sonrası kalan borç gösteriliyor, para göstergesi anında güncelleniyor, panel dokunurken yenilenmiyor.
+
 ## Sonraki fikirler
 - Seviye 20 sonrası: 4. salon / ikinci şube, müşteri alışveriş listeleri (birden çok ürün)
 - Ürün fiyatı/kâr marjı yükseltmeleri, işçi hız yükseltmeleri

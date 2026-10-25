@@ -81,13 +81,32 @@ export class Customer extends Character {
 
   release() {
     const shelf = this.shelf;
+    this.spotIndex = Math.max(0, shelf.waiting.indexOf(this));
     const [x, z] = shelf.customerSpot(this.spotIndex);
     this.state = 'toShelf';
     const viaDoor = shelf.z < 4; // içerideki reyonlar için önce kapıdan geç
-    this.goVia(viaDoor ? [[this.entry[0], this.entry[1] + 2.5]] : [], x, z, () => {
-      this.state = 'atShelf';
-      this.faceTowards(shelf.x, shelf.z);
-    });
+    this.goVia(viaDoor ? [[this.entry[0], this.entry[1] + 2.5]] : [], x, z, () => this.arriveAtSpot());
+  }
+
+  arriveAtSpot() {
+    const [x, z] = this.shelf.customerSpot(this.spotIndex);
+    if (Math.hypot(this.position.x - x, this.position.z - z) > 0.4) {
+      this.goTo(x, z, () => this.arriveAtSpot()); // yoldayken sıra ilerlemiş
+      return;
+    }
+    this.state = 'atShelf';
+    this.faceTowards(this.shelf.x, this.shelf.z);
+  }
+
+  /** Sıra ilerledi: yeni yerine yürü. */
+  moveToSpot(i) {
+    if (this.spotIndex === i) return;
+    this.spotIndex = i;
+    if (this.state !== 'atShelf' && this.state !== 'toShelf') return; // kapıdaki kuyruk vb.
+    if (this.state === 'toShelf' && this.path && this.path.length > 3) return; // hâlâ yolda; varınca düzelir
+    const [x, z] = this.shelf.customerSpot(i);
+    this.state = 'toShelf';
+    this.goTo(x, z, () => this.arriveAtSpot());
   }
 
   /** Önce verilen ara noktalardan geçip sonra hedefe yürür. */
@@ -111,7 +130,8 @@ export class Customer extends Character {
 
   update(dt) {
     if (this.state === 'atShelf') {
-      this.waitTimer += dt;
+      // Sabır yalnızca rafta ürün yokken azalır (sırada beklemek sorun değil)
+      if (this.shelf.count === 0) this.waitTimer += dt;
       this.takeTimer += dt;
       if (this.takeTimer > 0.35 && this.carrying < this.want && this.shelf.count > 0 && this.isFirstWaiting()) {
         this.takeTimer = 0;
@@ -148,13 +168,16 @@ export class Customer extends Character {
   }
 
   isFirstWaiting() {
-    // Raftaki sırada önde olan alır (aynı anda iki kişi aynı kasaya uzanmasın)
-    return this.shelf.waiting.find((c) => c.state === 'atShelf' && c.carrying < c.want) === this;
+    // Sadece sıranın başındaki (masanın önündeki) kişi alır
+    return this.spotIndex === 0 && this.shelf.waiting[0] === this;
   }
 
   releaseShelfSpot() {
     const i = this.shelf.waiting.indexOf(this);
-    if (i >= 0) this.shelf.waiting.splice(i, 1);
+    if (i >= 0) {
+      this.shelf.waiting.splice(i, 1);
+      this.shelf.reflow();
+    }
   }
 
   leaveShelf() {
@@ -177,7 +200,7 @@ export class Customer extends Character {
     this.faceTowards(this.checkout.x, this.position.z - 0.001);
     this.heading = -Math.PI / 2; // tezgaha (−x) bak
     this.readyToPay = this.checkout.queue[0] === this;
-    if (this.readyToPay && !this.checkout.cashier) this.setBubble('💳');
+    if (this.readyToPay && !this.checkout.cashiers.length) this.setBubble('💳');
   }
 
   moveInQueue(i) {
@@ -300,13 +323,15 @@ export class Customer extends Character {
 
 export class Cashier extends Character {
   constructor(game, checkout) {
-    super(game, 'Mage', { speed: WORKER_SPEED, look: 'uniform' });
-    this.position.set(checkout.cashierSpot[0], 0, checkout.cashierSpot[1]);
+    const second = checkout.cashiers.length > 0;
+    super(game, second ? 'Rogue' : 'Mage', { speed: WORKER_SPEED, look: 'uniform' });
+    // İkinci kasiyer tezgahın diğer ucunda durur, ödemeler iki kat hızlı alınır
+    this.position.set(checkout.cashierSpot[0], 0, checkout.cashierSpot[1] + (second ? -1.5 : 0));
     this.heading = -Math.PI / 2;
     this.root.rotation.y = this.heading;
     this.root.add(workerBadge('💳'));
     game.scene.add(this.root);
-    checkout.cashier = this;
+    checkout.cashiers.push(this);
     checkout.zone.visible = false;
   }
 }
@@ -370,8 +395,20 @@ export class Stocker extends Character {
   }
 
   pickJob() {
+    const g = this.game;
+    // Kampanya günü: stant öncelikli, birden çok taşıyıcı birlikte doldurabilir
+    const stand = g.campaign.active ? g.campaign.stand : null;
+    if (stand && stand.space > 0 && g.depot.pallets.get(stand.product)?.stock > 0) {
+      const others = g.workers.filter((w) => w !== this && w.target?.shelf === stand).length;
+      const otherShelvesLow = g.shelves.some((s) => s !== stand && !s.reservedBy && s.count / s.capacity < 0.25 && g.depot.pallets.get(s.product)?.stock > 0);
+      // Çok boş başka reyon varsa her taşıyıcı standa koşmasın
+      if (!otherShelvesLow || others === 0 || stand.count / stand.capacity < 0.5) {
+        this.startJob(stand);
+        return;
+      }
+    }
     // Depoda stoğu olan, boşalmakta olan bir reyon seç
-    const shelves = this.game.shelves.filter((s) => !s.reservedBy && s.space > 0 && this.game.depot.pallets.get(s.product)?.stock > 0);
+    const shelves = g.shelves.filter((s) => s !== stand && !s.reservedBy && s.space > 0 && g.depot.pallets.get(s.product)?.stock > 0);
     if (!shelves.length) {
       this.wanderHome();
       return;
@@ -382,8 +419,12 @@ export class Stocker extends Character {
       this.wanderHome();
       return;
     }
-    const supply = this.game.depot.pallets.get(shelf.product);
     shelf.reservedBy = this;
+    this.startJob(shelf);
+  }
+
+  startJob(shelf) {
+    const supply = this.game.depot.pallets.get(shelf.product);
     this.target = { shelf, supply };
     this.state = 'toSupply';
     const [x, z] = supply.standSpot;
@@ -395,7 +436,7 @@ export class Stocker extends Character {
   }
 
   finishJob() {
-    if (this.target) this.target.shelf.reservedBy = null;
+    if (this.target && this.target.shelf.reservedBy === this) this.target.shelf.reservedBy = null;
     // Elde kalan olursa (raf dolduysa) depodaki paletine geri sayılır
     for (const e of this.stack.splice(0)) {
       e.mesh.removeFromParent();

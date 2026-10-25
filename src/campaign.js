@@ -1,4 +1,5 @@
-import { Shelf } from './stations.js';
+import * as THREE from 'three';
+import { Shelf, QUEUE_COLS, QUEUE_ROWS, QUEUE_DX, QUEUE_DZ } from './stations.js';
 import { Customer } from './actors.js';
 import { CHARACTER_NAMES } from './assets.js';
 import { PRODUCTS, CAMPAIGN, DOOR_X } from './config.js';
@@ -92,6 +93,8 @@ export class Campaign {
     this.stand = new Shelf(this.game, { id: 'campaign', product, pos: [x, z] });
     this.stand.setStage(2);
     this.game.shelves.push(this.stand);
+    this.ropes = buildQueueRopes(x, z);
+    this.game.scene.add(this.ropes);
     return this.stand;
   }
 
@@ -99,6 +102,7 @@ export class Campaign {
     const s = this.stand;
     if (!s) return;
     this.game.scene.remove(s.root);
+    if (this.ropes) this.game.scene.remove(this.ropes);
     this.game.nav.setBox(`shelf-${s.id}`, null);
     const i = this.game.shelves.indexOf(s);
     if (i >= 0) this.game.shelves.splice(i, 1);
@@ -167,6 +171,33 @@ export class Campaign {
     // Aktif kampanya gün ortasında kaydedildiyse sabah yeniden başlamaz (gün kaydı sabaha döner)
     this.scheduled = d?.scheduled ?? null;
   }
+}
+
+/** Kuyruk koridoru: sıraların arasında direkler ve kırmızı ip (sıra sonları açık, zikzak). */
+function buildQueueRopes(x, z) {
+  const g = new THREE.Group();
+  const postMat = new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.6, roughness: 0.4 });
+  const ropeMat = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.6 });
+  const postGeo = new THREE.CylinderGeometry(0.06, 0.09, 0.95, 8);
+  const half = ((QUEUE_COLS - 1) * QUEUE_DX) / 2;
+  const len = (QUEUE_COLS - 1) * QUEUE_DX + 0.6;
+  for (let r = 0; r < QUEUE_ROWS - 1; r++) {
+    const rz = z + 2.9 + (r + 0.5) * QUEUE_DZ;
+    // Zikzak: ip bir uçtan açık bırakılır, sıra o uçtan döner
+    const open = r % 2 === 0 ? 1 : -1;
+    const x0 = x - half - 0.3 + (open < 0 ? 1.2 : 0);
+    const x1 = x + half + 0.3 - (open > 0 ? 1.2 : 0);
+    for (const px of [x0, x1]) {
+      const post = new THREE.Mesh(postGeo, postMat);
+      post.position.set(px, 0.47, rz);
+      post.castShadow = true;
+      g.add(post);
+    }
+    const rope = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.06, 0.06), ropeMat);
+    rope.position.set((x0 + x1) / 2, 0.82, rz);
+    g.add(rope);
+  }
+  return g;
 }
 
 /** Simülasyon hızlandırılsa da çalışan gecikmeli çağrı (oyun zamanıyla). */

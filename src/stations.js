@@ -60,6 +60,11 @@ function emojiSign(emoji, size = 0.9) {
 
 const inZone = (p, x, z, hw, hd) => Math.abs(p.x - x) < hw && Math.abs(p.z - z) < hd;
 
+export const QUEUE_COLS = 5;
+export const QUEUE_ROWS = 5;
+export const QUEUE_DX = 1.25;
+export const QUEUE_DZ = 1.1;
+
 // ---- Reyon (ürün masası) --------------------------------------------------------
 // Aşama 0: 2x2 masa (8 kasa). Aşama 1-2: 3x2 geniş masa (16 / 24 kasa).
 
@@ -177,10 +182,30 @@ export class Shelf {
     this.stock.forEach((m, i) => m.position.copy(this.slot(i)));
   }
 
+  /**
+   * Sıradaki yer. 0 = ürünü alan kişi (masanın önü), diğerleri arkasında sıra bekler.
+   * Kampanya standının önünde zikzak kuyruk alanı var; normal reyonlarda kısa sıra.
+   */
   customerSpot(index) {
-    const offsets = [[0, 1.7], [-0.75, 1.7], [0.75, 1.7], [0, 2.6], [-0.9, 2.6], [0.9, 2.6]];
-    const o = offsets[Math.min(index, offsets.length - 1)];
+    const front = [this.x, this.z + 1.7];
+    if (index === 0) return front;
+    if (this.id === 'campaign') {
+      // Zikzak kuyruk: 5 sıra × 5 kişi, sıralar arasında bariyer ipi
+      const k = Math.min(index - 1, QUEUE_COLS * QUEUE_ROWS - 1);
+      const row = Math.floor(k / QUEUE_COLS);
+      const col = k % QUEUE_COLS;
+      const half = ((QUEUE_COLS - 1) * QUEUE_DX) / 2;
+      const x = row % 2 === 0 ? this.x - half + col * QUEUE_DX : this.x + half - col * QUEUE_DX;
+      return [x, this.z + 2.9 + row * QUEUE_DZ];
+    }
+    const line = [[0, 2.55], [0, 3.4], [-0.95, 1.9], [0.95, 1.9], [-0.95, 2.8], [0.95, 2.8]];
+    const o = line[Math.min(index - 1, line.length - 1)];
     return [this.x + o[0], this.z + o[1]];
+  }
+
+  /** Biri sıradan çıkınca arkadakiler bir adım ilerler. */
+  reflow() {
+    this.waiting.forEach((c, i) => c.moveToSpot(i));
   }
 
   /** Kapasite yükseltme alanının konumu (masanın arkası). */
@@ -401,7 +426,7 @@ export class Checkout {
     this.cashierSpot = def.cashierSpot;
     this.queueStart = def.queueStart;
     this.queue = [];
-    this.cashier = null; // işe alınmış kasiyer
+    this.cashiers = []; // işe alınmış kasiyerler (en fazla 2)
     this.timer = 0;
 
     this.root = new THREE.Group();
@@ -462,14 +487,17 @@ export class Checkout {
   }
 
   update(dt) {
-    const serving = this.cashier || this.game.player && this.playerServing(this.game.player.position);
+    const playerHere = this.game.player && this.playerServing(this.game.player.position);
+    const serving = this.cashiers.length > 0 || playerHere;
     const front = this.queue[0];
     if (!front || !front.readyToPay || !serving) {
       this.timer = 0;
       return;
     }
     this.timer += dt;
-    const interval = this.cashier ? 0.45 : 0.3;
+    // Kasiyer başına 0.45 sn; iki kasiyer iki kat hızlı, oyuncu da yardım ederse daha da hızlı
+    let rate = this.cashiers.length / 0.45 + (playerHere ? 1 / 0.3 : 0);
+    const interval = 1 / rate;
     if (this.timer < interval) return;
     this.timer = 0;
     // Müşterinin kasalarını tek tek tezgaha al

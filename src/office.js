@@ -145,7 +145,7 @@ class OfficePanel {
     if (this.open) {
       this.orders.update();
       this.tick = (this.tick ?? 0) + 1;
-      if (this.tick % 20 === 0 && this.tab !== 'order') this.render();
+      // Banka/kampanya sekmesi sadece işlem sonrası yeniden çizilir (dokunurken butonlar değişmesin)
     }
   }
 
@@ -171,8 +171,8 @@ class OfficePanel {
         ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
       </div>
       <div class="bank-group"><span>Borç öde</span>
-        <button data-act="repay" data-n="500" ${!b.debt || m <= 0 ? 'disabled' : ''}>$500</button>
-        <button data-act="repay" data-n="all" ${!b.debt || m <= 0 ? 'disabled' : ''}>Tümü</button>
+        <button data-act="repay" data-n="500" ${!b.debt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(500, b.debt, Math.max(0, Math.floor(m))))}</button>
+        <button data-act="repay" data-n="all" ${!b.debt || m <= 0 ? 'disabled' : ''}>${m >= b.debt ? 'Borcun tamamı' : 'Elimdekini öde'} ($${formatMoney(Math.min(b.debt, Math.max(0, Math.floor(m))))})</button>
       </div>
       <div class="bank-group"><span>Para yatır</span>
         <button data-act="put" data-n="500" ${m < 1 ? 'disabled' : ''}>$500</button>
@@ -180,8 +180,9 @@ class OfficePanel {
       </div>
       <div class="bank-group"><span>Para çek</span>
         <button data-act="withdraw" data-n="500" ${!b.deposit ? 'disabled' : ''}>$500</button>
-        <button data-act="withdraw" data-n="all" ${!b.deposit ? 'disabled' : ''}>Tümü</button>
-      </div>`;
+        <button data-act="withdraw" data-n="all" ${!b.deposit ? 'disabled' : ''}>Tümünü çek</button>
+      </div>
+      ${b.lastLog ? `<p class="note bank-log">${b.lastLog}</p>` : ''}`;
   }
 
   onBank(e) {

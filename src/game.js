@@ -19,7 +19,7 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT,
+  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -144,7 +144,9 @@ export class Game {
         return this.shelves.find((s) => s.id === def.target).stagePadPos;
       case 'cashier': {
         const co = CHECKOUTS.find((c) => c.id === def.target);
-        return [co.cashierSpot[0] + 0.3, co.cashierSpot[1] + 5.4];
+        return def.value === 2
+          ? [co.cashierSpot[0] + 0.4, co.cashierSpot[1] + 3.0]   // 2. kasiyer alanı
+          : [co.cashierSpot[0] + 0.3, co.cashierSpot[1] + 5.4];
       }
       case 'checkout':
         return CHECKOUTS.find((c) => c.id === def.target).pos;
@@ -173,7 +175,7 @@ export class Game {
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
       case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
       case 'valet': return { title: 'Otopark görevlisi', emoji: '🦺' };
-      case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
+      case 'cashier': return { title: def.value === 2 ? '2. kasiyer' : 'Kasiyer', emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
       case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
       case 'expansion': return { title: 'Genişlet', emoji: '🏗️' };
@@ -319,6 +321,30 @@ export class Game {
   }
 
   // ---- Müşteriler ------------------------------------------------------------
+
+  // ---- Ek mesai ----------------------------------------------------------------
+
+  /** Gün sonu özetinde: gece çalışacak her çalışana 30–60 arası ek mesai ücreti belirlenir. */
+  planOvertime() {
+    const [min, max] = OVERTIME_PAY;
+    const people = this.workers.length;
+    let cost = 0;
+    for (let i = 0; i < people; i++) cost += min + Math.floor(Math.random() * (max - min + 1));
+    this.overtime = { people, cost };
+    return this.overtime;
+  }
+
+  payOvertime() {
+    const ot = this.overtime ?? { people: 0, cost: 0 };
+    if (ot.cost > this.money) return false;
+    if (ot.cost > 0) {
+      this.spend(ot.cost);
+      this.day.today.overtime = ot.cost;
+      this.hud.toast(`💼 Ek mesai: ${ot.people} çalışana $${ot.cost} ödendi`);
+    }
+    this.overtime = null;
+    return true;
+  }
 
   // ---- Seviye ----------------------------------------------------------------
 
@@ -555,7 +581,7 @@ export class Game {
     let target = null;
     let hint = '';
     const carried = p.stack.find((e) => !e.landing);
-    const unserved = this.checkouts.find((c) => !c.cashier && c.queue.length > 0 && c.queue[0].readyToPay);
+    const unserved = this.checkouts.find((c) => !c.cashiers.length && c.queue.length > 0 && c.queue[0].readyToPay);
     const cash = this.checkouts.find((c) => c.cash.value > 0);
     const affordable = [...this.pads.values()]
       .filter((pad) => !pad.locked && this.money >= pad.remaining)
