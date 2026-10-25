@@ -10,8 +10,7 @@
 
 import { NodeIO, Document } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { prune, dedup, mergeDocuments, unpartition, resample, meshopt } from '@gltf-transform/functions';
-import { MeshoptEncoder } from 'meshoptimizer';
+import { prune, dedup, mergeDocuments, unpartition, resample, quantize } from '@gltf-transform/functions';
 
 // Animation.dispose() kanal ve örnekleyicileri geride bırakır; prune() verilerini temizlesin diye onları da sil.
 function dropAnimation(anim) {
@@ -20,7 +19,6 @@ function dropAnimation(anim) {
   anim.dispose();
 }
 
-await MeshoptEncoder.ready;
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -28,9 +26,7 @@ const SRC = path.resolve(process.argv[2] ?? '../assets-src');
 const OUT = path.resolve('src/assets');
 fs.mkdirSync(path.join(OUT, 'characters'), { recursive: true });
 
-const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });
-// Animasyon verisi büyük; meshopt sıkıştırması (three.js MeshoptDecoder ile açılır) boyutu ciddi düşürür.
-const compress = () => meshopt({ encoder: MeshoptEncoder, level: 'medium' });
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 
 // ---- Karakterler ----------------------------------------------------------
 const CHAR_DIR = path.join(SRC, 'KayKit-Character-Pack-Adventures-1.0/addons/kaykit_character_pack_adventures/Characters/gltf');
@@ -54,7 +50,7 @@ for (const name of CHARACTERS) {
       node.dispose();
     }
   }
-  await doc.transform(resample({ tolerance: 1e-3 }), dedup(), prune(), compress());
+  await doc.transform(resample({ tolerance: 1e-3 }), dedup(), prune(), quantize());
   if (isAnimSource) {
     const animOut = path.join(OUT, 'characters', 'anims.glb');
     await io.write(animOut, doc);
@@ -111,7 +107,7 @@ for (const s of scenes.slice(1)) {
   s.dispose();
 }
 merged.getRoot().setDefaultScene(main);
-await merged.transform(dedup(), unpartition(), prune(), compress());
+await merged.transform(dedup(), unpartition(), prune(), quantize());
 const propsOut = path.join(OUT, 'props.glb');
 await io.write(propsOut, merged);
 console.log('props.glb', (fs.statSync(propsOut).size / 1024).toFixed(0) + ' KB');

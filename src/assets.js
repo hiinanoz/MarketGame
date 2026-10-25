@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 import propsUrl from './assets/props.glb?url';
@@ -25,7 +24,6 @@ let clips = [];
 
 export async function loadAssets(onProgress = () => {}) {
   const loader = new GLTFLoader();
-  loader.setMeshoptDecoder(MeshoptDecoder);
 
   const jobs = [
     ['props', propsUrl],
@@ -33,9 +31,20 @@ export async function loadAssets(onProgress = () => {}) {
     ...Object.entries(CHARACTER_URLS),
   ];
   let done = 0;
+  // GLTFLoader, createImageBitmap varsa dokuları blob: URL'ye fetch ile okur; katı içerik
+  // güvenliği (CSP) olan sayfalarda bu engellenir. Yükleme süresince <img> yoluna zorla.
+  const cib = window.createImageBitmap;
+  window.createImageBitmap = undefined;
+  try {
+    await loadAll();
+  } finally {
+    window.createImageBitmap = cib;
+  }
+
+  async function loadAll() {
   await Promise.all(
     jobs.map(async ([name, url]) => {
-      const gltf = await loader.loadAsync(url);
+      const gltf = await loadGltf(loader, url);
       if (name === 'props') {
         for (const child of [...gltf.scene.children]) {
           child.position.set(0, 0, 0);
@@ -51,6 +60,20 @@ export async function loadAssets(onProgress = () => {}) {
       onProgress(++done / jobs.length);
     }),
   );
+  }
+}
+
+/**
+ * Tek dosyalık sürümde modeller data: URL olarak gömülüdür. Bazı ortamlar (ör. Claude
+ * artifact sayfaları) data: URL'lere fetch isteğini engellediği için onları burada çözüyoruz.
+ */
+async function loadGltf(loader, url) {
+  if (!url.startsWith('data:')) return loader.loadAsync(url);
+  const base64 = url.slice(url.indexOf(',') + 1);
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return loader.parseAsync(bytes.buffer, '');
 }
 
 function prepareMeshes(root) {

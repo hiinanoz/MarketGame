@@ -34,7 +34,7 @@ Yeni ürün eklemek: `PRODUCTS`, `SHELVES` ve `UNLOCKS` listelerine birer satır
 ## Modeller
 
 Tüm 3D modeller [KayKit — Kay Lousberg](https://kaylousberg.com) paketlerinden (CC0, ticari kullanım serbest):
-Character Pack: Adventurers, Restaurant Bits, Furniture Bits. `src/assets/` altındaki dosyalar `tools/build-assets.mjs` ile üretildi: kullanılmayan animasyonlar ve silahlar atıldı, tüm karakterler tek bir animasyon dosyasını paylaşıyor, meshopt ile sıkıştırıldı (18 MB → 1.4 MB).
+Character Pack: Adventurers, Restaurant Bits, Furniture Bits. `src/assets/` altındaki dosyalar `tools/build-assets.mjs` ile üretildi: kullanılmayan animasyonlar ve silahlar atıldı, tüm karakterler tek bir animasyon dosyasını paylaşıyor (18 MB → 1.9 MB).
 
 ## Yol haritası
 
