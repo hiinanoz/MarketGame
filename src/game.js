@@ -7,7 +7,7 @@ import { Input } from './input.js';
 import { World } from './world.js';
 import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
-import { Customer, Cashier, Stocker, Cleaner, Manager } from './actors.js';
+import { Customer, Cashier, Stocker, Cleaner, Manager, Guard, Advertiser } from './actors.js';
 import { Rating, DirtSystem } from './upkeep.js';
 import { Traffic } from './traffic.js';
 import { Depot } from './depot.js';
@@ -15,7 +15,7 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP,
+  DOOR_X, DOOR2_X, WORKER_CAPACITY, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -61,6 +61,7 @@ export class Game {
     this.level = 1;
     this.stockerCapacity = WORKER_CAPACITY;
     this.door2Open = false;
+    this.adBoost = 1;
 
     this.shelves = [];
     this.checkouts = [];
@@ -150,6 +151,8 @@ export class Game {
       case 'depot': return { title: 'Depo 40', emoji: '🏭' };
       case 'cleaner': return { title: 'Temizlikçi', emoji: '🧹' };
       case 'manager': return { title: 'Müdür', emoji: '💼' };
+      case 'ads': return def.target === 'billboard' ? { title: 'Reklam panosu', emoji: '🪧' } : { title: 'Reklamcı', emoji: '📣' };
+      case 'security': return { title: 'Güvenlik', emoji: '👮' };
       case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
       case 'cashier': return { title: 'Kasiyer', emoji: '🧑‍💼' };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
@@ -219,6 +222,16 @@ export class Game {
       case 'parking':
         this.traffic.lot.setStage(def.value);
         break;
+      case 'ads':
+        this.adBoost += ADS[def.target];
+        if (def.target === 'advertiser') this.workers.push(new Advertiser(this, 6.5, 15.4));
+        else this.world.addBillboard(12.5, 11.6);
+        break;
+      case 'security': {
+        const [x, z] = GUARD_SPOTS[def.target];
+        this.workers.push(new Guard(this, x, z));
+        break;
+      }
       case 'depot':
         this.depot.upgrade();
         if (!silent) this.depot.autoOrder = true;
@@ -358,6 +371,11 @@ export class Game {
     const model = CHARACTER_NAMES.filter((n) => n !== 'Barbarian')[Math.floor(Math.random() * 4)];
     const door = shelf.x > ROOM2.minX && this.door2Open ? [DOOR2_X, 4] : [DOOR_X, 4];
     const c = new Customer(this, model, shelf, qty, door, slot);
+    // Yoğun saatlerde bazı yaya müşteriler hırsız
+    if (!slot && this.level >= THEFT.fromLevel) {
+      const chance = this.day.rush >= 1.2 ? THEFT.chanceRush : THEFT.chanceNormal;
+      if (Math.random() < chance) c.thief = true;
+    }
     this.customers.push(c);
     return c;
   }
@@ -379,7 +397,7 @@ export class Game {
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
-    const rush = this.day.rush * this.rating.spawnFactor;
+    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost;
     const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
     const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
     this.spawnTimer -= dt;
@@ -464,6 +482,11 @@ export class Game {
           break;
         }
       }
+    }
+
+    // Kaçan hırsıza yetiş
+    for (const c of this.customers) {
+      if (c.state === 'escaping' && Math.hypot(c.position.x - p.position.x, c.position.z - p.position.z) < THEFT.playerRadius) c.caught();
     }
 
     // Kir lekesinin üstünde durarak temizle

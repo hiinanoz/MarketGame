@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Character } from './character.js';
 import { bubbleTexture } from './fx.js';
-import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING } from './config.js';
+import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT } from './config.js';
 
 /** İşçilerin başının üstündeki küçük rozet (müşterilerden ayırt etmek için). */
 function workerBadge(emoji) {
@@ -139,6 +139,10 @@ export class Customer extends Character {
   leaveShelf() {
     this.releaseShelfSpot();
     this.bubble.visible = false;
+    if (this.thief) {
+      this.escape();
+      return;
+    }
     const co = this.game.pickCheckout(this);
     this.checkout = co;
     this.state = 'toQueue';
@@ -171,6 +175,51 @@ export class Customer extends Character {
     this.setBubble('😊');
     this.play('Cheer');
     this.busyAnim = true;
+  }
+
+  /** Hırsız: ödemeden kapıya koşar. */
+  escape() {
+    this.state = 'escaping';
+    this.speed *= 1.45;
+    this.setBubble('🏃');
+    const door = this.game.nearestDoor(this.position.x);
+    const tx = door[0] + (Math.random() < 0.5 ? -18 : 18);
+    this.goVia([[door[0], door[1] - 1], [door[0], door[1] + 2.5]], tx, STREET_Z + 2, () => this.escaped());
+  }
+
+  /** Güvenlik ya da oyuncu yakaladı: kasalar rafa döner. */
+  caught() {
+    if (this.state !== 'escaping') return;
+    for (const e of this.stack.splice(0)) {
+      const shelf = this.game.shelves.find((s) => s.product === e.product);
+      if (shelf && shelf.space > 0) {
+        shelf.incoming++;
+        this.game.fx.fly(e.mesh, shelf.top, shelf.slot(shelf.stock.length + shelf.incoming - 1), {
+          duration: 0.5, arc: 2,
+          onDone: (m) => { shelf.incoming--; shelf.stock.push(m); shelf.relayout(); },
+        });
+      } else {
+        e.mesh.removeFromParent();
+        const pal = this.game.depot.pallets.get(e.product);
+        if (pal && pal.space > 0) { pal.stock++; pal.syncVisual(); }
+      }
+    }
+    this.thief = false;
+    this.speed /= 1.45;
+    this.setBubble('😳');
+    this.game.rating.add(THEFT.caught);
+    this.game.hud.toast('👮 Hırsız yakalandı!');
+    this.game.audio.play('unlock', 0.6);
+    this.walkOut();
+  }
+
+  escaped() {
+    const n = this.stack.length;
+    for (const e of this.stack.splice(0)) e.mesh.removeFromParent();
+    this.game.day.today.stolen = (this.game.day.today.stolen ?? 0) + n;
+    this.game.rating.add(THEFT.escaped, 'hırsızlık');
+    this.game.hud.toast(`🦹 Hırsız ${n} kasa çaldı!`);
+    this.state = 'leaving';
   }
 
   /** Kapanışta: ürünleri bırakıp sessizce çıkar. */
@@ -420,6 +469,93 @@ export class Manager extends Character {
       }
     }
     this.followPath(dt);
+    super.update(dt);
+  }
+}
+
+// ---- Güvenlik görevlisi: kapıdan kaçan hırsızı yakalar --------------------------------------
+
+export class Guard extends Character {
+  constructor(game, x, z) {
+    super(game, 'Knight', { speed: WORKER_SPEED });
+    this.position.set(x, 0, z);
+    this.home = [x, z];
+    this.heading = -Math.PI / 2;
+    this.root.rotation.y = this.heading;
+    this.root.add(workerBadge('👮'));
+    game.scene.add(this.root);
+    this.catchT = 0;
+  }
+
+  update(dt) {
+    for (const c of this.game.customers) {
+      if (c.state !== 'escaping') continue;
+      const d = Math.hypot(c.position.x - this.position.x, c.position.z - this.position.z);
+      if (d < THEFT.catchRadius) {
+        this.faceTowards(c.position.x, c.position.z);
+        c.caught();
+        this.catchT = 0.8;
+        this.play('Interact');
+        this.busyAnim = true;
+      }
+    }
+    if (this.catchT > 0) {
+      this.catchT -= dt;
+      if (this.catchT <= 0) this.busyAnim = false;
+    }
+    super.update(dt);
+  }
+}
+
+// ---- Reklam görevlisi: kaldırımda tabela sallar, daha çok müşteri gelir ------------------------
+
+export class Advertiser extends Character {
+  constructor(game, x, z) {
+    super(game, 'Rogue', { speed: 2 });
+    this.position.set(x, 0, z);
+    this.heading = 0;
+    this.root.add(workerBadge('📣'));
+    // Tabela
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffd34d';
+    ctx.fillRect(0, 0, 256, 128);
+    ctx.fillStyle = '#d6372b';
+    ctx.font = 'bold 54px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('İNDİRİM', 128, 48);
+    ctx.font = 'bold 34px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = '#23302a';
+    ctx.fillText('taze ürünler →', 128, 100);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.75, 0.06), [
+      new THREE.MeshStandardMaterial({ color: 0xc89b62 }), new THREE.MeshStandardMaterial({ color: 0xc89b62 }),
+      new THREE.MeshStandardMaterial({ color: 0xc89b62 }), new THREE.MeshStandardMaterial({ color: 0xc89b62 }),
+      new THREE.MeshStandardMaterial({ map: tex }), new THREE.MeshStandardMaterial({ map: tex }),
+    ]);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.6), new THREE.MeshStandardMaterial({ color: 0x8a5a3b }));
+    this.sign = new THREE.Group();
+    pole.position.y = 0.8;
+    board.position.y = 1.75;
+    board.castShadow = true;
+    this.sign.add(pole, board);
+    this.sign.position.set(0.55, 0.6, 0.15);
+    this.root.add(this.sign);
+    game.scene.add(this.root);
+    this.t = Math.random() * 10;
+  }
+
+  update(dt) {
+    this.t += dt;
+    // Tabelayı salla, ara sıra sevin
+    this.sign.rotation.z = Math.sin(this.t * 3) * 0.25;
+    const cheer = this.t % 6 < 1.6;
+    this.busyAnim = cheer;
+    if (cheer) this.play('Cheer');
     super.update(dt);
   }
 }

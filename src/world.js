@@ -132,6 +132,44 @@ export class World {
     }
   }
 
+  /** Caddeye bakan reklam panosu. */
+  addBillboard(x, z) {
+    const g = new THREE.Group();
+    const wood = new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: 0.9 });
+    for (const dx of [-1.8, 1.8]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 0.25), wood);
+      post.position.set(dx, 1.6, 0);
+      post.castShadow = true;
+      g.add(post);
+    }
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 256;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 512, 256);
+    grad.addColorStop(0, '#3fae4a');
+    grad.addColorStop(1, '#2b8a35');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 72px "Trebuchet MS", sans-serif';
+    ctx.fillText('MARKET', 256, 90);
+    ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = '#ffe066';
+    ctx.fillText('Her gün taze! 🍅🥕🧀', 256, 180);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.3, 0.2), [wood, wood, wood, wood, new THREE.MeshStandardMaterial({ map: tex }), wood]);
+    board.position.y = 3.6;
+    board.castShadow = true;
+    g.add(board);
+    g.position.set(x, 0, z);
+    this.scene.add(g);
+    this.game.nav.setBox('billboard', { minX: x - 2, maxX: x + 2, minZ: z - 0.2, maxZ: z + 0.2 });
+  }
+
   addStrip(color, depth, z, y) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(200, depth), new THREE.MeshStandardMaterial({ color, roughness: 1 }));
     m.rotation.x = -Math.PI / 2;

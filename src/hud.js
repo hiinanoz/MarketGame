@@ -71,6 +71,7 @@ export class Hud {
     document.getElementById('sum-crates').textContent = st.crates;
     document.getElementById('sum-spent').textContent = `$${formatMoney(st.spent)}`;
     document.getElementById('sum-angry').textContent = st.angry;
+    document.getElementById('sum-stolen').textContent = st.stolen ?? 0;
     this.summary.classList.remove('hidden');
     this.summaryOpen = true;
   }

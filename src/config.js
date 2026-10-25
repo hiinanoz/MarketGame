@@ -34,6 +34,19 @@ export const DIRT = {
   cleanTime: 1.2,     // oyuncu için sn (temizlikçi biraz daha yavaş)
 };
 
+// ---- Reklam ve güvenlik -----------------------------------------------------------
+export const ADS = { advertiser: 0.35, billboard: 0.25 }; // müşteri artışı
+export const THEFT = {
+  fromLevel: 10,
+  chanceRush: 0.09,   // yoğun saatte (yoğunluk ≥ 1.2) gelen müşterinin hırsız olma olasılığı
+  chanceNormal: 0.025,
+  catchRadius: 4.2,   // güvenlik görevlisinin yakalama mesafesi
+  playerRadius: 1.5,  // oyuncu hırsıza bu kadar yaklaşırsa yakalar
+  escaped: -5,        // memnuniyet etkisi
+  caught: 1,
+};
+export const GUARD_SPOTS = { door1: [3.4, 2.6], door2: [23.4, 2.6] };
+
 // ---- Gün döngüsü ----------------------------------------------------------------
 export const DAY = {
   length: 240,       // açık kalma süresi (sn) = 08:00 → 22:00
@@ -104,7 +117,7 @@ export const CHECKOUTS = [
 
 // ---- Satın alınabilenler ------------------------------------------------------------
 // level: zeminde belirmesi için gereken seviye. requires: önce açılması gerekenler.
-// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking
+// type: shelf | shelfStage | cashier | stocker | capacity | stockerCap | expansion | door | checkout | depot | cleaner | manager | parking | ads | security
 export const UNLOCKS = [
   { id: 'shelf_carrot',  type: 'shelf',     target: 'carrot',    cost: 30,   level: 1, requires: [] },
   { id: 'cashier1',      type: 'cashier',   target: 'checkout1', cost: 60,   level: 2, requires: [] },
@@ -129,6 +142,10 @@ export const UNLOCKS = [
   { id: 'parking1',      type: 'parking',   value: 1, cost: 1500, pos: [-22, 8.8], level: 9, requires: [] },
   { id: 'cleaner2',      type: 'cleaner',   cost: 700,  pos: [-10.3, -3.9], level: 9, requires: ['cleaner1'] },
   { id: 'stocker3',      type: 'stocker',   cost: 1000, pos: [25.5, -9.5], level: 10, requires: ['stocker2', 'expansion'] },
+  { id: 'advertiser',    type: 'ads',       target: 'advertiser', cost: 1500, pos: [6.5, 10], level: 10, requires: [] },
+  { id: 'security1',     type: 'security',  target: 'door1', cost: 1200, pos: [3.4, 6.6], level: 10, requires: [] },
+  { id: 'security2',     type: 'security',  target: 'door2', cost: 1200, pos: [23.4, 6.6], level: 10, requires: ['door2'] },
+  { id: 'billboard',     type: 'ads',       target: 'billboard', cost: 3000, pos: [12.5, 10], level: 13, requires: ['advertiser'] },
   { id: 'shelf_ham',     type: 'shelf',     target: 'ham',       cost: 1500, level: 11, requires: ['shelf_bun'] },
   { id: 'capacity3',     type: 'capacity',  value: 14, cost: 1500, pos: [26.3, 2.3], level: 11, requires: ['capacity2', 'expansion'] },
   { id: 'shelf_steak',   type: 'shelf',     target: 'steak',     cost: 2200, level: 12, requires: ['shelf_ham'] },

@@ -46,5 +46,5 @@ Ayrıntılı seviye tablosu ve aşamalar: [docs/PLAN.md](docs/PLAN.md)
 - [x] Reyon kapasitesi 8/16/24, taşıyıcı kapasitesi, 2. salon ve 2. giriş kapısı
 - [x] Kirlenme + temizlikçi, müdür, memnuniyet puanı
 - [x] Araç trafiği + otopark
-- [ ] Reklam görevlisi, hırsızlık + güvenlik
+- [x] Reklam görevlisi, hırsızlık + güvenlik
 - [ ] Toptancı satın alma, tedarik krizleri, üretimhaneler, 3. salon
