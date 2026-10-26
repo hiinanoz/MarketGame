@@ -21,7 +21,7 @@ export class Bank {
    */
   get limitParts() {
     const g = this.game;
-    const assets = g.holding ? g.holding.businesses.reduce((a, b) => a + b.value, 0) : 0;
+    const assets = (g.holding ? g.holding.businesses.reduce((a, b) => a + b.value, 0) : 0) + (g.housing?.value ?? 0) + (g.rent?.marketOwned ? g.rent.boughtPrice ?? 0 : 0);
     const hist = this.history ?? [];
     const avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
     return {
@@ -132,7 +132,7 @@ export class Bank {
   /** En değersiz işletmeye el koy, değerinin bir kısmını borçtan düş. */
   seizeOne() {
     const g = this.game;
-    const owned = g.holding.owned.slice().sort((x, y) => x.fullValue - y.fullValue);
+    const owned = g.holding.owned.filter((b) => !b.leased).sort((x, y) => x.fullValue - y.fullValue);
     const biz = owned[0];
     if (!biz) return null;
     const price = Math.round(biz.fullValue * BANK.seizeRatio);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
-import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN } from './config.js';
+import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Muhasebe odası: mağazanın arka sağ köşesi. İçeri girince Sipariş / Banka / Kampanya paneli açılır.
@@ -193,6 +193,7 @@ class OfficePanel {
       ${row('Günlük maaşlar (gün sonu)', this.game.dailyPayroll)}
       ${b.missed ? `<p class="note warn">⚠️ Faiz ${b.missed} gündür ödenemedi. ${3 - b.missed} gün daha ödenmezse banka en değersiz işletmene el koyar.</p>` : ''}
       ${this.game.holding.businesses.some((x) => x.seized) ? `<p class="note">🏦 Bankaya geçen işletmeler borcun tamamen kapanınca 💼 tabletten geri alınabilir.</p>` : ''}
+      ${this.renderRent()}
       <p class="note">Kredi limiti $${formatMoney(b.limit)} = seviye $${formatMoney(b.limitParts.base)} + işletmeler $${formatMoney(b.limitParts.assets)} + kazanç $${formatMoney(b.limitParts.income)}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.</p>
       <div class="bank-group"><span>Kredi çek</span>
         ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
@@ -212,9 +213,32 @@ class OfficePanel {
       ${b.lastLog ? `<p class="note bank-log">${b.lastLog}</p>` : ''}`;
   }
 
+  /** Market binası (kira / satın alma) ve haftalık kiralar. */
+  renderRent() {
+    const g = this.game;
+    const r = g.rent;
+    const left = r.daysLeft;
+    const when = left === 0 ? 'bu akşam' : `${left} gün sonra`;
+    const lines = [];
+    if (r.marketOwned) lines.push(`<p class="note">🏪 <b>${g.marketTitle}</b> binası senin.</p>`);
+    else {
+      lines.push(`<p class="note">🔑 <b>${g.marketTitle}</b> kiralık: haftalık <b>$${formatMoney(r.marketRent)}</b> (dükkân büyüdükçe artar).</p>`);
+      lines.push(r.canBuyMarket
+        ? `<div class="bank-group"><span>Binayı satın al</span><button class="primary" data-act="buymarket" ${g.money < r.marketPrice ? 'disabled' : ''}>$${formatMoney(r.marketPrice)}</button></div>`
+        : `<p class="note">Binayı satın alma seçeneği Seviye ${RENT.market.buyLevel}'de açılır.</p>`);
+    }
+    if (r.weeklyTotal) lines.push(`<p class="note">Haftalık kira toplamı $${formatMoney(r.weeklyTotal)} · ödeme ${when}.</p>`);
+    return lines.join('');
+  }
+
   onBank(e) {
     const btn = e.target.closest('button[data-act]');
     if (!btn || btn.disabled) return;
+    if (btn.dataset.act === 'buymarket') {
+      this.game.rent.buyMarket();
+      this.renderBank();
+      return;
+    }
     const b = this.game.bank;
     const raw = btn.dataset.n;
     const n = raw === 'all' ? Infinity : raw === 'half' ? Math.floor(this.game.money / 2) : Number(raw);
@@ -227,11 +251,11 @@ class OfficePanel {
   renderCampaign() {
     const c = this.game.campaign;
     const sec = document.getElementById('campaign-sec');
+    const parts = [this.renderAds()];
     if (!c.unlocked) {
-      sec.innerHTML = `<p class="note">Kampanyalar Seviye ${CAMPAIGN.fromLevel}'te açılır.</p>`;
+      sec.innerHTML = parts.join('') + `<p class="note">Kampanyalar Seviye ${CAMPAIGN.fromLevel}'te açılır.</p>`;
       return;
     }
-    const parts = [];
     if (c.active.length) {
       parts.push(`<p class="note">Bugün: ${c.active.map((a) => `${PRODUCTS[a.product].emoji} ${a.sold}/${a.qty}`).join(' · ')} satıldı.</p>`);
     }
@@ -269,7 +293,24 @@ class OfficePanel {
     sec.innerHTML = parts.join('');
   }
 
+  /** Ücretli reklam (medya senin olunca ucuz). */
+  renderAds() {
+    const g = this.game;
+    const a = g.ads;
+    const tomorrow = a.targetDay !== g.day.day;
+    const btns = Object.entries(AD_TYPES).map(([k, t]) => {
+      if (g.level < t.level) return `<button disabled>${t.emoji} 🔒 Sv.${t.level}</button>`;
+      const done = a.has(k);
+      return `<button data-ad="${k}" ${done || g.money < a.cost(k) ? 'disabled' : ''}>${t.emoji} ${t.name}<br><small>${done ? 'verildi' : `$${formatMoney(a.cost(k))} · +%${Math.round(t.boost * 100)}`}</small></button>`;
+    }).join('');
+    const today = a.todayList;
+    return `<p class="note">📣 <b>Reklam ver</b> (${tomorrow ? 'yarın için' : 'bugün için'})${a.mediaOwned ? ' · 📰 medya senin: reklamlar %60 ucuz, müşteri +%15' : ''}${today.length ? ` · bugün yayında: ${today.map((t) => t.emoji).join(' ')}` : ''}</p>
+      <div class="ad-btns">${btns}</div>`;
+  }
+
   onCampaign(e) {
+    const ad = e.target.closest('[data-ad]');
+    if (ad && !ad.disabled) this.game.ads.buy(ad.dataset.ad);
     const pick = e.target.closest('[data-pick]');
     if (pick) this.campaignPick = pick.dataset.pick;
     const q = e.target.closest('[data-q]');

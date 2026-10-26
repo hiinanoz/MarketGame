@@ -17,6 +17,9 @@ import { Campaign } from './campaign.js';
 import { MarketAccountant } from './accountant.js';
 import { Holding } from './holding.js';
 import { Energy } from './energy.js';
+import { Rent } from './rent.js';
+import { Housing } from './housing.js';
+import { Ads } from './ads.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
@@ -91,6 +94,10 @@ export class Game {
     this.traffic = new Traffic(this);
     this.holding = new Holding(this);
     this.energy = new Energy(this);
+    this.rent = new Rent(this);
+    this.housing = new Housing(this);
+    this.ads = new Ads(this);
+    this.isMayor = false; // Sv.60: belediye başkanı (ceza kesilmez)
     this.marketName = 'Kasaba';
 
     // Oyuncu
@@ -372,6 +379,13 @@ export class Game {
     }
   }
 
+  /** Toplam çalışan: market + işletmeler + emlakçılar. */
+  get totalStaff() {
+    let n = this.workers.filter((w) => w.role).length;
+    for (const b of this.holding.owned) n += b.workers + (b.manager ? 1 : 0) + (b.accountant ? 1 : 0);
+    return n + this.housing.agents;
+  }
+
   /** Bugünkü toplam maaş yükü (market + işletmeler). */
   get dailyPayroll() {
     let n = 0;
@@ -596,7 +610,7 @@ export class Game {
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
-    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost;
+    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor;
     const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
     const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
     this.spawnTimer -= dt;
@@ -614,6 +628,8 @@ export class Game {
     this.campaign.update(dt);
     this.traffic.update(dt);
     this.holding.update(dt);
+    this.housing.update(dt);
+    this.hud.setStaff?.(this.level >= 21 ? this.totalStaff : null);
     for (let i = this.later.length - 1; i >= 0; i--) {
       const l = this.later[i];
       l.t -= dt;
@@ -664,7 +680,7 @@ export class Game {
     p.position.x += p.velocity.x * dt;
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
-    p.position.x = THREE.MathUtils.clamp(p.position.x, -49, 45);
+    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 51 ? -66 : -49, this.level >= 36 ? 104 : 45);
     p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
@@ -867,6 +883,9 @@ export class Game {
       accountant: this.accountant?.serialize() ?? null,
       holding: this.holding.serialize(),
       energy: this.energy.serialize(),
+      rent: this.rent.serialize(),
+      housing: this.housing.serialize(),
+      ads: this.ads.serialize(),
       marketName: this.marketName,
     };
     try {
@@ -920,6 +939,9 @@ export class Game {
     this.dirt.restore(data.dirt);
     this.holding.restore(data.holding);
     this.energy.restore(data.energy);
+    this.rent.restore(data.rent);
+    this.housing.restore(data.housing);
+    this.ads.restore(data.ads);
     if (data.marketName) this.setMarketName(data.marketName, true);
     if (data.depot) this.depot.restore(data.depot);
     else {

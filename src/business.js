@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Character, makeCrate } from './character.js';
 import { textTexture } from './fx.js';
-import { PRODUCTS, BUSINESSES, STAFF, VALLEY_FRONT_Z, MODULE_DEPTH, XP_PER_PROFIT, XP_PER_PURCHASE, LOGISTICS, DAY } from './config.js';
+import { PRODUCTS, BUSINESSES, STAFF, VALLEY_FRONT_Z, MODULE_DEPTH, XP_PER_PROFIT, XP_PER_PURCHASE, LOGISTICS, DAY, MEDIA } from './config.js';
 import { prop } from './assets.js';
 
 // Holding işletmeleri (tedarik vadisi). Yönetim odaklı: satın al → modül ekle → kadro ata.
@@ -35,7 +35,8 @@ export class Business {
     const { x, w } = this.def.plot;
     this.x = x;
     this.w = w;
-    this.frontZ = this.def.frontZ ?? VALLEY_FRONT_Z;
+    this.frontZ = this.def.building ? this.def.building.z + 3.2 : this.def.frontZ ?? VALLEY_FRONT_Z;
+    this.leased = false;       // kiralık (haftalık kira öder, ileride satın alınabilir)
     this.customName = '';      // oyuncunun verdiği isim
     this.battery = false;      // güneş tarlası: batarya deposu
     this.energyToday = 0;      // bugün üretilen elektrik (birim)
@@ -56,6 +57,22 @@ export class Business {
   /** Tam kadroyla günlük elektrik üretimi (birim = $1'lık elektrik). */
   get energyCapacity() { return this.isEnergy ? Math.round(this.def.energyPerModule * this.modules * this.efficiency) : 0; }
   get isLogistics() { return this.def.kind === 'garage'; }
+  /** Hazır binada çalışan işletme (market şubesi, medya): arsa/modül şeridi yok. */
+  get isBuilding() { return !!this.def.building; }
+  /** Hizmet geliri (şube cirosu, medya reklam geliri): tam kadroyla günlük. */
+  get serviceIncome() {
+    if (!this.def.revenuePerModule) return 0;
+    const boost = this.def.kind === 'shop' && this.game.holding?.mediaOwned ? MEDIA.salesBoost : 1;
+    return Math.round(this.def.revenuePerModule * this.modules * this.efficiency * boost);
+  }
+  /** Kiralıksa haftalık kira (büyüdükçe artar). */
+  get weeklyRent() {
+    const l = this.def.lease;
+    return this.owned && this.leased && l ? l.weekly + l.perModule * Math.max(0, this.modules - 1) : 0;
+  }
+  get canBuyOut() {
+    return this.owned && this.leased && this.game.level >= this.def.lease.buyLevel;
+  }
   get trucks() { return this.modules * (this.def.trucksPerModule ?? 0); }
   /** Lojistik: tam kadroyla beklenen günlük taşıma geliri. */
   get contractIncome() { return Math.round(LOGISTICS.contractPerTruck * this.trucks * this.efficiency); }
@@ -75,6 +92,7 @@ export class Business {
 
   get playerHere() {
     const p = this.game.player.position;
+    if (this.isBuilding) return Math.hypot(p.x - this.x, p.z - this.frontZ) < 5;
     return Math.abs(p.x - this.x) < this.w / 2 + 1 && p.z < this.frontZ + 3 && p.z > this.backZ - 2;
   }
 
@@ -101,7 +119,7 @@ export class Business {
 
   /** Arsa + modüllerin değeri (sahibi kim olursa olsun). */
   get fullValue() {
-    let v = this.def.price;
+    let v = this.leased ? 0 : this.def.price; // kiralıkta arsa/bina senin değil
     for (let i = 1; i < this.modules; i++) v += this.def.modules[i].cost ?? 0;
     return v;
   }
@@ -131,12 +149,14 @@ export class Business {
     g.spend(this.def.price);
     this.owned = true;
     this.modules = 1;
-    this.workers = this.perModule; // eski sahibin işçileri kalır
+    this.workers = this.def.startWorkers ?? this.perModule; // tedarikçide eski işçiler kalır, şubede kadroyu sen kurarsın
+    this.leased = !!this.def.lease;
     this.rebuild();
     this.rebuildStaff();
     if (this.isLogistics) g.depot.refreshFleet?.();
     g.gainXp(Math.floor(this.def.price / XP_PER_PURCHASE));
-    g.hud.toast(`🤝 ${this.def.emoji} ${this.name} artık senin!`);
+    g.hud.toast(this.leased ? `🔑 ${this.def.emoji} ${this.name} kiralandı (haftalık $${this.weeklyRent})` : `🤝 ${this.def.emoji} ${this.name} artık senin!`);
+    if (this.isBuilding && !this.workers) g.later.push({ t: 1.8, fn: () => g.hud.toast('👥 Şimdi müdür, muhasebeci ve çalışan ata (💼 tablet)') });
     g.audio.play('unlock');
     g.save();
     return true;
@@ -197,6 +217,21 @@ export class Business {
     g.gainXp(Math.floor(b.cost / XP_PER_PURCHASE));
     g.hud.toast(`🔋 ${this.name}: batarya deposu kuruldu`);
     g.audio.play('unlock');
+    g.save();
+    return true;
+  }
+
+  /** Kiralık işletmeyi satın al (kira biter). */
+  buyOut() {
+    const g = this.game;
+    const price = this.def.lease?.buyPrice;
+    if (!this.canBuyOut || g.money < price) return false;
+    g.spend(price);
+    this.leased = false;
+    g.gainXp(Math.floor(price / XP_PER_PURCHASE));
+    g.hud.toast(`🤝 ${this.def.emoji} ${this.name} satın alındı, kira bitti`);
+    g.audio.play('unlock');
+    this.updateLabel(true);
     g.save();
     return true;
   }
@@ -267,6 +302,11 @@ export class Business {
       this.updateLogistics(dt);
       return;
     }
+    if (this.def.revenuePerModule) {
+      this.accrue(this.serviceIncome, dt);
+      this.updateLabel();
+      return;
+    }
     if (this.isEnergy) {
       // Elektrik üretimi (güneş sadece gündüz, rüzgâr günün rüzgârına göre)
       const f = this.game.energy.factor(this.def.energy);
@@ -321,14 +361,21 @@ export class Business {
 
   /** Lojistik: boştaki kamyonlar başka firmalara taşıma yapar, gelir gün boyu kasaya akar. */
   updateLogistics(dt) {
-    this.cashT = (this.cashT ?? 0) + LOGISTICS.contractPerTruck * this.trucks * this.efficiency * dt / DAY.length;
+    this.accrue(LOGISTICS.contractPerTruck * this.trucks * this.efficiency, dt);
+    this.updateLabel();
+  }
+
+  /** Günlük geliri gün boyunca (mağaza açıkken) kasaya akıt. */
+  accrue(perDay, dt) {
+    if (this.game.day.phase !== 'open') return;
+    this.cashT = (this.cashT ?? 0) + perDay * dt / DAY.length;
     if (this.cashT >= 1) {
       const n = Math.floor(this.cashT);
       this.cashT -= n;
       this.game.money += n;
       this.today.sales += n;
+      this.game.hud.setMoney(this.game.money);
     }
-    this.updateLabel();
   }
 
   /** Oyuncu tarlada/üretim hattında çalışırsa ekstra üretim; ön taraftaki alandan kasa alabilir. */
@@ -397,6 +444,20 @@ export class Business {
   // ---- Görsel ----
 
   buildFront() {
+    if (this.isBuilding) {
+      // Hazır bina (Kenney City Builder, MIT)
+      const b = this.def.building;
+      const m = prop(b.model);
+      m.scale.setScalar(b.scale);
+      m.position.set(this.x, 0, b.z);
+      m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      this.root.add(m);
+      this.front = m;
+      this.fence = new THREE.Group();
+      this.game.nav.setBox(`biz-${this.id}`, { minX: this.x - b.scale / 2, maxX: this.x + b.scale / 2, minZ: b.z - b.scale / 2, maxZ: b.z + b.scale / 2 });
+      this.rebuild();
+      return;
+    }
     const g = new THREE.Group();
     const kind = this.def.kind;
     const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5, garage: 0x4f7cac, solar: 0xf2c14e, wind: 0xe8eef2 }[kind];
@@ -452,7 +513,8 @@ export class Business {
   buildSign() {
     this.label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
     this.label.renderOrder = 6;
-    this.label.position.set(this.x, 6.4, this.frontZ - 2);
+    if (this.isBuilding) this.label.position.set(this.x, this.def.building.labelY ?? 8.2, this.def.building.z + 2);
+    else this.label.position.set(this.x, 6.4, this.frontZ - 2);
     this.root.add(this.label);
     this.updateLabel(true);
   }
@@ -460,10 +522,11 @@ export class Business {
   updateLabel(force = false) {
     const g = this.game;
     let text;
-    if (this.owned) text = `${this.def.emoji} ${this.name} · ${this.modules}/${this.maxModules}`;
+    if (this.owned) text = `${this.def.emoji} ${this.name}${this.leased ? ' 🔑' : ''} · ${this.modules}/${this.maxModules}`;
     else if (this.seized) text = `${this.def.emoji} 🏦 Bankaya ait`;
     else if (g.level < this.def.level) text = `${this.def.emoji} ${this.def.owner} · 🔒 Sv.${this.def.level}`;
     else if (this.missingReq.length) text = `${this.def.emoji} ${this.def.owner} · 🔒 önce tedarikçiler`;
+    else if (this.def.lease) text = `${this.def.emoji} KİRALIK · devir $${this.def.price.toLocaleString('tr-TR')}`;
     else text = `${this.def.emoji} SATILIK $${this.def.price.toLocaleString('tr-TR')}`;
     if (!force && text === this.labelText) return;
     this.labelText = text;
@@ -472,10 +535,16 @@ export class Business {
     this.label.material.map = tex;
     this.label.material.needsUpdate = true;
     const aspect = tex.image.width / tex.image.height;
-    this.label.scale.set(0.9 * aspect, 0.9, 1);
+    const k = this.isBuilding ? 0.75 : 0.9;
+    this.label.scale.set(k * aspect, k, 1);
   }
 
   rebuild() {
+    if (this.isBuilding) {
+      this.rebuildStaff();
+      if (this.label) this.updateLabel(true);
+      return;
+    }
     if (this.pickupPad) this.pickupPad.visible = this.owned && !this.isLogistics && !this.isEnergy;
     // Modüller: arkaya doğru eklenen tarla/ahır/hat şeritleri
     this.moduleGroup.clear();
@@ -519,6 +588,12 @@ export class Business {
     for (const c of this.staffChars) this.game.scene.remove(c.root);
     this.staffChars = [];
     if (!this.owned) return;
+    if (this.isBuilding) {
+      // Çalışanlar içeride; müdür ve muhasebeci kapının önünde
+      if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 1.6, this.frontZ + 0.6));
+      if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 1.6, this.frontZ + 0.6));
+      return;
+    }
     const shown = Math.min(this.workers, 6);
     for (let i = 0; i < shown; i++) {
       const mod = i % Math.max(1, this.modules);
@@ -534,7 +609,7 @@ export class Business {
       owned: this.owned, modules: this.modules, workers: this.workers, manager: this.manager,
       accountant: this.accountant, storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
       seized: this.seized, seizedPrice: this.seizedPrice, customName: this.customName, battery: this.battery,
-      energyToday: this.energyToday,
+      energyToday: this.energyToday, leased: this.leased,
     };
   }
 
@@ -545,6 +620,7 @@ export class Business {
       accountant: !!d.accountant, storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
       autoGrow: d.autoGrow ?? true, seized: !!d.seized, seizedPrice: d.seizedPrice ?? 0,
       customName: d.customName ?? '', battery: !!d.battery, energyToday: d.energyToday ?? 0,
+      leased: !!d.leased,
     });
     this.rebuild();
   }

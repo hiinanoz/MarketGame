@@ -62,7 +62,7 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 | **S1** ✅ | 21–25 | Holding tableti, işletme çekirdeği, müdür/muhasebeci rolleri ve şapkalar, market muhasebecisi, kuzey harita genişlemesi, ulaşım, başlangıç hikâyesi, ilk tedarikçi (çiftlik) | Oynat + geri bildirim |
 | **S2** ✅ | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
 | **S3** ✅ | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
-| **S4** | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
+| **S4** 🚧 | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
 | **S5** | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
 | **S6** | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
 | **S7** | 81–100 | Bölge bölge satın alma, mega projeler, final, derece ekranı | |
@@ -101,6 +101,16 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - Kendi üretimin önce kendi tüketimini karşılar (fatura düşer/biter). Güneş, **batarya** (Sv.34, $18.000) yoksa tüketimin gece payını (%30) karşılayamaz.
 - Fazla elektrik, santrallerden birinde muhasebeci varsa **şebekeye** birim başı $0,8'e satılır; yoksa boşa gider.
 - Muhasebeci kasada tahmini fatura kadar da yedek bırakır.
+
+## Kira, konut, şube, medya düzenlemesi (kullanıcı kararları)
+
+- **Market Sv.20'ye kadar kiralık.** Haftalık kira (her 7. günün sonunda) = 120 + ek salon başı 140 + reyon başı 8 + otopark aşaması başı 40 + depo yükseltmesi 40. Sv.20'den sonra muhasebe odası → 🏦 Banka sekmesinden bina satın alınır (30 haftalık kira).
+- **Kiralık işletmeler:** fırın (Sv.38'de satın alınabilir), et tesisi (Sv.42), rüzgâr santrali (Sv.46), Kiralık Dükkân şubesi (Sv.60). Devir bedeliyle kiralanır, haftalık kira modül başına artar. Banka kiralık işletmeye el koyamaz. Çiftlik, mandıra, lojistik, güneş, diğer şubeler ve medya doğrudan satın alınır.
+- **Konut (Sv.36+, doğu mahallesi, 12 arsa):** arsa $3.000 → ev tipi seç ve öde (müstakil ev Sv.37, apartman Sv.39, site Sv.42, villa Sv.47) → gündüzleri aşama aşama inşa (temel, kaba inşaat, çatı). Bitince "Kiraya ver"; kiracı 1–2 günde bulunur, 14–42 gün kalır, çıkınca daire tadilat ister. Her binaya ayrı emlakçı ($200, Sv.37): kiracı ve tadilatı kendisi yapar, kiradan %10 komisyon alır. Kira günlük birikir, haftalık ödenir. İnşaat şirketi (Sv.38, $25.000): %40 hızlı, %15 ucuz. Mahalle memnuniyeti şimdilik kiracılara bağlı değil.
+- **Market şubeleri (Sv.50+):** Köşe Bakkal (Sv.50, satın al), Kiralık Dükkân (Sv.52, kirala), Ucuz Market (Sv.56, satın al). Boş gelir: müdür, muhasebeci ve çalışanları sen atarsın; müdür + muhasebeci olunca çalışan alır ve büyür.
+- **Medya (Sv.52, Kasaba Gazetesi & Radyo, şehir merkezi):** almadan önce reklamlar ücretli (muhasebe → 📢 sekmesi: el ilanı, gazete, radyo, TV; o gün açıksa hemen, değilse ertesi gün). Medya alınınca reklamlar %60 ucuz, market ve şubelere +%15 müşteri.
+- **Belediye:** 4 ve üzeri işletmede her sabah %25 olasılıkla ceza (ruhsat, kaldırım işgali…). Belediye başkanı olunca (Sv.60) kesilmez.
+- **HUD:** Sv.21'den sonra toplam çalışan sayısı (👥) görünür.
 
 ## Bitirme ve derece
 

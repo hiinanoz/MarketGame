@@ -167,7 +167,9 @@ export class World {
       if (x > -52 && x < -11 && z > 2 && z < 14) continue; // otopark
       if (x > -34 && x < -11 && z > -32 && z < 2) continue; // 3. salon, üretimhaneler
       if (x > -46 && x < 46 && z < -34) continue;
-      if (x > 31 && x < 48 && z > 0 && z < 13) continue; // rakip marketler // tedarik vadisi arsaları
+      if (x > 31 && x < 54 && z > 0 && z < 13) continue; // rakip marketler / şubeler
+      if (x > 54 && z > -34 && z < 14) continue; // doğu mahallesi arsaları
+      if (x < -50 && z > 0 && z < 14) continue; // şehir merkezi (medya) // tedarik vadisi arsaları
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }
@@ -232,17 +234,6 @@ export class World {
       const z = -100 - rng() * 60;
       if (x > -28 && x < 34) continue; // enerji tepeleri arsaları
       place(rng() < 0.5 ? 'trees_A_large' : 'trees_B_medium', x, z, 3 + rng() * 2, rng() * 6, false);
-    }
-    // Rakip marketler (Kenney City Builder, MIT): lojistik firmasıyla fazla ürün bunlara satılır
-    const rivals = [['building-small-a', 36.5, 'Ucuz Market'], ['building-small-c', 43.5, 'Köşe Bakkal']];
-    for (const [name, x, title] of rivals) {
-      place(name, x, 7.5, 6, 0);
-      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTexture(title), transparent: true, depthTest: false }));
-      label.scale.set(4.2, 1.05, 1);
-      label.position.set(x, 7.2, 8);
-      label.renderOrder = 6;
-      s.add(label);
-      this.game.nav.setBox(`rival-${x}`, { minX: x - 3, maxX: x + 3, minZ: 4.5, maxZ: 10.5 });
     }
   }
 

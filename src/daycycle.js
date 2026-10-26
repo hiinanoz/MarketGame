@@ -90,6 +90,8 @@ export class DayCycle {
     g.bank.payInterest(this.today);   // önce banka faizi (3 gün ödenmezse el koyma)
     g.payroll(this.today);            // sonra maaşlar (ödenemeyen ayrılır)
     g.energy.settle(this.today);      // elektrik faturası / kendi üretim / şebeke satışı
+    g.rent.settle(this.today);        // haftalık kiralar (7. günün sonunda)
+    g.housing.endOfDay(this.today);   // kiracılar, tadilat, haftalık kira geliri
     g.holding.endOfDay(this.today);
     g.accountant?.endOfDay();
     g.bank.endOfDay(this.today);
@@ -110,6 +112,7 @@ export class DayCycle {
     this.today = blankStats();
     this.game.hud.toast(`☀️ Gün ${this.day} başladı`);
     this.game.supply.rollCrisis();
+    this.game.ads.startDay();         // reklamlar, belediye denetimi
     this.game.campaign.startDay();
     this.game.save();
   }

@@ -278,6 +278,17 @@ html, body {
 .stars::before { content: '★★★★★'; }
 #rating-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; white-space: nowrap; color: #ffd34d; }
 #rating-fill::before { content: '★★★★★'; }
+.pill.staff {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 96px);
+  left: 12px;
+  min-width: 0;
+  font-size: 13px;
+  padding: 3px 10px;
+  gap: 4px;
+  z-index: 5;
+  pointer-events: none;
+}
 .pill.rating.low { background: rgba(140, 40, 30, 0.8); }
 
 .pill.crisis {
@@ -383,3 +394,8 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .rename button { padding: 6px 10px; }
 .biz-head .pen { background: none; border: 0; padding: 0 2px; font-size: 14px; cursor: pointer; box-shadow: none; vertical-align: middle; }
 .biz-head > div { flex: 1; min-width: 0; }
+.ad-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
+.ad-btns button { padding: 7px 6px; font-size: 13px; line-height: 1.2; }
+.ad-btns small { font-weight: 600; opacity: 0.8; }
+.progress { height: 10px; border-radius: 6px; background: #e3dccb; overflow: hidden; margin: 6px 0; }
+.progress i { display: block; height: 100%; background: linear-gradient(90deg, #f2b705, #3fae4a); }

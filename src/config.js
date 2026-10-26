@@ -282,14 +282,16 @@ export const BUSINESSES = {
   },
   bakery: {
     name: 'Altın Başak Fırını', emoji: '🥖', owner: 'Mehmet Usta', kind: 'hall',
-    plot: { x: 23, w: 14 }, price: 24000, level: 26,
+    plot: { x: 23, w: 14 }, price: 8000, level: 26,
+    lease: { weekly: 600, perModule: 250, buyLevel: 38, buyPrice: 30000 }, // kiralık: price = devir bedeli
     products: ['bun'],
     modules: [{ level: 26 }, { level: 27, cost: 12000 }, { level: 29, cost: 18000 }, { level: 30, cost: 28000 }, { level: 48, cost: 50000 }],
     interval: 3,
   },
   meat: {
     name: 'Kasaba Et Tesisi', emoji: '🥩', owner: 'Kemal Bey', kind: 'hall',
-    plot: { x: -34, w: 14 }, price: 32000, level: 28,
+    plot: { x: -34, w: 14 }, price: 10000, level: 28,
+    lease: { weekly: 800, perModule: 300, buyLevel: 42, buyPrice: 40000 },
     products: ['ham', 'steak'],
     modules: [{ level: 28 }, { level: 29, cost: 16000 }, { level: 30, cost: 24000 }, { level: 30, cost: 34000 }, { level: 48, cost: 60000 }],
     interval: 3.5,
@@ -305,10 +307,39 @@ export const BUSINESSES = {
   },
   wind: {
     name: 'Rüzgârlı Sırt Rüzgâr Santrali', emoji: '🌬️', owner: 'Kaptan Nuri', kind: 'wind', workerName: 'teknisyen',
-    plot: { x: 18, w: 22 }, frontZ: -100, price: 60000, level: 33,
+    plot: { x: 18, w: 22 }, frontZ: -100, price: 20000, level: 33,
+    lease: { weekly: 1500, perModule: 500, buyLevel: 46, buyPrice: 70000 },
     products: [], energy: 'wind', energyPerModule: 320, workersPerModule: 1,
     staffLevels: { manager: 32, accountant: 35 },
     modules: [{ level: 33 }, { level: 34, cost: 30000 }, { level: 35, cost: 40000 }, { level: 40, cost: 55000 }, { level: 46, cost: 80000 }],
+  },
+  // ---- Market şubeleri (Sv.50+): rakip marketi satın al ya da kiralık dükkân tut ----
+  // Satın alınınca boş gelir: müdür, muhasebeci ve çalışanları sen atarsın.
+  branch1: {
+    name: 'Köşe Bakkal', emoji: '🏪', owner: 'Bakkal Cemil', kind: 'shop', workerName: 'çalışan',
+    plot: { x: 43.5, w: 6 }, building: { model: 'building-small-c', z: 7.5, scale: 6, labelY: 10.2 },
+    price: 50000, level: 50, products: [], revenuePerModule: 900, workersPerModule: 3, startWorkers: 0,
+    modules: [{ level: 50 }, { level: 52, cost: 25000 }, { level: 56, cost: 40000 }],
+  },
+  branch2: {
+    name: 'Kiralık Dükkân', emoji: '🔑', owner: 'Emlak ofisi', kind: 'shop', workerName: 'çalışan',
+    plot: { x: 50, w: 6 }, building: { model: 'building-small-b', z: 7.5, scale: 6 },
+    price: 15000, level: 52, products: [], revenuePerModule: 1000, workersPerModule: 3, startWorkers: 0,
+    lease: { weekly: 1500, perModule: 600, buyLevel: 60, buyPrice: 70000 },
+    modules: [{ level: 52 }, { level: 54, cost: 25000 }, { level: 58, cost: 40000 }],
+  },
+  branch3: {
+    name: 'Ucuz Market', emoji: '🛍️', owner: 'Ucuzcu A.Ş.', kind: 'shop', workerName: 'çalışan',
+    plot: { x: 36.5, w: 6 }, building: { model: 'building-small-a', z: 7.5, scale: 6 },
+    price: 110000, level: 56, products: [], revenuePerModule: 1400, workersPerModule: 3, startWorkers: 0,
+    modules: [{ level: 56 }, { level: 58, cost: 45000 }, { level: 62, cost: 70000 }],
+  },
+  // ---- Medya (Sv.52): reklam harcaması düşer, ciro artar ----
+  media: {
+    name: 'Kasaba Gazetesi & Radyo', emoji: '📰', owner: 'Basın A.Ş.', kind: 'media', workerName: 'muhabir',
+    plot: { x: -58, w: 6 }, building: { model: 'building-small-b', z: 7.5, scale: 6 },
+    price: 80000, level: 52, products: [], revenuePerModule: 700, workersPerModule: 2,
+    modules: [{ level: 52 }, { level: 55, cost: 30000 }, { level: 60, cost: 50000 }],
   },
   // Lojistik firması: tüm tedarikçiler alındıktan sonra satılığa çıkar, kamyon filosunu yönetir.
   logistics: {
@@ -347,8 +378,9 @@ export const REGIONS = [
   { id: 'valley', name: 'Tedarik vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
   { id: 'logistics', name: 'Lojistik', emoji: '🚛', pos: [38, -35.8], level: 29 },
   { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [3, -97], level: 31 },
-  { id: 'east', name: 'Doğu mahalleleri', emoji: '🏘️', pos: [60, 0], level: 36, soon: true },
-  { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-80, 0], level: 51, soon: true },
+  { id: 'east', name: 'Doğu mahallesi', emoji: '🏘️', pos: [78, 14], level: 36 },
+  { id: 'branches', name: 'Rakip marketler', emoji: '🏪', pos: [43, 12.5], level: 50 },
+  { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-58, 12.5], level: 51 },
   { id: 'port', name: 'Liman', emoji: '⚓', pos: [0, 40], level: 69, soon: true },
 ];
 
@@ -400,3 +432,45 @@ export const ELECTRICITY = {
   gridPrice: 0.8,    // şebekeye satış fiyatı (birim başı $)
   wind: [0.5, 1.4],  // günlük rüzgâr gücü aralığı
 };
+
+// ---- Kiralar (haftalık, her 7. günün sonunda) ----------------------------------------------
+// Market Sv.20'ye kadar kiralıktır; Sv.20'den sonra muhasebe odasındaki banka sekmesinden alınır.
+// Kira, market büyüdükçe artar.
+export const RENT = {
+  week: 7,
+  market: { base: 120, room: 140, shelf: 8, parking: 40, depot: 40, buyLevel: 20, buyWeeks: 30 },
+};
+
+// ---- Konut (Sv.36+, doğu mahallesi) -------------------------------------------------------
+export const HOUSING = {
+  fromLevel: 36,
+  plotPrice: 3000,
+  plotSize: 10,
+  plots: [[61, 4], [73, 4], [85, 4], [97, 4], [61, -10], [73, -10], [85, -10], [97, -10], [61, -24], [73, -24], [85, -24], [97, -24]],
+  types: {
+    house: { name: 'Müstakil ev', emoji: '🏠', level: 37, cost: 8000, days: 2, units: 1, rent: 2000, renovation: 800 },
+    apartment: { name: 'Apartman (4 daire)', emoji: '🏢', level: 39, cost: 28000, days: 4, units: 4, rent: 1500, renovation: 600 },
+    site: { name: 'Site (8 daire, havuzlu)', emoji: '🏘️', level: 42, cost: 65000, days: 6, units: 8, rent: 1800, renovation: 700 },
+    villa: { name: 'Lüks villa', emoji: '🏡', level: 47, cost: 45000, days: 4, units: 1, rent: 9000, renovation: 3000 },
+  },
+  agent: { level: 37, hire: 200, commission: 0.1 },  // emlakçı: her binaya bir tane, kiradan %10
+  tenancyDays: [14, 42],   // kiracının kalma süresi (gün)
+  searchDays: [1, 2],      // elle ilana verince kiracı bulma süresi
+  agentSearchDays: [0, 1], // emlakçıyla
+  company: { level: 38, price: 25000, timeFactor: 0.6, costFactor: 0.85 }, // kendi inşaat şirketin
+};
+
+// ---- Belediye ve reklam ---------------------------------------------------------------------
+export const MUNICIPALITY = {
+  minBusinesses: 4,   // işletme sayısı 3'ü geçince denetim başlar
+  chance: 0.25,       // her sabah ceza olasılığı
+  base: 150, perBusiness: 60,
+  reasons: ['Ruhsat denetimi', 'Kaldırım işgali', 'Gürültü şikâyeti', 'Çevre denetimi', 'Tabela izni', 'Hijyen denetimi', 'İskân eksikliği'],
+};
+export const AD_TYPES = {
+  flyer: { name: 'El ilanı', emoji: '📄', cost: 80, boost: 0.12, level: 2 },
+  newspaper: { name: 'Gazete ilanı', emoji: '📰', cost: 200, boost: 0.25, level: 6 },
+  radio: { name: 'Radyo reklamı', emoji: '📻', cost: 500, boost: 0.45, level: 12 },
+  tv: { name: 'TV reklamı', emoji: '📺', cost: 1500, boost: 0.8, level: 25 },
+};
+export const MEDIA = { adDiscount: 0.6, salesBoost: 1.15 }; // medya sende: reklam %60 ucuz, müşteri +%15

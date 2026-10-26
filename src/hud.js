@@ -50,6 +50,14 @@ export class Hud {
     el.classList.toggle('hidden', !text);
   }
 
+  /** Sv.21+: toplam çalışan sayısı (null: gizle). */
+  setStaff(n) {
+    if (n === this.staffShown) return;
+    this.staffShown = n;
+    document.getElementById('staff-pill').classList.toggle('hidden', n === null);
+    if (n !== null) document.getElementById('staff-count').textContent = n;
+  }
+
   setRating(stars) {
     const v = stars.toFixed(1);
     if (this.ratingShown === v) return;
@@ -86,6 +94,18 @@ export class Hud {
     if (st.interestUnpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen faiz borca eklendi (${st.missed}/3)</span><b>$${formatMoney(st.interestUnpaid)}</b></div>`);
     if (st.seized) extra.push(`<div class="bad"><span>🏦 Banka el koydu: ${st.seized.emoji} ${st.seized.name} (borç kapanınca 💼 tabletten geri al)</span><b>−$${formatMoney(st.seized.price)} borç</b></div>`);
     if (st.seizeNone) extra.push(`<div class="bad"><span>⚠️ Faiz 3 gündür ödenmiyor — borcunu azalt!</span><b></b></div>`);
+    if (st.fine) extra.push(`<div class="bad"><span>🏛️ Belediye cezası: ${st.fine.reason}</span><b>−$${formatMoney(st.fine.amount)}</b></div>`);
+    if (st.rent) {
+      if (st.rent.market) extra.push(`<div class="bad"><span>🔑 Market kirası (haftalık)</span><b>−$${formatMoney(st.rent.market)}</b></div>`);
+      if (st.rent.biz) extra.push(`<div class="bad"><span>🔑 Kiralık işletmelerin kirası (haftalık)</span><b>−$${formatMoney(st.rent.biz)}</b></div>`);
+      if (st.rent.unpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen kira krediye yazıldı</span><b>$${formatMoney(st.rent.unpaid)}</b></div>`);
+    }
+    if (st.housing) {
+      const h = st.housing;
+      if (h.rent) extra.push(`<div class="good"><span>🏘️ Haftalık kira geliri${h.commission ? ` (emlakçı %10: −$${formatMoney(h.commission)})` : ''}</span><b>+$${formatMoney(h.rent - (h.commission ?? 0))}</b></div>`);
+      if (h.left) extra.push(`<div class="bad"><span>🚪 Kiracısı çıkan daire (tadilat gerekli)</span><b>${h.left}</b></div>`);
+      if (h.renovation) extra.push(`<div class="bad"><span>🔧 Emlakçının yaptırdığı tadilat</span><b>−$${formatMoney(h.renovation)}</b></div>`);
+    }
     if (st.marketWages) extra.push(`<div class="bad"><span>👥 Market çalışanlarının maaşı</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
     if (st.quit?.length) extra.push(`<div class="bad"><span>😞 Maaşı ödenemeyip ayrılan: ${summarize(st.quit)}</span><b>${st.quit.length}</b></div>`);
     if (st.interestEarned) extra.push(`<div class="good"><span>🏦 Mevduat faizi</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);
