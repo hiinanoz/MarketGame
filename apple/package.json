@@ -2,7 +2,7 @@
   "name": "market-tycoon-apple",
   "private": true,
   "version": "1.0.0",
-  "description": "Market Tycoon — iPhone, iPhone Duo, iPad ve Mac (Capacitor 8) paketi. Oyun kodu ../src'den derlenir.",
+  "description": "Market Krallığı — iPhone, iPhone Duo, iPad ve Mac (Capacitor 8) paketi. Oyun kodu ../src'den derlenir.",
   "scripts": {
     "web": "cd .. && vite build --mode ios",
     "sync": "npm run web && cap sync ios",

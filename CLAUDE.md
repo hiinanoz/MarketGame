@@ -1,4 +1,4 @@
-# Market Tycoon — geliştirici notları
+# Market Krallığı (EN: Corner Shop Empire) — geliştirici notları
 
 - Three.js + Vite, saf JavaScript (ES modülleri), derleme adımı dışında framework yok.
 - Kullanıcıyla Türkçe konuşulur; oyun içi metinler ve kod yorumları Türkçe.

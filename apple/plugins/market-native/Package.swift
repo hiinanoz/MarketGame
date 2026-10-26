@@ -1,7 +1,7 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-// Market Tycoon'un uygulama içi Capacitor eklentileri (Game Center, iCloud kayıt, ses oturumu).
+// Market Krallığı'un uygulama içi Capacitor eklentileri (Game Center, iCloud kayıt, ses oturumu).
 let package = Package(
     name: "MarketNative",
     platforms: [.iOS(.v15)],

@@ -1,4 +1,4 @@
-# Market Tycoon — 100 seviyelik oyun tasarımı
+# Market Krallığı — 100 seviyelik oyun tasarımı
 
 Hikâye: Kasabaya geliyorsun, bankadan kredi çekip küçük bir market alıyorsun. Marketi büyütüyor, tedarikçileri, santralleri ve arazileri satın alıyor, işletmeleri müdür ve muhasebecilere devrediyor, siyasete giriyor, kendi bankanı kuruyor ve sonunda **şehrin tamamını** satın alıyorsun. Son parsel alındığında oyun biter ve **bitirme süren** derecelendirilir.
 

@@ -1,4 +1,4 @@
-# Market Tycoon — Apple sürümü (iPhone, iPhone Duo, iPad, Mac)
+# Market Krallığı / Corner Shop Empire — Apple sürümü (iPhone, iPhone Duo, iPad, Mac)
 
 Bu klasör oyunu Capacitor 8 ile yerel iOS uygulamasına paketler. **Oyun kodu kopyalanmaz**: `../src` tek kaynaktır,
 `npm run web` onu `www/` klasörüne derler. Plan ve kararlar: `../docs/APPLE.md`.

@@ -1,4 +1,4 @@
-# Market Tycoon
+# Market Krallığı (Corner Shop Empire)
 
 Township tarzı, joystick ile oynanan 3D market işletme oyunu. Tarayıcıda (telefon ve bilgisayar) çalışır; Three.js ile yazıldı.
 
