@@ -1,0 +1,14 @@
+{
+  "appId": "com.uyelikposya.markettycoon",
+  "appName": "Market Tycoon",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#7cc46a",
+    "allowsLinkPreview": false,
+    "scrollEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 0, "launchAutoHide": true }
+  }
+}
