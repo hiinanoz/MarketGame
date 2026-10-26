@@ -130,9 +130,11 @@ function showHome(game) {
     platform.accessPoint(false);
     game.paused = false;
   };
-  const showSub = (html) => {
-    sub.innerHTML = `${html}<button data-back class="primary">Geri</button>`;
+  // Alt sayfa: başlık ve Geri düğmesi sabit, aradaki içerik kaydırılır
+  const showSub = (title, body, closeLabel = 'Tamam') => {
+    sub.innerHTML = `<div class="sub-head"><button data-back class="sub-back" aria-label="Geri">‹</button><h3>${title}</h3></div><div class="sub-body">${body}</div><button data-back class="primary sub-close">${closeLabel}</button>`;
     sub.classList.remove('hidden');
+    sub.querySelector('.sub-body').scrollTop = 0;
   };
   sub.addEventListener('click', (e) => { if (e.target.closest('[data-back]')) sub.classList.add('hidden'); });
   document.getElementById('home-continue').addEventListener('click', close);
@@ -142,15 +144,21 @@ function showHome(game) {
     document.getElementById('menu-btn').click();
   });
   document.getElementById('home-help').addEventListener('click', () => {
-    showSub(`<h3>Nasıl oynanır</h3>${HELP.map(([e, t]) => `<p class="help-row"><span>${e}</span>${t}</p>`).join('')}`);
+    showSub('Nasıl oynanır', `${HELP.map(([e, t]) => `<p class="help-row"><span>${e}</span>${t}</p>`).join('')}`);
   });
   document.getElementById('home-ach').addEventListener('click', async () => {
     const { ACHIEVEMENTS } = await import('./achievements.js');
     const earned = game.achievements.earned;
-    showSub(`<h3>Başarımlar ${earned.size}/${ACHIEVEMENTS.length}</h3><div class="ach-list">${ACHIEVEMENTS.map((a) => `<div class="${earned.has(a.id) ? 'on' : ''}"><span>${earned.has(a.id) ? a.emoji : '🔒'}</span>${a.name}</div>`).join('')}</div>`);
+    // Kazanılanlar üstte; ilerleme çubuğu başlığın altında
+    const list = [...ACHIEVEMENTS].sort((x, y) => earned.has(y.id) - earned.has(x.id));
+    const pct = Math.round((earned.size / ACHIEVEMENTS.length) * 100);
+    showSub(
+      `Başarımlar <small>${earned.size}/${ACHIEVEMENTS.length}</small>`,
+      `<div class="ach-progress"><i style="width:${pct}%"></i></div><div class="ach-list">${list.map((a) => `<div class="${earned.has(a.id) ? 'on' : ''}"><span>${earned.has(a.id) ? a.emoji : '🔒'}</span>${a.name}</div>`).join('')}</div>`,
+    );
   });
   document.getElementById('home-new').addEventListener('click', () => {
-    showSub(`<h3>Yeni oyun?</h3><p>Mevcut oyunun (${game.marketTitle}, Gün ${game.day.day}) silinir${platform.native ? ' — iCloud kopyası dahil' : ''}. Bu geri alınamaz.</p><button data-reset class="danger">Sil ve yeni oyuna başla</button>`);
+    showSub('Yeni oyun?', `<p>Mevcut oyunun (${game.marketTitle}, Gün ${game.day.day}) silinir${platform.native ? ' — iCloud kopyası dahil' : ''}. Bu geri alınamaz.</p><button data-reset class="danger">Sil ve yeni oyuna başla</button>`, 'Vazgeç');
     sub.querySelector('[data-reset]').addEventListener('click', () => game.reset());
   });
 }

@@ -458,8 +458,21 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .home-logo { font-size: 56px; line-height: 1; }
 .home-meta { margin: -4px 0 6px; font-weight: 700; opacity: 0.7; }
 .home-panel > button { min-height: 48px; font-size: 17px; }
-.home-sub { position: absolute; inset: 0; background: var(--panel); border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; text-align: left; }
-.home-sub h3 { margin: 0 0 4px; text-align: center; }
+/* Alt sayfa (başarımlar, yardım): başlık ve Tamam sabit, orta kısım kaydırılır */
+.home-panel { min-height: min(560px, calc(100dvh - 48px)); }
+.home-sub { position: absolute; inset: 0; background: var(--panel); border-radius: 20px; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; text-align: left; overflow: hidden; }
+.home-sub.hidden { display: none; }
+.sub-head { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.sub-head h3 { margin: 0; flex: 1; text-align: center; padding-right: 40px; font-size: 20px; }
+.sub-head h3 small { opacity: 0.55; font-size: 15px; }
+.panel button.sub-back { width: 40px; height: 40px; padding: 0; font-size: 28px; line-height: 1; background: #ece6d8; }
+.sub-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 18px), transparent); mask-image: linear-gradient(#000 calc(100% - 18px), transparent); padding-bottom: 14px; }
+.sub-close { flex: 0 0 auto; }
+.ach-progress { height: 8px; border-radius: 4px; background: #ece6d8; overflow: hidden; flex: 0 0 auto; }
+.ach-progress i { display: block; height: 100%; background: #3fae49; border-radius: 4px; }
+/* Kaydırılan tüm paneller dokunmayla kaysın (gövdedeki touch-action:none'ı aş) */
+.overlay > .panel, #summary .sum-extra, .sub-body { touch-action: pan-y; }
 .help-row { display: flex; gap: 10px; margin: 0; font-weight: 600; font-size: 14px; }
 .help-row span { font-size: 22px; }
 .ach-list { display: flex; flex-direction: column; gap: 4px; }
