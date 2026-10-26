@@ -1,5 +1,9 @@
 # Apple ekosistemi (oyun bittikten sonra)
 
+> Güncel ve ayrıntılı plan (26 Ekim 2026): https://claude.ai/artifact/7KQLGhgyw8NFhxXCUSCViy
+> Özet: Capacitor 8 ile `apple/` klasöründe tek kod tabanından iPhone, iPhone Duo, iPad ve Mac; Game Center ve iCloud için
+> uygulama içi Swift eklentileri; Apple TV (tvOS'ta WebKit yok) ayrı yerel sürüm olarak sonra.
+
 Hedef: iPhone, iPad (ve katlanabilir/büyük ekranlı modeller), Apple TV. App Store'a yükleme oyun tamamlandıktan sonra ayrı bir çalışma olarak yapılacak.
 
 ## Yaklaşım
