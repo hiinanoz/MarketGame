@@ -423,3 +423,5 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .poll-row { display: grid; grid-template-columns: 120px 1fr 44px; gap: 8px; align-items: center; font-size: 13px; font-weight: 700; }
 .poll-row .progress { margin: 0; }
 .poll-row.me .progress i { background: linear-gradient(90deg, #7b3fa0, #c06bd8); }
+.up { color: #2e7d32; font-weight: 800; }
+.down { color: #c62828; font-weight: 800; }

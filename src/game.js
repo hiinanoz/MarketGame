@@ -21,6 +21,7 @@ import { Rent } from './rent.js';
 import { Housing } from './housing.js';
 import { Ads } from './ads.js';
 import { Politics } from './politics.js';
+import { Finance } from './finance.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
@@ -99,6 +100,7 @@ export class Game {
     this.housing = new Housing(this);
     this.ads = new Ads(this);
     this.politics = new Politics(this);
+    this.finance = new Finance(this);
     this.isMayor = false; // Sv.60: belediye başkanı (ceza kesilmez)
     this.marketName = 'Kasaba';
 
@@ -655,7 +657,7 @@ export class Game {
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
-    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor;
+    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor;
     const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
     const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
     this.spawnTimer -= dt;
@@ -729,7 +731,7 @@ export class Game {
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
     p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 51 ? -90 : -49, this.level >= 36 ? 104 : 45);
-    p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, 17.5);
+    p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, this.level >= 66 ? 54 : 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
 
@@ -935,6 +937,7 @@ export class Game {
       housing: this.housing.serialize(),
       ads: this.ads.serialize(),
       politics: this.politics.serialize(),
+      finance: this.finance.serialize(),
       marketName: this.marketName,
     };
     try {
@@ -992,6 +995,7 @@ export class Game {
     this.housing.restore(data.housing);
     this.ads.restore(data.ads);
     this.politics.restore(data.politics);
+    this.finance.restore(data.finance);
     if (data.marketName) this.setMarketName(data.marketName, true);
     if (data.depot) this.depot.restore(data.depot);
     else {

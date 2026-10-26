@@ -348,6 +348,44 @@ export const BUSINESSES = {
     staffLevels: { manager: 41, accountant: 41 },
     modules: [{ level: 41 }, { level: 43, cost: 45000 }, { level: 46, cost: 60000 }, { level: 52, cost: 80000 }, { level: 60, cost: 110000 }],
   },
+  // ---- Liman ve sanayi bölgesi (Sv.68+, ön caddenin güneyi) ----
+  hotel: {
+    name: 'Anadolu Otel', emoji: '🏨', owner: 'Anadolu Otelcilik', kind: 'hotel', workerName: 'personel',
+    plot: { x: -34, w: 10 }, building: { model: 'building_H_withoutBase', z: 31, scale: 5, facing: -1, labelY: 17 },
+    price: 120000, level: 68, products: [], revenuePerModule: 2500, workersPerModule: 3, startWorkers: 0,
+    modules: [{ level: 68 }, { level: 70, cost: 60000 }, { level: 74, cost: 90000 }],
+  },
+  restaurant: {
+    name: 'Lezzet Restoran Zinciri', emoji: '🍽️', owner: 'Lezzet A.Ş.', kind: 'restaurant', workerName: 'garson',
+    plot: { x: -20, w: 10 }, building: { model: 'building_B_withoutBase', z: 31, scale: 5, facing: -1, labelY: 11 },
+    price: 70000, level: 68, products: [], revenuePerModule: 1600, workersPerModule: 3, startWorkers: 0,
+    modules: [{ level: 68 }, { level: 71, cost: 35000 }, { level: 75, cost: 55000 }],
+  },
+  port: {
+    name: 'Kasaba Limanı', emoji: '⚓', owner: 'Liman İşletmesi', kind: 'port', workerName: 'liman işçisi',
+    plot: { x: 26, w: 26 }, building: { procedural: 'port', z: 48, size: [26, 10], facing: -1, labelY: 9 },
+    price: 200000, level: 69, products: [], revenuePerModule: 3000, workersPerModule: 4, startWorkers: 0,
+    importDiscount: 0.08, // modül başı mal alımında indirim (ithalat)
+    modules: [{ level: 69 }, { level: 72, cost: 100000 }, { level: 78, cost: 150000 }],
+  },
+  factory: {
+    name: 'Sanayi Fabrikası', emoji: '🏭', owner: 'Sanayi Bölgesi', kind: 'factory', workerName: 'işçi',
+    plot: { x: -30, w: 16 }, building: { procedural: 'factory', z: 46, size: [16, 9], facing: -1, labelY: 9 },
+    price: 150000, level: 73, products: [], revenuePerModule: 3500, workersPerModule: 5, startWorkers: 0,
+    modules: [{ level: 73 }, { level: 75, cost: 80000 }, { level: 79, cost: 120000 }],
+  },
+  mall: {
+    name: 'Kasaba AVM', emoji: '🏬', owner: 'AVM Yatırım', kind: 'mall', workerName: 'çalışan',
+    plot: { x: -2, w: 12 }, building: { model: 'building_E_withoutBase', z: 31, scale: 6, facing: -1, labelY: 16 },
+    price: 300000, level: 75, products: [], revenuePerModule: 6000, workersPerModule: 6, startWorkers: 0, customers: 1.05,
+    modules: [{ level: 75 }, { level: 78, cost: 150000 }, { level: 82, cost: 220000 }],
+  },
+  airport: {
+    name: 'Kasaba Havalimanı', emoji: '✈️', owner: 'Ulaştırma Bakanlığı (ihale)', kind: 'airport', workerName: 'personel',
+    plot: { x: -78, w: 26 }, building: { procedural: 'airport', z: 40, size: [26, 18], facing: -1, labelY: 9 },
+    price: 500000, level: 76, products: [], revenuePerModule: 9000, workersPerModule: 8, startWorkers: 0, customers: 1.1,
+    modules: [{ level: 76 }, { level: 80, cost: 250000 }, { level: 85, cost: 400000 }],
+  },
   // Lojistik firması: tüm tedarikçiler alındıktan sonra satılığa çıkar, kamyon filosunu yönetir.
   logistics: {
     name: 'Hızlı Nakliyat', emoji: '🚛', owner: 'Rıza Bey', kind: 'garage', workerName: 'şoför',
@@ -388,7 +426,7 @@ export const REGIONS = [
   { id: 'east', name: 'Doğu mahallesi', emoji: '🏘️', pos: [78, 14], level: 36 },
   { id: 'branches', name: 'Rakip marketler', emoji: '🏪', pos: [43, 12.5], level: 50 },
   { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-66, 12.5], level: 51 },
-  { id: 'port', name: 'Liman', emoji: '⚓', pos: [0, 40], level: 69, soon: true },
+  { id: 'port', name: 'Liman ve sanayi', emoji: '⚓', pos: [0, 26], level: 66 },
 ];
 
 // Başlangıç: banka kuruluş kredisiyle market alınır (yeni oyunlarda)
@@ -523,4 +561,31 @@ export const POLITICS = {
     stadium: { name: 'Stadyum', emoji: '🏟️', cost: 150000, income: 2000, customers: 1.4, everyDays: 7, desc: 'haftada bir maç günü +%40 müşteri', pos: [-78, -20], size: [20, 14] },
   },
   names: ['Ahmet Kaya', 'Selin Demir', 'Murat Aksoy', 'Zeynep Yıldız', 'Kemal Şahin', 'Elif Arslan', 'Hasan Çelik', 'Ayşe Koç', 'Burak Öztürk'],
+};
+
+// ---- Finans (Sv.66–80) ----------------------------------------------------------------------
+export const FINANCE = {
+  fromLevel: 66,
+  investLicense: { level: 66, price: 60000 },  // yatırım şirketi: hisse alım satımı
+  // Borsadaki rakip şirketler. %51 ve üstü hisse = kontrol (etki açılır).
+  companies: {
+    ucuzcu: { name: 'Ucuzcu Market Zinciri', emoji: '🛍️', value: 400000, level: 66, effect: 'customers', amount: 1.1, effectText: 'rakip zincir senin: +%10 müşteri' },
+    otel: { name: 'Anadolu Otelcilik', emoji: '🏨', value: 600000, level: 66, effect: 'dividend', amount: 2, effectText: 'temettü ×2' },
+    tekstil: { name: 'Kasaba Tekstil', emoji: '🧵', value: 500000, level: 66, effect: 'dividend', amount: 2, effectText: 'temettü ×2' },
+    enerji: { name: 'Kuzey Enerji A.Ş.', emoji: '⚡', value: 900000, level: 74, effect: 'electricity', amount: 0.5, effectText: 'elektrik faturası yarıya iner' },
+    banka: { name: 'Şehir Bankası', emoji: '🏦', value: 1500000, level: 79, effect: 'interest', amount: 0.5, effectText: 'kredi faizin yarıya iner' },
+  },
+  control: 51,
+  dividend: 0.004,        // günlük temettü (hisse değerinin)
+  drift: 0.004, vol: 0.04, // günlük fiyat değişimi
+  // Kendi bankan
+  bank: {
+    license: { level: 70, price: 250000 },
+    rate: 0.01,             // sermayenin günlük faiz geliri (halka verilen krediler)
+    branch: { level: 71, price: 50000, income: 1500, max: 4 },
+    card: { level: 72, price: 80000, boost: 0.3 },
+    insurance: { level: 72, price: 80000, boost: 0.2 },
+    center: { level: 80, price: 500000 }, // finans merkezi: kendi kredilerin faizsiz, limit ×2
+  },
+  ipo: { level: 77, share: 0.2 },           // halka arz: şirket değerinin %20'si nakit
 };

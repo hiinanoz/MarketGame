@@ -91,6 +91,8 @@ const PROPS = {
   ],
   [CITY]: [
     'car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_police', 'streetlight', 'bench', 'bush',
+    // Sv.66+ liman bölgesi: otel, restoran, AVM, banka genel merkezi
+    'building_B_withoutBase', 'building_E_withoutBase', 'building_G_withoutBase', 'building_H_withoutBase',
   ],
   // Enerji (güneş, rüzgâr) ve lojistik konteynerleri — KayKit Space Base Bits (CC0)
   [SPACE]: ['solarpanel', 'windturbine_tall', 'windturbine_low'],

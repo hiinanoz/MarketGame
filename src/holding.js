@@ -40,6 +40,19 @@ export class Holding {
     return this.businesses.filter((b) => b.owned);
   }
 
+  /** Sahip olunan işletmelerin müşteri çarpanı (AVM, havalimanı). */
+  get customerFactor() {
+    let f = 1;
+    for (const b of this.owned) if (b.def.customers) f *= b.def.customers;
+    return f;
+  }
+
+  /** Liman: ithalatla mal alımında indirim (modül başına). */
+  get importDiscount() {
+    const p = this.get('port');
+    return p?.owned ? Math.min(0.3, p.def.importDiscount * p.modules * p.efficiency) : 0;
+  }
+
   /** Medya şirketi sende mi (reklam indirimi + müşteri artışı)? */
   get mediaOwned() {
     return !!this.get('media')?.owned;
@@ -95,7 +108,7 @@ export class Holding {
 
   render() {
     this.el.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === this.tab));
-    this.body.innerHTML = this.tab === 'map' ? this.renderMap() : this.tab === 'estate' ? this.renderEstate() : this.renderBusinesses();
+    this.body.innerHTML = this.tab === 'map' ? this.renderMap() : this.tab === 'estate' ? this.renderEstate() : this.tab === 'fin' ? this.game.finance.render() : this.renderBusinesses();
   }
 
   renderBusinesses() {
@@ -249,6 +262,11 @@ export class Holding {
     const t = e.target.closest('button');
     if (!t || t.disabled) return;
     const d = t.dataset;
+    if (this.tab === 'fin') {
+      this.game.finance.onClick(d);
+      this.render();
+      return;
+    }
     if (d.buy) this.get(d.buy).buy();
     if (d.expand) this.get(d.expand).expand();
     if (d.back) this.get(d.back).buyBack();
@@ -306,7 +324,7 @@ export class Holding {
       pos = [p.x, p.z + 6.5];
     } else if (key.startsWith('biz:')) {
       const b = this.get(key.slice(4));
-      pos = [b.x, b.frontZ + 1.2];
+      pos = [b.x, b.frontZ + (b.def.building?.facing === -1 ? -1.2 : 1.2)];
     } else {
       pos = REGIONS.find((r) => r.id === key)?.pos;
     }

@@ -106,6 +106,10 @@ export class Hud {
       if (h.left) extra.push(`<div class="bad"><span>🚪 Kiracısı çıkan daire (tadilat gerekli)</span><b>${h.left}</b></div>`);
       if (h.renovation) extra.push(`<div class="bad"><span>🔧 Emlakçının yaptırdığı tadilat</span><b>−$${formatMoney(h.renovation)}</b></div>`);
     }
+    if (st.finance) {
+      if (st.finance.dividend) extra.push(`<div class="good"><span>📈 Hisse temettüsü</span><b>+$${formatMoney(st.finance.dividend)}</b></div>`);
+      if (st.finance.bank) extra.push(`<div class="good"><span>🏦 Bankanın faiz geliri</span><b>+$${formatMoney(st.finance.bank)}</b></div>`);
+    }
     if (st.politics) {
       const p = st.politics;
       if (p.sponsor) extra.push(`<div class="bad"><span>⚽ Sponsorluk</span><b>−$${formatMoney(p.sponsor)}</b></div>`);

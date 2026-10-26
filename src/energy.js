@@ -65,7 +65,7 @@ export class Energy {
     // Güneş bataryasızken sadece gündüz tüketimini karşılar
     const solarUsable = battery ? solar : Math.min(solar, C * (1 - E.nightShare));
     const own = Math.min(C, wind + solarUsable);
-    const bill = Math.round(C - own);
+    const bill = Math.round((C - own) * (g.finance?.electricityFactor ?? 1));
     const surplus = Math.max(0, wind + solar - own);
     const gridIncome = accountant ? Math.round(surplus * E.gridPrice) : 0;
     // Fatura: kasadan; yetmezse kalan krediye yazılır

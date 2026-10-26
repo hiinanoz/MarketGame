@@ -64,7 +64,7 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 | **S3** ✅ | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
 | **S4** 🚧 | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
 | **S5** 🚧 | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
-| **S6** | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
+| **S6** ✅ | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
 | **S7** | 81–100 | Bölge bölge satın alma, mega projeler, final, derece ekranı | |
 
 ## S1'de yapılanlar (Sv.21–25)
@@ -129,6 +129,14 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Başkanlık:** belediye cezası yok; vergi oranı (%0–30, %5 üstü memnuniyeti düşürür), imar izni (doğu mahallesinde 4 yeni arsa), şehir projeleri ihalesi (otogar: günlük gelir + %5 müşteri; stadyum: günlük gelir + haftalık maç günü %40 müşteri).
 - **Otokrasi:** üst üste 4 seçim kazanınca geçilebilir; seçim yapılmaz, kral olursun. Halk memnuniyeti 2 yıl (48 gün) üst üste %50'nin altında kalırsa otokrasi biter, 6 ay sonra seçim yapılır.
 - Halk memnuniyeti = market puanı + kamu binaları + okul/sağlık + projeler + istihdam − yüksek vergi.
+
+## S6'da yapılanlar (Sv.66–80, finans)
+
+- **Liman ve sanayi bölgesi** ön caddenin güneyinde, kıyıda (Sv.66'da yürünebilir): Anadolu Otel ve Lezzet Restoran Zinciri (Sv.68), Kasaba Limanı (Sv.69; modül başı mal alımı %8 ucuz, Sv.78 genişletme), Sanayi Fabrikası (Sv.73), Kasaba AVM (Sv.75, +%5 müşteri), Havalimanı ihalesi (Sv.76, +%10 müşteri). Hepsi boş gelir: müdür, muhasebeci, çalışan atanır.
+- **Yatırım şirketi** (Sv.66): tabletteki 📈 Finans sekmesinde borsa. Hisse fiyatları her gün değişir, temettü öder. %51 = kontrol: Ucuzcu zinciri (+%10 müşteri, Sv.66), Anadolu Otelcilik / Kasaba Tekstil (temettü ×2), Kuzey Enerji (Sv.74, elektrik −%50), Şehir Bankası (Sv.79, kredi faizi −%50).
+- **Kendi bankan** (Sv.70 lisans): sermaye koy → günlük %1 faiz geliri; şubeler (Sv.71, 4'e kadar), kredi kartı ve sigorta (Sv.72, gelir +%30/+%20), **finans merkezi** (Sv.80): kendi kredilerin faizsiz, kredi limiti ×2. Banka genel merkezi binası kıyıda görünür.
+- **Halka arz** (Sv.77): şirket değerinin %20'si nakit. Tablette şirket değeri ve portföy görünür.
+- Yeni modeller: KayKit City Builder binaları (B, E, G, H; CC0, mevcut dokuyu paylaşır).
 
 ## Bitirme ve derece
 

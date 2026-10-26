@@ -35,7 +35,10 @@ export class Business {
     const { x, w } = this.def.plot;
     this.x = x;
     this.w = w;
-    this.frontZ = this.def.building ? this.def.building.z + 3.2 : this.def.frontZ ?? VALLEY_FRONT_Z;
+    const B = this.def.building;
+    // Hazır bina: ön cephe caddeye bakar (facing -1: binanın kuzeyi = caddenin güneyindeki binalar)
+    this.bHalf = B ? (B.size ? B.size[1] / 2 : B.scale / 2) : 0;
+    this.frontZ = B ? B.z + (B.facing === -1 ? -1 : 1) * (this.bHalf + 0.2) : this.def.frontZ ?? VALLEY_FRONT_Z;
     this.leased = false;       // kiralık (haftalık kira öder, ileride satın alınabilir)
     this.customName = '';      // oyuncunun verdiği isim
     this.battery = false;      // güneş tarlası: batarya deposu
@@ -62,7 +65,7 @@ export class Business {
   /** Hizmet geliri (şube cirosu, medya reklam geliri): tam kadroyla günlük. */
   get serviceIncome() {
     if (!this.def.revenuePerModule) return 0;
-    const boost = this.def.kind === 'shop' && this.game.holding?.mediaOwned ? MEDIA.salesBoost : 1;
+    const boost = ['shop', 'mall', 'restaurant', 'hotel'].includes(this.def.kind) && this.game.holding?.mediaOwned ? MEDIA.salesBoost : 1;
     return Math.round(this.def.revenuePerModule * this.modules * this.efficiency * boost);
   }
   /** Kiralıksa haftalık kira (büyüdükçe artar). */
@@ -447,14 +450,20 @@ export class Business {
     if (this.isBuilding) {
       // Hazır bina (Kenney City Builder, MIT)
       const b = this.def.building;
-      const m = prop(b.model);
-      m.scale.setScalar(b.scale);
+      let m;
+      if (b.procedural) m = proceduralBuilding(b.procedural, b.size);
+      else {
+        m = prop(b.model);
+        m.scale.setScalar(b.scale);
+      }
       m.position.set(this.x, 0, b.z);
+      if (b.facing === -1) m.rotation.y = Math.PI;
       m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       this.root.add(m);
       this.front = m;
       this.fence = new THREE.Group();
-      this.game.nav.setBox(`biz-${this.id}`, { minX: this.x - b.scale / 2, maxX: this.x + b.scale / 2, minZ: b.z - b.scale / 2, maxZ: b.z + b.scale / 2 });
+      const hw = b.size ? b.size[0] / 2 : b.scale / 2;
+      this.game.nav.setBox(`biz-${this.id}`, { minX: this.x - hw, maxX: this.x + hw, minZ: b.z - this.bHalf, maxZ: b.z + this.bHalf });
       this.rebuild();
       return;
     }
@@ -513,7 +522,7 @@ export class Business {
   buildSign() {
     this.label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
     this.label.renderOrder = 6;
-    if (this.isBuilding) this.label.position.set(this.x, this.def.building.labelY ?? 8.2, this.def.building.z + 2);
+    if (this.isBuilding) this.label.position.set(this.x, this.def.building.labelY ?? 8.2, this.def.building.z + (this.def.building.facing === -1 ? 0 : 2));
     else this.label.position.set(this.x, 6.4, this.frontZ - 2);
     this.root.add(this.label);
     this.updateLabel(true);
@@ -590,8 +599,9 @@ export class Business {
     if (!this.owned) return;
     if (this.isBuilding) {
       // Çalışanlar içeride; müdür ve muhasebeci kapının önünde
-      if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 1.6, this.frontZ + 0.6));
-      if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 1.6, this.frontZ + 0.6));
+      const dz = this.def.building.facing === -1 ? -0.6 : 0.6;
+      if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 1.6, this.frontZ + dz));
+      if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 1.6, this.frontZ + dz));
       return;
     }
     const shown = Math.min(this.workers, 6);
@@ -815,4 +825,56 @@ class Standing extends Character {
     this.root.rotation.y = 0;
     game.scene.add(this.root);
   }
+}
+
+// ---- Liman bölgesi yapıları (basit) ----
+
+function pbox(w, h, d, color, x, y, z) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
+  m.position.set(x, y, z);
+  return m;
+}
+
+/** Ön cephesi +z'ye bakan basit yapılar (facing -1 ile döndürülür). */
+function proceduralBuilding(type, [w, d]) {
+  const g = new THREE.Group();
+  if (type === 'port') {
+    // Rıhtım, iki vinç, konteyner yığınları
+    g.add(pbox(w, 0.6, d, 0x9e9e9e, 0, 0.3, 0));
+    const colors = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0xfb8c00];
+    for (let i = 0; i < 10; i++) {
+      const c = pbox(2.4, 1.1, 1.1, colors[i % colors.length], -w / 2 + 2.5 + (i % 5) * 2.7, 1.15 + Math.floor(i / 5) * 1.1, 1.5);
+      g.add(c);
+    }
+    for (const x of [-w / 4, w / 4]) {
+      for (const dx of [-1, 1]) for (const dz of [0, 2.4]) g.add(pbox(0.35, 9, 0.35, 0xf9a825, x + dx, 4.8, -d / 2 + 1 + dz));
+      g.add(pbox(0.9, 0.6, 13, 0xf9a825, x, 9.5, -d / 2 + 4)); // kol denize uzanır
+      g.add(pbox(1.6, 1.2, 1.6, 0x455a64, x, 8.6, -d / 2 + 2.2)); // kabin
+    }
+  } else if (type === 'factory') {
+    g.add(pbox(w, 4.5, d * 0.8, 0xb0a596, 0, 2.25, 0));
+    for (let i = 0; i < 3; i++) g.add(pbox(w / 3 - 0.2, 1.2, d * 0.8, 0x78909c, -w / 3 + i * (w / 3), 5.1, 0));
+    for (const x of [-w / 3, w / 4]) {
+      const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 6, 10), new THREE.MeshStandardMaterial({ color: 0x8d6e63 }));
+      ch.position.set(x, 6.5, -d / 4);
+      g.add(ch);
+    }
+  } else if (type === 'airport') {
+    // Pist + terminal + kule
+    const runway = pbox(w, 0.06, 5, 0x424242, 0, 0.03, -d / 2 + 4);
+    g.add(runway);
+    for (let i = -w / 2 + 2; i < w / 2; i += 3) g.add(pbox(1.4, 0.07, 0.25, 0xffffff, i, 0.05, -d / 2 + 4));
+    g.add(pbox(w * 0.6, 3.6, 5, 0xeceff1, -2, 1.8, d / 2 - 4));
+    g.add(pbox(w * 0.6 + 0.4, 0.3, 5.4, 0x4fc3f7, -2, 3.75, d / 2 - 4));
+    g.add(pbox(1.6, 8, 1.6, 0xcfd8dc, w / 2 - 3, 4, d / 2 - 4));
+    g.add(pbox(2.6, 1.4, 2.6, 0x4fc3f7, w / 2 - 3, 8.6, d / 2 - 4));
+    // Uçak
+    const plane = new THREE.Group();
+    plane.add(pbox(6, 0.9, 0.9, 0xffffff, 0, 1.2, 0));
+    plane.add(pbox(1.2, 0.15, 6, 0xffffff, 0.3, 1.2, 0));
+    plane.add(pbox(0.8, 1.4, 0.15, 0xe53935, -2.7, 1.9, 0));
+    plane.position.set(-w / 4, 0, -d / 2 + 4);
+    g.add(plane);
+  }
+  return g;
 }

@@ -33,7 +33,7 @@ export class Bank {
 
   get limit() {
     const p = this.limitParts;
-    return p.base + p.assets + p.income;
+    return Math.round((p.base + p.assets + p.income) * (this.game.finance?.limitFactor ?? 1));
   }
 
   get available() {
@@ -97,8 +97,9 @@ export class Bank {
    */
   payInterest(today) {
     const g = this.game;
-    const a = Math.round(this.debt * BANK.loanRate);
-    const b = Math.round(this.startDebt * START_LOAN.rate);
+    const f = g.finance?.interestFactor ?? 1; // Şehir Bankası / finans merkezi
+    const a = Math.round(this.debt * BANK.loanRate * f);
+    const b = Math.round(this.startDebt * START_LOAN.rate * f);
     const due = a + b;
     let paid = Math.min(due, Math.max(0, Math.floor(g.money)));
     g.money -= paid;

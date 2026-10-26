@@ -14,7 +14,7 @@ export class Supply {
 
   /** Bir kasanın bugünkü alış fiyatı. */
   costOf(product) {
-    let c = PRODUCTS[product].cost * this.discount;
+    let c = PRODUCTS[product].cost * this.discount * (1 - (this.game.holding?.importDiscount ?? 0));
     if (this.crisis?.product === product && this.crisis.type === 'price') c *= CRISIS.priceMult;
     return Math.max(1, Math.round(c));
   }
