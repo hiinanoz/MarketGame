@@ -425,3 +425,7 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .poll-row.me .progress i { background: linear-gradient(90deg, #7b3fa0, #c06bd8); }
 .up { color: #2e7d32; font-weight: 800; }
 .down { color: #c62828; font-weight: 800; }
+.panel.final { text-align: center; max-height: 90vh; overflow-y: auto; }
+.final-grade { font-size: 84px; font-weight: 900; line-height: 1; color: #f2b705; text-shadow: 0 4px 0 #b07d00; margin-top: 6px; }
+.final-title { font-size: 22px; font-weight: 900; margin: 4px 0 10px; }
+.panel.final .stats { text-align: left; margin-bottom: 10px; }

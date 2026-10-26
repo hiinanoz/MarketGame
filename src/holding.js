@@ -255,13 +255,24 @@ export class Holding {
       const locked = g.level < r.level;
       return `<button class="region ${locked ? 'locked' : ''}" data-region="${r.id}" ${locked ? 'disabled' : ''}>
         <span class="biz-e">${r.emoji}</span><span>${r.name}</span><small>${locked ? `🔒 Sv.${r.level}${r.soon ? ' · yakında' : ''}` : 'Git →'}</small></button>`;
-    }).join('')}</div>`;
+    }).join('')}</div>${this.game.city.render()}`;
   }
 
   onClick(e) {
     const t = e.target.closest('button');
     if (!t || t.disabled) return;
     const d = t.dataset;
+    if (d.offer) {
+      const [id, r] = d.offer.split(':');
+      this.game.city.offer(id, Number(r));
+      this.render();
+      return;
+    }
+    if (d.final !== undefined) {
+      this.close();
+      this.game.city.showFinal();
+      return;
+    }
     if (this.tab === 'fin') {
       this.game.finance.onClick(d);
       this.render();
@@ -319,7 +330,10 @@ export class Holding {
   /** Hızlı geçiş: oyuncuyu bölgeye ışınla. */
   goTo(key) {
     let pos;
-    if (key.startsWith('plot:')) {
+    if (key.startsWith('city:')) {
+      const p = this.game.city.props.find((x) => x.id === key.slice(5));
+      pos = [p.pos[0], p.pos[1] + (p.facing === -1 ? -6 : 6)];
+    } else if (key.startsWith('plot:')) {
       const p = this.game.housing.plots[Number(key.slice(5))];
       pos = [p.x, p.z + 6.5];
     } else if (key.startsWith('biz:')) {

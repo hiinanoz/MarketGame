@@ -427,6 +427,10 @@ export const REGIONS = [
   { id: 'branches', name: 'Rakip marketler', emoji: '🏪', pos: [43, 12.5], level: 50 },
   { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-66, 12.5], level: 51 },
   { id: 'port', name: 'Liman ve sanayi', emoji: '⚓', pos: [0, 26], level: 66 },
+  { id: 'bazaar', name: 'Eski Çarşı', emoji: '🏛️', pos: [-86, -40], level: 81 },
+  { id: 'coast', name: 'Sahil Şeridi', emoji: '🏖️', pos: [86, 28], level: 83 },
+  { id: 'campus', name: 'Üniversite', emoji: '🎓', pos: [110, -6], level: 87 },
+  { id: 'villages', name: 'Kuzey Köyleri', emoji: '🌄', pos: [55, -108], level: 89 },
 ];
 
 // Başlangıç: banka kuruluş kredisiyle market alınır (yeni oyunlarda)
@@ -588,4 +592,58 @@ export const FINANCE = {
     center: { level: 80, price: 500000 }, // finans merkezi: kendi kredilerin faizsiz, limit ×2
   },
   ipo: { level: 77, share: 0.2 },           // halka arz: şirket değerinin %20'si nakit
+};
+
+// ---- Şehri satın almak (Sv.81–100) ---------------------------------------------------------
+// Her bölgede mülk sahipleri var. Teklif verirsin: "esnek" sahip 2–3 tekliften sonra %25'e kadar
+// iner; "inatçı" sahip sordukça kızar, fiyatı artırır, asla indirmez. Şehirdeki her şey
+// (bütün mülkler + bütün işletmeler) senin olunca Sv.100: "Kasabanın Hakimi".
+export const CITY = {
+  fromLevel: 81,
+  // Esnek sahip: n. teklifte kabul ettiği en düşük oran (asıl fiyata göre)
+  flexSteps: [0.95, 0.85, 0.75],
+  angryRaise: 0.08,         // inatçı sahip: reddedilen her teklifte fiyat artışı
+  offers: [0.75, 0.85, 0.95, 1],
+  regions: [
+    { id: 'bazaar', name: 'Eski Çarşı', emoji: '🏛️', level: 81, props: [
+      { name: 'Bakırcılar Hanı', owner: 'Hacı Rıza', price: 400000, mood: 'flex', pos: [-92, -47], model: 'building_B_withoutBase' },
+      { name: 'Kapalı Çarşı', owner: 'Esnaf Odası', price: 650000, mood: 'angry', pos: [-80, -47], model: 'building_E_withoutBase' },
+      { name: 'Eski Kahvehane', owner: 'Nuri Usta', price: 250000, mood: 'flex', pos: [-92, -60], model: 'building-small-a' },
+      { name: 'Saat Kulesi Meydanı', owner: 'Vakıf', price: 500000, mood: 'angry', pos: [-80, -60], model: 'building_H_withoutBase' },
+    ] },
+    { id: 'coast', name: 'Sahil Şeridi', emoji: '🏖️', level: 83, props: [
+      { name: 'Martı Pansiyon', owner: 'Gül Hanım', price: 450000, mood: 'flex', pos: [66, 34], model: 'building-small-c', facing: -1 },
+      { name: 'Deniz Kafe', owner: 'Kaptan Ali', price: 350000, mood: 'angry', pos: [78, 34], model: 'building_B_withoutBase', facing: -1 },
+      { name: 'Yat Kulübü', owner: 'Sahil A.Ş.', price: 900000, mood: 'flex', pos: [92, 36], model: 'building_E_withoutBase', facing: -1 },
+      { name: 'Balıkçı Barınağı', owner: 'Kooperatif', price: 300000, mood: 'flex', pos: [106, 34], model: 'building-small-a', facing: -1 },
+    ] },
+    { id: 'industry', name: 'Sanayi Bölgesi', emoji: '🏗️', level: 85, props: [
+      { name: 'Çimento Fabrikası', owner: 'Demir Holding', price: 1200000, mood: 'angry', pos: [-56, 34], procedural: 'factory', facing: -1 },
+      { name: 'Un Değirmeni', owner: 'Değirmenci Halil', price: 600000, mood: 'flex', pos: [-56, 47], model: 'building-garage', facing: -1 },
+      { name: 'Oto Sanayi Sitesi', owner: 'Esnaf Birliği', price: 800000, mood: 'flex', pos: [-46, 47], model: 'building-garage', facing: -1 },
+    ] },
+    { id: 'campus', name: 'Üniversite Yerleşkesi', emoji: '🎓', level: 87, props: [
+      { name: 'Rektörlük', owner: 'Mütevelli Heyeti', price: 1500000, mood: 'angry', pos: [118, -4], model: 'building_H_withoutBase' },
+      { name: 'Fakülte Binası', owner: 'Vakıf Üniversitesi', price: 1100000, mood: 'flex', pos: [118, -18], model: 'building_E_withoutBase' },
+      { name: 'Öğrenci Yurdu', owner: 'Yurt A.Ş.', price: 700000, mood: 'flex', pos: [118, 8], model: 'building_G_withoutBase' },
+    ] },
+    { id: 'villages', name: 'Kuzey Köyleri', emoji: '🌄', level: 89, props: [
+      { name: 'Çamlıca Köyü', owner: 'Muhtar Osman', price: 500000, mood: 'flex', pos: [48, -116], model: 'building_windmill_green' },
+      { name: 'Yayla Mandırası', owner: 'Yaylacı Fatma', price: 450000, mood: 'angry', pos: [62, -116], model: 'building_grain' },
+      { name: 'Göl Kenarı Arazisi', owner: 'Orman İşletmesi', price: 800000, mood: 'flex', pos: [55, -132], model: 'trees_A_large' },
+    ] },
+    { id: 'hall', name: 'Belediye Meydanı', emoji: '🏙️', level: 95, props: [
+      { name: 'Eski Belediye Sarayı', owner: 'Hazine', price: 3000000, mood: 'angry', pos: [-86, -74], model: 'building_G_withoutBase' },
+    ] },
+  ],
+  grades: [[200, 'S'], [300, 'A'], [420, 'B'], [600, 'C'], [Infinity, 'D']], // oyun gününe göre
+};
+
+// ---- Yaşayan şehir (Sv.20+) ------------------------------------------------------------------
+export const LIFE = {
+  fromLevel: 20,
+  base: 4,            // başlangıçta sokaktaki kasabalı sayısı (seviye ve evlerle artar)
+  max: 16,
+  spendBase: 6, spendPerLevel: 0.3, // senin dükkânına uğrayanın bıraktığı para
+  growthPerDay: 2,    // her gün şehre eklenen süs (ağaç, bank, lamba, çiçeklik)
 };

@@ -40,6 +40,12 @@ async function start() {
   document.getElementById('menu-name-save').addEventListener('click', () => game.setMarketName(menuName.value));
   menuName.addEventListener('keydown', (e) => { if (e.key === 'Enter') game.setMarketName(menuName.value); });
 
+  document.getElementById('final').addEventListener('pointerdown', (e) => e.stopPropagation());
+  document.getElementById('final-continue').addEventListener('click', () => {
+    document.getElementById('final').classList.add('hidden');
+    game.paused = false;
+  });
+
   let last = performance.now();
   const loop = (now) => {
     const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));

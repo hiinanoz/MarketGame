@@ -22,6 +22,8 @@ import { Housing } from './housing.js';
 import { Ads } from './ads.js';
 import { Politics } from './politics.js';
 import { Finance } from './finance.js';
+import { City } from './city.js';
+import { Life } from './life.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
@@ -68,7 +70,7 @@ export class Game {
     this.hud = new Hud(this);
     this.rating = new Rating(this);
     this.dirt = new DirtSystem(this);
-    this.stats = { sold: 0 };
+    this.stats = { sold: 0, customers: 0, playTime: 0 };
     this.xp = 0;
     this.level = 1;
     this.stockerCapacity = WORKER_CAPACITY;
@@ -101,6 +103,8 @@ export class Game {
     this.ads = new Ads(this);
     this.politics = new Politics(this);
     this.finance = new Finance(this);
+    this.city = new City(this);
+    this.life = new Life(this);
     this.isMayor = false; // Sv.60: belediye başkanı (ceza kesilmez)
     this.marketName = 'Kasaba';
 
@@ -548,15 +552,17 @@ export class Game {
   onCustomerPaid() {
     this.rating.add(RATING.paid);
     this.day.today.customers++;
+    this.stats.customers = (this.stats.customers ?? 0) + 1;
     this.gainXp(1);
   }
 
   /** XP ekle (müşteri, işletme kârı, satın alım). Seviye atlarsa yeni alanları göster. */
   gainXp(n) {
-    if (n <= 0) return;
+    if (n <= 0 || this.city?.finished) return; // oyun bitti: seviye artık ilerlemez
     this.xp += n;
     let leveled = false;
-    while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) {
+    // Sv.100 ancak şehrin tamamı alınınca (Kasabanın Hakimi)
+    while (LEVELS[this.level] !== undefined && this.level < 99 && this.xp >= LEVELS[this.level]) {
       this.level++;
       leveled = true;
     }
@@ -677,6 +683,9 @@ export class Game {
     this.holding.update(dt);
     this.housing.update(dt);
     this.politics.update(dt);
+    this.city.update(dt);
+    this.life.update(dt);
+    this.stats.playTime = (this.stats.playTime ?? 0) + dt;
     this.checkDueWarning();
     this.checkStuck(dt);
     this.hud.setStaff?.(this.level >= 21 ? this.totalStaff : null);
@@ -730,7 +739,7 @@ export class Game {
     p.position.x += p.velocity.x * dt;
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
-    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 51 ? -90 : -49, this.level >= 36 ? 104 : 45);
+    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 81 ? -100 : this.level >= 51 ? -90 : -49, this.level >= 81 ? 128 : this.level >= 36 ? 104 : 45);
     p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, this.level >= 66 ? 54 : 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
@@ -938,6 +947,9 @@ export class Game {
       ads: this.ads.serialize(),
       politics: this.politics.serialize(),
       finance: this.finance.serialize(),
+      city: this.city.serialize(),
+      life: this.life.serialize(),
+      stats: this.stats,
       marketName: this.marketName,
     };
     try {
@@ -973,7 +985,7 @@ export class Game {
     }
     this.money = data.money ?? START_MONEY;
     this.xp = data.xp ?? 0;
-    while (LEVELS[this.level] !== undefined && this.xp >= LEVELS[this.level]) this.level++;
+    while (LEVELS[this.level] !== undefined && this.level < 99 && this.xp >= LEVELS[this.level]) this.level++;
     this.stats.sold = data.sold ?? 0;
     this.savedPads = data.pads ?? {};
     this.savedAccountant = data.accountant ?? null;
@@ -996,6 +1008,9 @@ export class Game {
     this.ads.restore(data.ads);
     this.politics.restore(data.politics);
     this.finance.restore(data.finance);
+    this.city.restore(data.city);
+    this.life.restore(data.life);
+    if (data.stats) Object.assign(this.stats, data.stats);
     if (data.marketName) this.setMarketName(data.marketName, true);
     if (data.depot) this.depot.restore(data.depot);
     else {

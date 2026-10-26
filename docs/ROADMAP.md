@@ -65,7 +65,7 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 | **S4** 🚧 | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
 | **S5** 🚧 | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
 | **S6** ✅ | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
-| **S7** | 81–100 | Bölge bölge satın alma, mega projeler, final, derece ekranı | |
+| **S7** ✅ | 81–100 | Bölge bölge satın alma, mega projeler, final, derece ekranı | |
 
 ## S1'de yapılanlar (Sv.21–25)
 
@@ -138,9 +138,19 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Halka arz** (Sv.77): şirket değerinin %20'si nakit. Tablette şirket değeri ve portföy görünür.
 - Yeni modeller: KayKit City Builder binaları (B, E, G, H; CC0, mevcut dokuyu paylaşır).
 
+## S7'de yapılanlar (Sv.81–100) ve bitiş
+
+- **Şehri satın almak:** 6 bölge, 18 mülk (Eski Çarşı Sv.81, Sahil Şeridi Sv.83, Sanayi Bölgesi Sv.85, Üniversite Sv.87, Kuzey Köyleri Sv.89, Belediye Meydanı Sv.95). Tabletteki 🗺️ Harita sekmesinin altında mülk sahiplerine teklif verilir (%75 / %85 / %95 / tam fiyat).
+  - Esnek sahip: 1. teklifte %95, 2.'de %85, 3.'den sonra %75'i kabul eder (en fazla %25 indirim).
+  - İnatçı sahip: düşük teklife kızar, fiyatı her seferinde %8 artırır, asla indirmez.
+  - Alınan mülkte yeşil bayrak dalgalanır.
+- **Bitiş:** bütün mülkler + bütün işletmeler senin olunca Sv.100 ve 👑 **Kasabanın Hakimi**. XP ile en fazla Sv.99'a çıkılır. Final ekranı: derece (oyun gününe göre S ≤ 200, A ≤ 300, B ≤ 420, C ≤ 600, D), gün, oynama süresi, para, şirket değeri, işletme/mülk/konut/çalışan sayısı, müşteri, kazanılan seçim, en büyük işletme. "Oynamaya devam et" ile oyun sürer; seviye artık ilerlemez, para kazanmaya devam edilir.
+- **Yaşayan şehir (Sv.20+):** kasabalılar evlerinden (yoksa şehir dışından) çıkar, kaldırımlarda yürür; senin dükkânlarına uğrayıp para bırakır, parka, sahile, işletmelere gider; akşam eve döner. Sayı seviye ve evlerle artar (en fazla 16).
+- **Şehir zamanla değişir:** Sv.20'den sonra her gün kaldırımlara yeni ağaç, çiçeklik, bank ve lamba eklenir; alınan mülkler bayrakla görünür.
+
 ## Bitirme ve derece
 
-Oyun, şehrin son parseli alındığında biter. Final ekranında: toplam gün, toplam oyun süresi, şirket değeri, en büyük işletme, istatistikler ve **derece** (S/A/B/C/D). Derece eşikleri ilk tam oynanış testinden sonra ayarlanır.
+Derece eşikleri ilk tam oynanış testinden sonra ayarlanabilir (`config.js` → `CITY.grades`).
 
 ## Teknik notlar
 

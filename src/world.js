@@ -38,6 +38,7 @@ export class World {
 
     // Ön cadde + kaldırım, arkada toptancı yolu
     this.addStrip(0xd9cfb8, 3, 15.5, -0.01);
+    this.addStrip(0xd9cfb8, 3, 25.3, -0.01); // güney kaldırımı (liman bölgesi, yürüyen kasabalılar)
     this.addRoad(20, 6);
     this.addRoad(BACK_ROAD_Z, 5);
 
@@ -233,6 +234,7 @@ export class World {
       const x = -70 + rng() * 140;
       const z = -100 - rng() * 60;
       if (x > -55 && x < 34) continue; // enerji tepeleri arsaları (baraj, güneş, rüzgâr)
+      if (x > 38 && x < 75 && z < -105 && z > -145) continue; // Kuzey Köyleri
       place(rng() < 0.5 ? 'trees_A_large' : 'trees_B_medium', x, z, 3 + rng() * 2, rng() * 6, false);
     }
   }
