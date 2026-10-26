@@ -279,7 +279,7 @@ class OfficePanel {
     for (const sch of c.scheduled) {
       const info = PRODUCTS[sch.product];
       const who = sch.by === 'accountant' ? ' (muhasebeci)' : '';
-      parts.push(`<div class="camp-plan"><span>${info.emoji} <b>${info.name}</b> · ${sch.qty} kasa${who}</span>
+      parts.push(`<div class="camp-plan"><span>${info.emoji} <b>${info.name}</b> · ${sch.qty} kasa${sch.staff ? ' · 👥' : ''}${who}</span>
         <button data-cancel="${sch.product}">İptal ($${formatMoney(sch.paid ?? 0)} iade)</button></div>`);
     }
     if (c.slotsFree <= 0) {
@@ -295,15 +295,17 @@ class OfficePanel {
       return `<button class="camp-card ${k === this.campaignPick ? 'active' : ''}" data-pick="${k}">
         <span class="e">${p.emoji}</span><span>${p.name}</span><small>$${p.cost} → $${p.price}${last ? ` · son: ${last.sold}/${last.qty}` : ''}</small></button>`;
     }).join('');
-    const total = c.costFor(this.campaignPick, this.campaignQty);
+    this.campaignStaff ??= false;
+    const total = c.costFor(this.campaignPick, this.campaignQty, this.campaignStaff);
     parts.push(`
       <p class="note">Yarın için özel ürün ve stok seç (${c.scheduled.length}/${CAMPAIGN.maxCampaigns}). Her kampanyada <b>${CAMPAIGN.extraMin}–${CAMPAIGN.extraMax}</b> ek müşteri gelir, %${Math.round(CAMPAIGN.extraShopping * 100)}'si başka ürün de alır. Kalan stok gün sonunda zarar yazılır.</p>
       <div class="camp-cards">${cards}</div>
       <div class="bank-group"><span>Stok</span>
         <button data-q="-100">−100</button><button data-q="-20">−20</button><b class="o-qty">${this.campaignQty}</b><button data-q="20">+20</button><button data-q="100">+100</button>
       </div>
+      <label class="row toggle"><span>👥 Kampanya personeli ($${CAMPAIGN.staffCost}/gün)<small>Standda satış ve ödeme alır, paletten hızlı doldurur: günde ~250 kişiye kadar. Ürün erken biterse sıradakilerden özür diler (memnuniyet az düşer).</small></span><input type="checkbox" id="camp-staff" ${this.campaignStaff ? 'checked' : ''} /></label>
       <div class="sheet-foot">
-        <span class="o-total">Hazırlık $${c.fee()} + stok $${formatMoney(this.campaignQty * PRODUCTS[this.campaignPick].cost)}</span>
+        <span class="o-total">Hazırlık $${c.fee()} + stok $${formatMoney(this.campaignQty * PRODUCTS[this.campaignPick].cost)}${this.campaignStaff ? ` + personel $${CAMPAIGN.staffCost}` : ''}</span>
         <button id="camp-go" class="primary" ${this.game.money < total ? 'disabled' : ''}>Hazırla $${formatMoney(total)}</button>
       </div>`);
     sec.innerHTML = parts.join('');
@@ -331,7 +333,12 @@ class OfficePanel {
     if (pick) this.campaignPick = pick.dataset.pick;
     const q = e.target.closest('[data-q]');
     if (q) this.campaignQty = Math.max(CAMPAIGN.minStock, Math.min(CAMPAIGN.maxStock, this.campaignQty + Number(q.dataset.q)));
-    if (e.target.closest('#camp-go')) this.game.campaign.prepare(this.campaignPick, this.campaignQty);
+    if (e.target.id === 'camp-staff') {
+      this.campaignStaff = e.target.checked;
+      this.renderCampaign();
+      return;
+    }
+    if (e.target.closest('#camp-go')) this.game.campaign.prepare(this.campaignPick, this.campaignQty, { staff: this.campaignStaff });
     const cancel = e.target.closest('[data-cancel]');
     if (cancel) this.game.campaign.cancel(cancel.dataset.cancel);
     this.renderCampaign();

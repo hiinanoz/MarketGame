@@ -200,6 +200,7 @@ export class Game {
       case 'manager': return { title: 'Müdür', emoji: '💼' };
       case 'ads': return def.target === 'billboard' ? { title: 'Reklam panosu', emoji: '🪧' } : { title: 'Reklamcı', emoji: '📣' };
       case 'security': return { title: 'Güvenlik', emoji: '👮' };
+      case 'roadboard': return { title: 'Reklam panosu +%5', emoji: '🪧' };
       case 'wholesaler': return { title: 'Toptancıyı al', emoji: '🏢' };
       case 'room3': return { title: '3. salon', emoji: '🏗️' };
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
@@ -243,6 +244,7 @@ export class Game {
       // Personel alanında günlük maaş da yazsın (işe alım ucuz ama her gün maaş ödenir)
       const role = def.type === 'ads' ? (def.target === 'advertiser' ? 'advertiser' : null) : STAFF_ROLE[def.type];
       if (role && WAGES[role]) label.title = `${label.title} · $${WAGES[role]}/gün`;
+      if (def.type === 'roadboard') def.cost = this.roadboardCost();
       const pad = new UnlockPad(this, def, x, z, label);
       pad.setLocked(def.level > this.level);
       if (this.savedPads?.[def.id]) {
@@ -304,6 +306,19 @@ export class Game {
         this.traffic.lot.valet = true;
         this.workers.push(new Valet(this, VALET_SPOT[0], VALET_SPOT[1]));
         break;
+      case 'roadboard': {
+        this.adBoost += ADS.roadboard;
+        this.world.addBillboard(def.pos[0], def.pos[1] - 0.6);
+        // Kalan panoların fiyatı artar
+        for (const p of this.pads.values()) {
+          if (p.def.type !== 'roadboard') continue;
+          p.cost = this.roadboardCost();
+          p.paid = Math.min(p.paid, p.cost - 1);
+          p.rate = Math.max(p.cost / 1.6, 25);
+          p.redraw();
+        }
+        break;
+      }
       case 'ads':
         this.adBoost += ADS[def.target];
         if (def.target === 'advertiser') this.workers.push(new Advertiser(this, 12.5, 15.4));
@@ -444,6 +459,12 @@ export class Game {
     const due = this.dueTonight;
     const have = this.money + this.bank.deposit + this.checkouts.reduce((a, c) => a + c.cash.value, 0);
     if (due > 0 && have < due) this.hud.toast(`⚠️ Gün sonu ödemeler $${Math.round(due)}, kasada $${Math.round(have)} — yetmezse çalışanlar ayrılır`);
+  }
+
+  /** Yol kenarı panosu fiyatı: alınan pano sayısı arttıkça (kalan azaldıkça) iki katına çıkar. */
+  roadboardCost() {
+    const owned = [...this.unlocked].filter((id) => id.startsWith('roadboard')).length;
+    return ADS.roadboardBase * 2 ** owned;
   }
 
   /** Toplam çalışan: market + işletmeler + emlakçılar. */
@@ -757,7 +778,7 @@ export class Game {
     p.position.x += p.velocity.x * dt;
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
-    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 81 ? -100 : this.level >= 51 ? -90 : -49, this.level >= 81 ? 128 : this.level >= 36 ? 104 : 45);
+    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 81 ? -100 : this.level >= 51 ? -90 : -49, this.level >= 81 ? 128 : this.level >= 36 ? 104 : this.level >= 13 ? 58 : 45);
     p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, this.level >= 66 ? 54 : 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);

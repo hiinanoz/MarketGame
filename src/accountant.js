@@ -145,19 +145,22 @@ export class MarketAccountant extends Character {
       if (c.slotsFree <= 0) break;
       // Tecrübeli: pazar araştırmasıyla gelecek müşteriyi bilir, stoğu talebe göre ayarlar
       const extra = c.rollExtra();
-      let qty = this.expert ? this.expertEstimate(extra, CAMPAIGN.maxCampaigns) : this.estimate(product);
-      while (qty > CAMPAIGN.minStock && c.costFor(product, qty) > budget) qty -= 10;
-      const cost = c.costFor(product, qty);
+      // Kampanya personeli: tecrübeli, talep normal standın kaldırabileceğinden fazlaysa tutar;
+      // stajyer bütçe yettikçe rastgele karar verir
+      const staff = this.expert ? extra > this.campaignCapacity(CAMPAIGN.maxCampaigns, false) * 1.1 : Math.random() < 0.4;
+      let qty = this.expert ? this.expertEstimate(extra, CAMPAIGN.maxCampaigns, staff) : this.estimate(product);
+      while (qty > CAMPAIGN.minStock && c.costFor(product, qty, staff) > budget) qty -= 10;
+      const cost = c.costFor(product, qty, staff);
       if (cost > budget) break;
       // Tecrübeli, talep stoğu çok aşacaksa (çok mağdur müşteri) kampanyayı yapmaz
-      if (this.expert && qty < this.expertEstimate(extra, CAMPAIGN.maxCampaigns) * 0.8) {
+      if (this.expert && qty < this.expertEstimate(extra, CAMPAIGN.maxCampaigns, staff) * 0.8) {
         this.note(`📢 ${PRODUCTS[product].emoji} için bütçe talebe yetmiyor, kampanya yapılmadı`);
         break;
       }
-      if (c.prepare(product, qty, { by: 'accountant', extra })) {
+      if (c.prepare(product, qty, { by: 'accountant', extra, staff })) {
         budget -= cost;
         made++;
-        this.note(`📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası (${qty} kasa${this.expert ? `, ~${extra} müşteri bekleniyor` : ''})`);
+        this.note(`📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası (${qty} kasa${staff ? ', 👥 personelli' : ''}${this.expert ? `, ~${extra} müşteri bekleniyor` : ''})`);
       }
       if (budget < c.fee() * 3) break;
     }
@@ -168,15 +171,15 @@ export class MarketAccountant extends Character {
    * Tecrübeli: gelecek müşteri (pazar araştırması) ile mağazanın bir günde kaldırabileceği kampanya
    * müşterisinin küçüğü × müşteri başı 2 kasa + %5 pay (mağduriyet ve kalan stok az).
    */
-  expertEstimate(extra, together = 1) {
-    const come = Math.min(extra, this.campaignCapacity(together));
+  expertEstimate(extra, together = 1, staff = false) {
+    const come = Math.min(extra, this.campaignCapacity(together, staff));
     return Math.max(CAMPAIGN.minStock, Math.min(CAMPAIGN.maxStock, Math.ceil((come * 2 * 1.05) / 10) * 10));
   }
 
   /** Geçmiş kampanyalardan: aynı anda N kampanya varken bir kampanyaya en fazla kaç kişi gelebildi. */
-  campaignCapacity(together) {
-    const seen = Object.values(this.game.campaign.lastResults).filter((r) => r.planned && r.extra < r.planned);
-    if (!seen.length) return Math.round(420 / Math.max(1, together)); // ilk tahmin
+  campaignCapacity(together, staff = false) {
+    const seen = Object.values(this.game.campaign.lastResults).filter((r) => r.planned && r.extra < r.planned && !!r.staff === staff);
+    if (!seen.length) return staff ? 250 : Math.round(420 / Math.max(1, together)); // ilk tahmin
     const perDay = Math.max(...seen.map((r) => r.extra * (r.together ?? 1)));
     return Math.round(perDay / Math.max(1, together));
   }

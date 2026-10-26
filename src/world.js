@@ -165,6 +165,7 @@ export class World {
       const x = -60 + rng() * 120;
       const z = -110 + rng() * 122;
       if (x > -17 && x < 32 && z > -30 && z < 8) continue; // mağaza ve depo
+      if (z > 2 && x > -60 && x < 60) continue; // marketin ve dükkânların önü açık kalsın (kampanya standları görünsün)
       if (x > -52 && x < -11 && z > 2 && z < 14) continue; // otopark
       if (x > -34 && x < -11 && z > -32 && z < 2) continue; // 3. salon, üretimhaneler
       if (x > -46 && x < 46 && z < -34) continue;
@@ -200,9 +201,9 @@ export class World {
     this.shopSign.material.map = shopSignTexture(title);
     this.shopSign.material.needsUpdate = true;
     this.shopSign.scale.set(8.8, 2.2, 1);
-    if (this.billboardCanvas) {
-      drawBillboard(this.billboardCanvas.getContext('2d'), title);
-      this.billboardTex.needsUpdate = true;
+    for (const b of this.billboards ?? []) {
+      drawBillboard(b.canvas.getContext('2d'), title);
+      b.tex.needsUpdate = true;
     }
   }
 
@@ -261,10 +262,9 @@ export class World {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    this.billboardCanvas = c;
     drawBillboard(ctx, this.game.marketTitle);
     const tex = new THREE.CanvasTexture(c);
-    this.billboardTex = tex;
+    (this.billboards ??= []).push({ canvas: c, tex });
     tex.colorSpace = THREE.SRGBColorSpace;
     const board = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.3, 0.2), [wood, wood, wood, wood, new THREE.MeshStandardMaterial({ map: tex }), wood]);
     board.position.y = 3.6;
@@ -272,7 +272,7 @@ export class World {
     g.add(board);
     g.position.set(x, 0, z);
     this.scene.add(g);
-    this.game.nav.setBox('billboard', { minX: x - 2, maxX: x + 2, minZ: z - 0.2, maxZ: z + 0.2 });
+    this.game.nav.setBox(`billboard-${x}`, { minX: x - 2, maxX: x + 2, minZ: z - 0.2, maxZ: z + 0.2 });
   }
 
   addStrip(color, depth, z, y) {

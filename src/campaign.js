@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Shelf, QUEUE_COLS, QUEUE_ROWS, QUEUE_DX, QUEUE_DZ } from './stations.js';
-import { Customer } from './actors.js';
+import { Customer, workerBadge } from './actors.js';
+import { Character } from './character.js';
 import { CHARACTER_NAMES } from './assets.js';
 import { PRODUCTS, CAMPAIGN, DOOR_X } from './config.js';
 
@@ -32,8 +33,13 @@ export class Campaign {
     return CAMPAIGN.feeBase + this.game.level * CAMPAIGN.feePerLevel;
   }
 
-  costFor(product, qty) {
-    return this.fee() + qty * PRODUCTS[product].cost;
+  costFor(product, qty, staff = false) {
+    return this.fee() + qty * PRODUCTS[product].cost + (staff ? CAMPAIGN.staffCost : 0);
+  }
+
+  /** Personelli kampanyalar: mağazaya aynı anda daha çok müşteri alınabilir. */
+  get maxActive() {
+    return CAMPAIGN.maxActive + this.active.filter((a) => a.staff).length * CAMPAIGN.staffMaxActive;
   }
 
   isScheduled(product) {
@@ -46,13 +52,13 @@ export class Campaign {
     return CAMPAIGN.extraMin + Math.floor(Math.random() * (CAMPAIGN.extraMax - CAMPAIGN.extraMin + 1));
   }
 
-  prepare(product, qty, { by = 'player', extra = null } = {}) {
+  prepare(product, qty, { by = 'player', extra = null, staff = false } = {}) {
     if (!this.unlocked || this.slotsFree <= 0 || this.isScheduled(product)) return false;
     qty = Math.max(CAMPAIGN.minStock, Math.min(CAMPAIGN.maxStock, qty));
-    const total = this.costFor(product, qty);
+    const total = this.costFor(product, qty, staff);
     if (this.game.money < total) return false;
     this.game.spend(total);
-    this.scheduled.push({ product, qty, paid: total, by, extra: extra ?? this.rollExtra() });
+    this.scheduled.push({ product, qty, paid: total, by, extra: extra ?? this.rollExtra(), staff });
     const who = by === 'accountant' ? '🧾 Muhasebeci: ' : '';
     this.game.hud.toast(`${who}📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası!`);
     this.game.audio.play('unlock');
@@ -120,7 +126,10 @@ export class Campaign {
       pallet.stock = rest;
       pallet.syncVisual();
       const extra = s.extra ?? this.rollExtra();
-      this.active.push({ index: i, product: s.product, qty: s.qty, extra, spawned: 0, sold: 0, timer: Math.random() * 2, stand });
+      const slot = { index: i, product: s.product, qty: s.qty, extra, spawned: 0, sold: 0, timer: Math.random() * 2, stand, staff: !!s.staff, pallet };
+      stand.staffed = slot.staff;
+      if (slot.staff) slot.worker = this.spawnStaff(stand);
+      this.active.push(slot);
     });
     this.scheduled = [];
     const names = this.active.map((a) => PRODUCTS[a.product].emoji).join(' ');
@@ -163,15 +172,57 @@ export class Campaign {
     if (i >= 0) this.game.shelves.splice(i, 1);
   }
 
+  /** Kampanya personeli: standın yanında durur, satış yapar, ödemeyi alır. */
+  spawnStaff(stand) {
+    const w = new Character(this.game, 'Rogue', { speed: 3, look: 'uniform' });
+    w.position.set(stand.x + 1.9, 0, stand.z - 0.3);
+    w.heading = Math.PI / 2 + Math.PI; // standa (−x) bak
+    w.root.rotation.y = -Math.PI / 2;
+    w.root.add(workerBadge('📢'));
+    this.game.scene.add(w.root);
+    return w;
+  }
+
+  /** Bu kampanyanın ürünü tamamen bitti mi (stand + palet + taşınan)? */
+  soldOut(a) {
+    if (a.stand.count > 0 || (a.pallet?.stock ?? 0) > 0) return false;
+    return !this.game.workers.some((w) => w.stack?.some((e) => e.product === a.product)) && !this.game.player.stack.some((e) => e.product === a.product);
+  }
+
   update(dt) {
     if (!this.active.length || !this.game.day.isOpen) return;
+    for (const a of this.active) {
+      if (a.worker) {
+        a.worker.update(dt);
+        // Personel paletten standa hızlıca kasa koyar
+        a.refillT = (a.refillT ?? 0) - dt;
+        if (a.refillT <= 0 && a.pallet?.stock > 0 && a.stand.space > 0) {
+          a.refillT = CAMPAIGN.staffRefill;
+          a.pallet.stock--;
+          a.pallet.syncVisual();
+          a.stand.fillStock(1);
+        }
+      }
+      // Ürün bittiyse sıradakiler beklemesin, yeni müşteri de gelmesin
+      if (!a.ended && this.soldOut(a)) {
+        a.ended = true;
+        a.spawned = Math.max(a.spawned, a.extra);
+        for (const c of [...a.stand.waiting]) {
+          if (c.state !== 'atShelf' && c.state !== 'toShelf') continue;
+          if (c.carrying > 0) c.leaveShelf();
+          else c.leaveSoldOut(a.staff);
+        }
+        this.game.hud.toast(`📢 ${PRODUCTS[a.product].emoji} kampanya ürünü bitti${a.staff ? ' — personel sıradakilerden özür diledi' : ''}`);
+      }
+    }
     const remaining = Math.max(5, this.game.day.remaining);
     for (const a of this.active) {
       const left = a.extra - a.spawned;
       if (left <= 0) continue;
       a.timer -= dt;
       if (a.timer > 0) continue;
-      if (this.game.customers.length >= CAMPAIGN.maxActive) {
+      // Personelsiz kampanya normal sınırla, personelli olan ek kapasiteyle müşteri alır
+      if (this.game.customers.length >= (a.staff ? this.maxActive : CAMPAIGN.maxActive)) {
         a.timer = 0.5; // mağaza dolu: biraz sonra tekrar dene
         continue;
       }
@@ -217,6 +268,8 @@ export class Campaign {
       this.lastResult = r;
       this.game.depot.removePallet(product);
       this.removeStand(a.stand);
+      if (a.worker) this.game.scene.remove(a.worker.root);
+      r.staff = a.staff;
     }
     this.active = [];
   }

@@ -53,7 +53,7 @@ export const DIRT = {
 };
 
 // ---- Reklam ve güvenlik -----------------------------------------------------------
-export const ADS = { advertiser: 0.35, billboard: 0.25 }; // müşteri artışı
+export const ADS = { advertiser: 0.35, billboard: 0.25, roadboard: 0.05, roadboardBase: 600 }; // müşteri artışı
 export const THEFT = {
   fromLevel: 10,
   chanceRush: 0.09,   // yoğun saatte (yoğunluk ≥ 1.2) gelen müşterinin hırsız olma olasılığı
@@ -78,6 +78,10 @@ export const BANK = {
   incomeDays: 3,        // + son 3 günün ortalama kazancının 3 katı
 };
 export const CAMPAIGN = {
+  staffCost: 80,         // kampanya personeli (günlük): standda satış + ödeme, hızlı dolum
+  staffMaxActive: 40,    // personelli her kampanya için mağazaya aynı anda girebilecek ek müşteri
+  staffTake: 0.12,       // personelli standda kasa alma süresi (normal 0.35 sn)
+  staffRefill: 0.25,     // personel paletten standa her bu kadar saniyede bir kasa koyar
   fromLevel: 4,
   feeBase: 200,         // hazırlık ücreti = feeBase + seviye × feePerLevel
   feePerLevel: 40,
@@ -209,6 +213,10 @@ export const UNLOCKS = [
   { id: 'security1',     type: 'security',  target: 'door1', cost: 1200, pos: [3.4, 6.6], level: 10, requires: [] },
   { id: 'security2',     type: 'security',  target: 'door2', cost: 1200, pos: [22.4, 6.2], level: 10, requires: ['door2'] },
   { id: 'billboard',     type: 'ads',       target: 'billboard', cost: 3000, pos: [16.5, 9.4], level: 13, requires: ['advertiser'] },
+  // Yol kenarı reklam panoları: her biri +%5 müşteri; kalan pano azaldıkça fiyat artar
+  { id: 'roadboard0',    type: 'roadboard', target: 0, cost: 600, pos: [31, 12.2], level: 13, requires: ['billboard'] },
+  { id: 'roadboard1',    type: 'roadboard', target: 1, cost: 600, pos: [-49.5, 12.2], level: 13, requires: ['billboard'] },
+  { id: 'roadboard2',    type: 'roadboard', target: 2, cost: 600, pos: [56, 12.4], level: 13, requires: ['billboard'] },
   { id: 'wholesaler',    type: 'wholesaler', cost: 5000, pos: [10, -22.6], level: 12, requires: [] },
   { id: 'room3',         type: 'room3',     cost: 4500, pos: [-7, -13.4], level: 14, requires: ['expansion'] },
   { id: 'checkout3',     type: 'checkout',  target: 'checkout3', cost: 2500, level: 14, requires: ['room3'] },

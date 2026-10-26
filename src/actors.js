@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Character } from './character.js';
 import { CUSTOMER_LOOKS } from './assets.js';
 import { bubbleTexture } from './fx.js';
-import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT } from './config.js';
+import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT, CAMPAIGN } from './config.js';
 
 /** İşçilerin başının üstündeki küçük rozet (müşterilerden ayırt etmek için). */
 export function workerBadge(emoji) {
@@ -133,7 +133,8 @@ export class Customer extends Character {
       // Sabır yalnızca rafta ürün yokken azalır (sırada beklemek sorun değil)
       if (this.shelf.count === 0) this.waitTimer += dt;
       this.takeTimer += dt;
-      if (this.takeTimer > 0.35 && this.carrying < this.want && this.shelf.count > 0 && this.isFirstWaiting()) {
+      const takeT = this.shelf.staffed ? CAMPAIGN.staffTake : 0.35; // personelli standda hızlı
+      if (this.takeTimer > takeT && this.carrying < this.want && this.shelf.count > 0 && this.isFirstWaiting()) {
         this.takeTimer = 0;
         this.shelf.giveTo(this);
         const left = this.want - this.carrying;
@@ -202,6 +203,11 @@ export class Customer extends Character {
     }
     if (this.thief) {
       this.escape();
+      return;
+    }
+    // Kampanya personeli olan standda ödeme standda alınır (kasa kuyruğuna girmez)
+    if (this.campaign && this.shelf.staffed && this.stack.length) {
+      this.payAtStand();
       return;
     }
     const co = this.game.pickCheckout(this);
@@ -296,6 +302,38 @@ export class Customer extends Character {
     for (const e of this.stack.splice(0)) e.mesh.removeFromParent();
     this.readyToPay = false;
     this.bubble.visible = false;
+    this.walkOut();
+  }
+
+  /** Personelli kampanya standında ödeme. */
+  payAtStand() {
+    const g = this.game;
+    let total = 0;
+    for (const e of this.stack.splice(0)) {
+      total += PRODUCTS[e.product].price;
+      e.mesh.removeFromParent();
+      g.stats.sold++;
+      g.campaign.onSold(e.product);
+      g.day.today.crates++;
+    }
+    if (total) g.earn(total, this.position.clone().add(new THREE.Vector3(0, 2, 0)));
+    g.onCustomerPaid();
+    this.paid();
+  }
+
+  /** Kampanya ürünü bitti: sırada bekleyen gider. Personel varsa özür diler, memnuniyet az düşer. */
+  leaveSoldOut(staffed) {
+    if (!staffed) {
+      this.leaveAngry();
+      return;
+    }
+    const t = this.game.day.today;
+    t.campaignUnhappyBy ??= {};
+    t.campaignUnhappyBy[this.shelf.product] = (t.campaignUnhappyBy[this.shelf.product] ?? 0) + 1;
+    this.game.rating.add(RATING.angry / 30, 'kampanya ürünü bitti (personel özür diledi)');
+    this.releaseShelfSpot();
+    this.setBubble('🙏');
+    this.state = 'leaving';
     this.walkOut();
   }
 

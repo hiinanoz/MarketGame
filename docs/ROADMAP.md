@@ -154,6 +154,10 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Müzik:** dosyasız, WebAudio ile çalan 16-bit tarzı polifonik döngü (104 BPM, bas + arpej + melodi + hafif ritim). Menüden kapatılabilir; boyut eklemez.
 - **Market muhasebecisi yetkileri:** sipariş, kampanya seçimi, alan yatırımı, personel alımı, ödemeler için kredi (gün sonu kasa yetmezse eksik kadar kredi; önce maaşlar). **Stajyer** ($70/gün) geçmişe bakarak tahmin eder; **tecrübeli** ($600 + $140/gün, 🎓) pazar araştırmasıyla kampanya talebini ve mağazanın kaldırabileceği müşteri sayısını bilir (az mağdur, az kalan stok), maaşı karşılanmayacak personeli almaz, tam ihtiyaç kadar kredi çeker.
 
+- **Kampanya personeli** ($80/gün, kampanya hazırlarken seçilir): standın yanında durur, paletten standa hızlı doldurur, müşteriler standdan 3 kat hızlı alır ve ödemeyi standda yapar (kasa kuyruğuna girmez); personelli kampanyaya mağazaya aynı anda +40 kişi daha girebilir (günde ~250 kişiye kadar). Ürün bitince sıradakiler beklemez: personel varsa özür diler, memnuniyet çok az düşer; yoksa kızgın giderler. Ürün bitince o kampanyaya yeni müşteri gelmez. Tecrübeli muhasebeci talep yüksekse personel tutar.
+- Marketin ve dükkânların önündeki ağaçlar kaldırıldı (kampanya standları görünsün).
+- **Yol kenarı reklam panoları:** 3 yeni yer (Sv.13, reklam panosundan sonra); her biri +%5 müşteri; fiyat $600 → $1.200 → $2.400 (kalan azaldıkça artar).
+
 ## Bitirme ve derece
 
 Derece eşikleri ilk tam oynanış testinden sonra ayarlanabilir (`config.js` → `CITY.grades`).
