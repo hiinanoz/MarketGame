@@ -60,8 +60,8 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 | Sürüm | Seviyeler | İçerik | Bitince |
 |---|---|---|---|
 | **S1** ✅ | 21–25 | Holding tableti, işletme çekirdeği, müdür/muhasebeci rolleri ve şapkalar, market muhasebecisi, kuzey harita genişlemesi, ulaşım, başlangıç hikâyesi, ilk tedarikçi (çiftlik) | Oynat + geri bildirim |
-| **S2** 🚧 | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
-| **S3** | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
+| **S2** ✅ | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
+| **S3** ✅ | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
 | **S4** | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
 | **S5** | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
 | **S6** | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
@@ -92,7 +92,15 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Banka faizi:** gün sonunda nakitten (yetmezse mevduattan) ödenir; ödenemeyen kısım borca eklenir. Faiz üst üste 3 gün ödenmezse banka en değersiz işletmeye el koyar (değerinin %70'i borçtan düşer, modüller korunur). Borcun tamamı kapanınca işletme aynı fiyata 💼 tabletten geri alınır.
 - **Lojistik firması** (🚛 Hızlı Nakliyat, Sv.29, $40.000; dört tedarikçinin hepsi alındıktan sonra): kamyon filosunu yönetir. Yokken tedarikçi sevkiyatı dış nakliyeyle gider (kasa başı $1). Varken sevkiyat bedava, market siparişleri %10 ucuz ve kamyonlar modül başına %15 hızlı; kamyonlar (modül başına 2, şoför başına) başka firmalara taşıma yapıp günde kamyon başı $220'ye kadar getirir; fazla ürün rakip marketlere (Ucuz Market, Köşe Bakkal) alış fiyatının 1,15 katına satılır.
 - **Yeni modeller:** çiftliğe yel değirmeni, tahıl ambarı, çuval, el arabası; vadinin arkasına orman; enerji tepelerinde (Sv.31'de açılacak) rüzgâr türbinleri ve güneş paneli sıraları; caddede iki rakip market.
-- Sırada: elektrik faturaları (Sv.30), ardından S3 enerji.
+- **İsimler:** yeni oyunda markete isim verilir (tabela ve reklam panosunda "<isim> Market"); menüden ve tabletten (✏️) değiştirilebilir. Satın alınan her işletmeye tabletten isim verilir.
+- **Elektrik (Sv.30):** gün sonu fatura = market 60 + ek salon başı 40 + işletme modülü başı 25 birim ($1/birim). Ödenemeyen kısım krediye yazılır.
+
+## S3'te yapılanlar (Sv.31–35)
+
+- **Enerji tepeleri** (vadinin arkası, haritada ⚡): *Güneşli Tepe Güneş Tarlası* (Sv.31, $45.000, modül başı 200 birim/gün, sadece gündüz) ve *Rüzgârlı Sırt Rüzgâr Santrali* (Sv.33, $60.000, modül başı 320 birim/gün × günün rüzgârı 0,5–1,4). Modül başı 1 teknisyen; enerji müdürü Sv.32, enerji muhasebecisi Sv.35.
+- Kendi üretimin önce kendi tüketimini karşılar (fatura düşer/biter). Güneş, **batarya** (Sv.34, $18.000) yoksa tüketimin gece payını (%30) karşılayamaz.
+- Fazla elektrik, santrallerden birinde muhasebeci varsa **şebekeye** birim başı $0,8'e satılır; yoksa boşa gider.
+- Muhasebeci kasada tahmini fatura kadar da yedek bırakır.
 
 ## Bitirme ve derece
 

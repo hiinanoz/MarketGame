@@ -35,6 +35,10 @@ export class Business {
     const { x, w } = this.def.plot;
     this.x = x;
     this.w = w;
+    this.frontZ = this.def.frontZ ?? VALLEY_FRONT_Z;
+    this.customName = '';      // oyuncunun verdiği isim
+    this.battery = false;      // güneş tarlası: batarya deposu
+    this.energyToday = 0;      // bugün üretilen elektrik (birim)
     this.root = new THREE.Group();
     game.scene.add(this.root);
     this.moduleGroup = new THREE.Group();
@@ -45,7 +49,12 @@ export class Business {
 
   // ---- Durum ----
 
-  get name() { return this.def.name; }
+  get name() { return this.customName || this.def.name; }
+  get isEnergy() { return !!this.def.energy; }
+  get perModule() { return this.def.workersPerModule ?? STAFF.workersPerModule; }
+  staffLevel(role) { return this.def.staffLevels?.[role] ?? STAFF.levels[role]; }
+  /** Tam kadroyla günlük elektrik üretimi (birim = $1'lık elektrik). */
+  get energyCapacity() { return this.isEnergy ? Math.round(this.def.energyPerModule * this.modules * this.efficiency) : 0; }
   get isLogistics() { return this.def.kind === 'garage'; }
   get trucks() { return this.modules * (this.def.trucksPerModule ?? 0); }
   /** Lojistik: tam kadroyla beklenen günlük taşıma geliri. */
@@ -56,7 +65,7 @@ export class Business {
   }
   get maxModules() { return this.def.modules.length; }
   get stored() { return Object.values(this.storage).reduce((a, b) => a + b, 0); }
-  get workerSlots() { return this.modules * STAFF.workersPerModule; }
+  get workerSlots() { return this.modules * this.perModule; }
 
   /** Satın alma/modül için seviye ve para durumu. */
   nextModule() {
@@ -66,18 +75,18 @@ export class Business {
 
   get playerHere() {
     const p = this.game.player.position;
-    return Math.abs(p.x - this.x) < this.w / 2 + 1 && p.z < VALLEY_FRONT_Z + 3 && p.z > this.backZ - 2;
+    return Math.abs(p.x - this.x) < this.w / 2 + 1 && p.z < this.frontZ + 3 && p.z > this.backZ - 2;
   }
 
   /** Oyuncu modüllerin içinde mi (elle hasat/üretim). */
   get playerWorking() {
     const p = this.game.player.position;
-    return this.owned && Math.abs(p.x - this.x) < this.w / 2 - 0.5 && p.z < VALLEY_FRONT_Z - 6 && p.z > this.backZ;
+    return this.owned && Math.abs(p.x - this.x) < this.w / 2 - 0.5 && p.z < this.frontZ - 6 && p.z > this.backZ;
   }
 
   /** İşletme deposundan kasa alma alanı (ön tarafta). */
   get pickupSpot() {
-    return [this.x + Math.min(this.w / 2 - 2, 5.5), VALLEY_FRONT_Z + 1.6];
+    return [this.x + Math.min(this.w / 2 - 2, 5.5), this.frontZ + 1.6];
   }
 
   /** Bağımsız: müdür + muhasebeci varsa işletme kendi kendini yönetir. */
@@ -98,7 +107,7 @@ export class Business {
   }
 
   get backZ() {
-    return VALLEY_FRONT_Z - 4 - Math.max(1, this.modules) * MODULE_DEPTH;
+    return this.frontZ - 4 - Math.max(1, this.modules) * MODULE_DEPTH;
   }
 
   /** Üretim hızı çarpanı (0..1). */
@@ -122,7 +131,7 @@ export class Business {
     g.spend(this.def.price);
     this.owned = true;
     this.modules = 1;
-    this.workers = STAFF.workersPerModule; // eski sahibin işçileri kalır
+    this.workers = this.perModule; // eski sahibin işçileri kalır
     this.rebuild();
     this.rebuildStaff();
     if (this.isLogistics) g.depot.refreshFleet?.();
@@ -154,7 +163,7 @@ export class Business {
     g.spend(this.seizedPrice);
     this.seized = false;
     this.owned = true;
-    this.workers = Math.min(STAFF.workersPerModule, this.workerSlots);
+    this.workers = Math.min(this.perModule, this.workerSlots);
     this.rebuild();
     this.rebuildStaff();
     g.hud.toast(`🤝 ${this.def.emoji} ${this.name} bankadan geri alındı`);
@@ -177,6 +186,27 @@ export class Business {
     return out;
   }
 
+  /** Güneş tarlasına batarya: gündüz fazlası gece kullanılır. */
+  buyBattery() {
+    const g = this.game;
+    const b = this.def.battery;
+    if (!this.owned || this.battery || !b || g.level < b.level || g.money < b.cost) return false;
+    g.spend(b.cost);
+    this.battery = true;
+    this.rebuild();
+    g.gainXp(Math.floor(b.cost / XP_PER_PURCHASE));
+    g.hud.toast(`🔋 ${this.name}: batarya deposu kuruldu`);
+    g.audio.play('unlock');
+    g.save();
+    return true;
+  }
+
+  rename(name) {
+    this.customName = String(name ?? '').trim().slice(0, 24);
+    this.updateLabel(true);
+    this.game.save();
+  }
+
   expand() {
     const g = this.game;
     const m = this.nextModule();
@@ -196,7 +226,7 @@ export class Business {
     const cost = STAFF.hire[role];
     if (!this.owned || g.money < cost) return false;
     if (role === 'worker' && this.workers >= this.workerSlots) return false;
-    if (role !== 'worker' && (this[role] || g.level < STAFF.levels[role])) return false;
+    if (role !== 'worker' && (this[role] || g.level < this.staffLevel(role))) return false;
     g.spend(cost);
     if (role === 'worker') this.workers++;
     else this[role] = true;
@@ -235,6 +265,13 @@ export class Business {
     this.updateIndependent(dt);
     if (this.isLogistics) {
       this.updateLogistics(dt);
+      return;
+    }
+    if (this.isEnergy) {
+      // Elektrik üretimi (güneş sadece gündüz, rüzgâr günün rüzgârına göre)
+      const f = this.game.energy.factor(this.def.energy);
+      this.energyToday += this.def.energyPerModule * this.modules * this.efficiency * f * dt / DAY.length;
+      this.updateLabel();
       return;
     }
     this.updateManual(dt);
@@ -353,6 +390,7 @@ export class Business {
     if (profit > 0) this.game.gainXp(Math.floor(profit / XP_PER_PROFIT));
     this.yesterday = this.today;
     this.today = blank();
+    this.energyToday = 0;
     return this.yesterday;
   }
 
@@ -361,8 +399,8 @@ export class Business {
   buildFront() {
     const g = new THREE.Group();
     const kind = this.def.kind;
-    const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5, garage: 0x4f7cac }[kind];
-    const roofColor = { field: 0x5d4037, barn: 0x5d4037, hall: 0x546e7a, garage: 0x37474f }[kind];
+    const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5, garage: 0x4f7cac, solar: 0xf2c14e, wind: 0xe8eef2 }[kind];
+    const roofColor = { field: 0x5d4037, barn: 0x5d4037, hall: 0x546e7a, garage: 0x37474f, solar: 0x3b5b8c, wind: 0x4a7a9a }[kind];
     const w = Math.min(this.w - 4, 9);
     const body = new THREE.Mesh(new THREE.BoxGeometry(w, 3.4, 5), new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
     body.position.set(0, 1.7, -2.8);
@@ -381,7 +419,7 @@ export class Business {
     this.fence = new THREE.Group();
     g.add(this.fence);
     this.fenceMat = fenceMat;
-    g.position.set(this.x, 0, VALLEY_FRONT_Z);
+    g.position.set(this.x, 0, this.frontZ);
     this.root.add(g);
     this.front = g;
     // Kasa alma alanı
@@ -414,7 +452,7 @@ export class Business {
   buildSign() {
     this.label = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
     this.label.renderOrder = 6;
-    this.label.position.set(this.x, 6.4, VALLEY_FRONT_Z - 2);
+    this.label.position.set(this.x, 6.4, this.frontZ - 2);
     this.root.add(this.label);
     this.updateLabel(true);
   }
@@ -438,13 +476,26 @@ export class Business {
   }
 
   rebuild() {
-    if (this.pickupPad) this.pickupPad.visible = this.owned && !this.isLogistics;
+    if (this.pickupPad) this.pickupPad.visible = this.owned && !this.isLogistics && !this.isEnergy;
     // Modüller: arkaya doğru eklenen tarla/ahır/hat şeritleri
     this.moduleGroup.clear();
     const count = Math.max(1, this.modules);
     for (let i = 0; i < count; i++) {
-      const z = VALLEY_FRONT_Z - 6 - i * MODULE_DEPTH - MODULE_DEPTH / 2;
+      const z = this.frontZ - 6 - i * MODULE_DEPTH - MODULE_DEPTH / 2;
       this.moduleGroup.add(moduleMesh(this.def.kind, this.w - 2, MODULE_DEPTH - 1.2, this.x, z, this.owned ? 1 : 0.55, i));
+    }
+    // Batarya deposu (güneş tarlasının önünde, sağda)
+    if (this.battery) {
+      const bat = new THREE.Group();
+      const boxMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.6 });
+      for (let i = 0; i < 3; i++) {
+        const cell = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.6, 2.2), boxMat);
+        cell.position.set(i * 1.3, 0.8, 0);
+        cell.castShadow = true;
+        bat.add(cell);
+      }
+      bat.position.set(this.x + this.w / 2 - 4.5, 0, this.frontZ - 1.5);
+      this.moduleGroup.add(bat);
     }
     // Çit
     this.fence.clear();
@@ -471,18 +522,19 @@ export class Business {
     const shown = Math.min(this.workers, 6);
     for (let i = 0; i < shown; i++) {
       const mod = i % Math.max(1, this.modules);
-      const z = VALLEY_FRONT_Z - 6 - mod * MODULE_DEPTH - 2 - (i % 3) * 2.5;
+      const z = this.frontZ - 6 - mod * MODULE_DEPTH - 2 - (i % 3) * 2.5;
       this.staffChars.push(new FieldWorker(this.game, this.x - this.w / 2 + 2 + ((i * 3.1) % (this.w - 4)), z, this));
     }
-    if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 2.6, VALLEY_FRONT_Z + 1.2));
-    if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 2.6, VALLEY_FRONT_Z + 1.2));
+    if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 2.6, this.frontZ + 1.2));
+    if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 2.6, this.frontZ + 1.2));
   }
 
   serialize() {
     return {
       owned: this.owned, modules: this.modules, workers: this.workers, manager: this.manager,
       accountant: this.accountant, storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
-      seized: this.seized, seizedPrice: this.seizedPrice,
+      seized: this.seized, seizedPrice: this.seizedPrice, customName: this.customName, battery: this.battery,
+      energyToday: this.energyToday,
     };
   }
 
@@ -492,6 +544,7 @@ export class Business {
       owned: !!d.owned, modules: d.modules ?? 0, workers: d.workers ?? 0, manager: !!d.manager,
       accountant: !!d.accountant, storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
       autoGrow: d.autoGrow ?? true, seized: !!d.seized, seizedPrice: d.seizedPrice ?? 0,
+      customName: d.customName ?? '', battery: !!d.battery, energyToday: d.energyToday ?? 0,
     });
     this.rebuild();
   }
@@ -556,6 +609,38 @@ function moduleMesh(kind, w, d, x, z, alpha, index) {
       cow.position.set(w * 0.2, 0, -d / 3 + i * (d / 3));
       cow.rotation.y = i * 1.3;
       g.add(cow);
+    }
+  } else if (kind === 'solar') {
+    // Güneş paneli sırası (KayKit Space Base Bits, CC0)
+    const pad = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x9ccc65, roughness: 1, transparent: alpha < 1, opacity: alpha }));
+    pad.rotation.x = -Math.PI / 2;
+    pad.position.y = 0.01;
+    g.add(pad);
+    if (alpha >= 1) {
+      const cols = Math.floor(w / 3.3);
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < cols; c++) {
+          const p = prop('solarpanel');
+          p.scale.setScalar(3);
+          p.position.set(-w / 2 + 1.8 + c * 3.3, 0, -d / 4 + r * (d / 2));
+          g.add(p);
+        }
+      }
+    }
+  } else if (kind === 'wind') {
+    // Rüzgâr türbinleri (KayKit Space Base Bits, CC0)
+    const pad = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x8fbf5a, roughness: 1, transparent: alpha < 1, opacity: alpha }));
+    pad.rotation.x = -Math.PI / 2;
+    pad.position.y = 0.01;
+    g.add(pad);
+    if (alpha >= 1) {
+      for (const side of [-1, 1]) {
+        const t = prop(index % 2 ? 'windturbine_low' : 'windturbine_tall');
+        t.scale.setScalar(4.2);
+        t.position.set(side * w / 4, 0, 0);
+        t.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+        g.add(t);
+      }
     }
   } else if (kind === 'garage') {
     // Kamyon park yeri: asfalt, park çizgileri, iki kamyon (Kenney Starter Kit Racing, MIT)

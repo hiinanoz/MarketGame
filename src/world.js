@@ -183,6 +183,24 @@ export class World {
       this.addTree(15 + rng() * 12, -14 + rng() * 16, 0.7 + rng() * 0.4, rng, false, this.room2Trees);
     }
     this.addScenery(rng);
+    // Mağaza tabelası (ön kapının üstünde)
+    this.shopSign = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+    this.shopSign.renderOrder = 5;
+    this.shopSign.position.set(DOOR_X, 3.8, ROOM1.maxZ + 0.4);
+    s.add(this.shopSign);
+    this.setMarketTitle(this.game.marketTitle ?? 'Kasaba Market');
+  }
+
+  /** Tabela ve reklam panosuna marketin adını yaz. */
+  setMarketTitle(title) {
+    this.shopSign.material.map?.dispose();
+    this.shopSign.material.map = shopSignTexture(title);
+    this.shopSign.material.needsUpdate = true;
+    this.shopSign.scale.set(8.8, 2.2, 1);
+    if (this.billboardCanvas) {
+      drawBillboard(this.billboardCanvas.getContext('2d'), title);
+      this.billboardTex.needsUpdate = true;
+    }
   }
 
   /**
@@ -209,9 +227,10 @@ export class World {
     place('wheelbarrow', -20, -35.4, 2.2, 1.2);
     place('barrel', 13.2, -35.6, 2.2);
     // Kuzey ormanı (vadinin arkası)
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < 44; i++) {
       const x = -70 + rng() * 140;
-      const z = -100 - rng() * 30;
+      const z = -100 - rng() * 60;
+      if (x > -28 && x < 34) continue; // enerji tepeleri arsaları
       place(rng() < 0.5 ? 'trees_A_large' : 'trees_B_medium', x, z, 3 + rng() * 2, rng() * 6, false);
     }
     // Rakip marketler (Kenney City Builder, MIT): lojistik firmasıyla fazla ürün bunlara satılır
@@ -224,16 +243,6 @@ export class World {
       label.renderOrder = 6;
       s.add(label);
       this.game.nav.setBox(`rival-${x}`, { minX: x - 3, maxX: x + 3, minZ: 4.5, maxZ: 10.5 });
-    }
-    // Enerji tepeleri (Sv.31): rüzgâr türbinleri ve güneş paneli sıraları
-    this.energy = new THREE.Group();
-    s.add(this.energy);
-    for (let i = 0; i < 5; i++) {
-      const t = place(i % 2 ? 'windturbine_low' : 'windturbine_tall', -40 + i * 12, -118 - (i % 2) * 5, 7, 0);
-      this.energy.add(t);
-    }
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 6; c++) this.energy.add(place('solarpanel', 22 + c * 3.2, -106 - r * 3.4, 3, 0));
     }
   }
 
@@ -259,12 +268,10 @@ export class World {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = 'bold 72px "Trebuchet MS", sans-serif';
-    ctx.fillText('MARKET', 256, 90);
-    ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
-    ctx.fillStyle = '#ffe066';
-    ctx.fillText('Her gün taze! 🍅🥕🧀', 256, 180);
+    this.billboardCanvas = c;
+    drawBillboard(ctx, this.game.marketTitle);
     const tex = new THREE.CanvasTexture(c);
+    this.billboardTex = tex;
     tex.colorSpace = THREE.SRGBColorSpace;
     const board = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.3, 0.2), [wood, wood, wood, wood, new THREE.MeshStandardMaterial({ map: tex }), wood]);
     board.position.y = 3.6;
@@ -482,4 +489,53 @@ function signTexture(text) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
+}
+
+/** Fontu metne sığacak şekilde küçült. */
+function fitFont(ctx, text, max, size, maxWidth) {
+  let f = size;
+  do {
+    ctx.font = `bold ${f}px "Trebuchet MS", sans-serif`;
+    f -= 2;
+  } while (ctx.measureText(text).width > maxWidth && f > 18);
+}
+
+function drawBillboard(ctx, title) {
+  const grad = ctx.createLinearGradient(0, 0, 512, 256);
+  grad.addColorStop(0, '#3fae4a');
+  grad.addColorStop(1, '#2b8a35');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 256);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const t = title.toLocaleUpperCase('tr-TR');
+  fitFont(ctx, t, 0, 72, 470);
+  ctx.fillText(t, 256, 90);
+  ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#ffe066';
+  ctx.fillText('Her gün taze! 🍅🥕🧀', 256, 180);
+}
+
+function shopSignTexture(title) {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#2b8a35';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 12;
+  ctx.beginPath();
+  ctx.roundRect(16, 40, 992, 176, 48);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const t = `🛒 ${title}`;
+  fitFont(ctx, t, 0, 104, 920);
+  ctx.fillText(t, 512, 132);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }

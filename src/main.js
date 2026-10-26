@@ -20,11 +20,25 @@ async function start() {
     intro.classList.remove('hidden');
     game.paused = true; // hikâye okunurken gün ilerlemesin
     intro.addEventListener('pointerdown', (e) => e.stopPropagation());
+    const nameInput = document.getElementById('intro-name');
+    const preview = document.getElementById('intro-preview');
+    nameInput.addEventListener('input', () => {
+      game.marketName = nameInput.value.trim() || 'Kasaba';
+      preview.innerHTML = `Tabelada: <b>${game.marketTitle.replace(/</g, '&lt;')}</b>`;
+    });
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('intro-start').click(); });
     document.getElementById('intro-start').addEventListener('click', () => {
       intro.classList.add('hidden');
+      game.setMarketName(nameInput.value);
       game.paused = false;
     });
   }
+
+  // Menü: market adını değiştir
+  const menuName = document.getElementById('menu-name');
+  document.getElementById('menu-btn').addEventListener('click', () => { menuName.value = game.marketName; });
+  document.getElementById('menu-name-save').addEventListener('click', () => game.setMarketName(menuName.value));
+  menuName.addEventListener('keydown', (e) => { if (e.key === 'Enter') game.setMarketName(menuName.value); });
 
   let last = performance.now();
   const loop = (now) => {

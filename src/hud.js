@@ -95,6 +95,13 @@ export class Hud {
       if (c.unhappy) extra.push(`<div class="bad"><span>😠 ${info.emoji} ürün bulamayan</span><b>${c.unhappy}</b></div>`);
       if (c.left) extra.push(`<div class="bad"><span>📦 ${info.emoji} kalan stok zararı (${c.left} kasa)</span><b>−$${formatMoney(c.loss)}</b></div>`);
     }
+    if (st.electricity) {
+      const e = st.electricity;
+      extra.push(`<div class="${e.bill ? 'bad' : 'good'}"><span>⚡ Elektrik: tüketim ${formatMoney(e.consumption)}, kendi üretimin ${formatMoney(e.own)}</span><b>${e.bill ? `−$${formatMoney(e.bill)}` : 'bedava'}</b></div>`);
+      if (e.unpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen fatura krediye yazıldı</span><b>$${formatMoney(e.unpaid)}</b></div>`);
+      if (e.gridIncome) extra.push(`<div class="good"><span>🔌 Şebekeye satış (${formatMoney(e.surplus)} birim)</span><b>+$${formatMoney(e.gridIncome)}</b></div>`);
+      else if (e.surplus > 0) extra.push(`<div><span>🔌 ${formatMoney(e.surplus)} birim fazla elektrik boşa gitti (santrale muhasebeci al, Sv.35)</span><b></b></div>`);
+    }
     if (st.holding) {
       const h = st.holding;
       if (h.freight) extra.push(`<div class="bad"><span>🚚 Dış nakliye (lojistik firman yok)</span><b>−$${formatMoney(h.freight)}</b></div>`);

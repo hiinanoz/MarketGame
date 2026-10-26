@@ -89,6 +89,7 @@ export class DayCycle {
     g.campaign.endOfDay(this.today);
     g.bank.payInterest(this.today);   // önce banka faizi (3 gün ödenmezse el koyma)
     g.payroll(this.today);            // sonra maaşlar (ödenemeyen ayrılır)
+    g.energy.settle(this.today);      // elektrik faturası / kendi üretim / şebeke satışı
     g.holding.endOfDay(this.today);
     g.accountant?.endOfDay();
     g.bank.endOfDay(this.today);

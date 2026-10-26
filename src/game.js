@@ -16,6 +16,7 @@ import { Bank } from './bank.js';
 import { Campaign } from './campaign.js';
 import { MarketAccountant } from './accountant.js';
 import { Holding } from './holding.js';
+import { Energy } from './energy.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
@@ -89,6 +90,8 @@ export class Game {
     this.campaign = new Campaign(this);
     this.traffic = new Traffic(this);
     this.holding = new Holding(this);
+    this.energy = new Energy(this);
+    this.marketName = 'Kasaba';
 
     // Oyuncu
     this.player = new Character(this, 'Barbarian', { speed: PLAYER_SPEED, capacity: START_CAPACITY });
@@ -352,6 +355,22 @@ export class Game {
   }
 
   // ---- Müşteriler ------------------------------------------------------------
+
+  /** Tabelalarda görünen ad: "<isim> Market" (isimde zaten market/bakkal geçiyorsa eklenmez). */
+  get marketTitle() {
+    const n = this.marketName || 'Kasaba';
+    return /market|bakkal|mağaza|süpermarket/i.test(n) ? n : `${n} Market`;
+  }
+
+  setMarketName(name, silent = false) {
+    const n = String(name ?? '').trim().slice(0, 20);
+    this.marketName = n || 'Kasaba';
+    this.world.setMarketTitle(this.marketTitle);
+    if (!silent) {
+      this.hud.toast(`🏪 ${this.marketTitle}`);
+      this.save();
+    }
+  }
 
   /** Bugünkü toplam maaş yükü (market + işletmeler). */
   get dailyPayroll() {
@@ -646,7 +665,7 @@ export class Game {
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
     p.position.x = THREE.MathUtils.clamp(p.position.x, -49, 45);
-    p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 22 ? -96 : -31, 17.5);
+    p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
 
@@ -847,6 +866,8 @@ export class Game {
       campaign: this.campaign.serialize(),
       accountant: this.accountant?.serialize() ?? null,
       holding: this.holding.serialize(),
+      energy: this.energy.serialize(),
+      marketName: this.marketName,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -898,6 +919,8 @@ export class Game {
     if (data.rating !== undefined) this.rating.value = data.rating;
     this.dirt.restore(data.dirt);
     this.holding.restore(data.holding);
+    this.energy.restore(data.energy);
+    if (data.marketName) this.setMarketName(data.marketName, true);
     if (data.depot) this.depot.restore(data.depot);
     else {
       // v1'den geçiş: her ürüne biraz stok

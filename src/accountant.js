@@ -26,7 +26,7 @@ export class MarketAccountant extends Character {
   get reserve() {
     // Gün sonu maaşları + yarının faizi kasada kalsın
     const b = this.game.bank;
-    return 200 + this.game.level * 40 + this.game.dailyPayroll + Math.round(b.debt * 0.04 + b.startDebt * 0.01);
+    return 200 + this.game.level * 40 + this.game.dailyPayroll + this.game.energy.estimatedBill + Math.round(b.debt * 0.04 + b.startDebt * 0.01);
   }
 
   note(text) {

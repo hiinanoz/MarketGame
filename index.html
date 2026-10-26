@@ -92,9 +92,12 @@
       <div class="panel">
         <h2>Market Tycoon</h2>
         <label class="row"><span>Ses</span><input id="opt-sound" type="checkbox" checked /></label>
+        <label class="name-field">Marketin adı
+          <span class="name-row"><input id="menu-name" maxlength="20" autocomplete="off" /><button id="menu-name-save">Kaydet</button></span>
+        </label>
         <button id="reset-btn" class="danger">Oyunu sıfırla</button>
         <button id="close-menu" class="primary">Devam et</button>
-        <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0)</p>
+        <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0), Kenney (MIT)</p>
       </div>
     </div>
 
@@ -105,6 +108,10 @@
         <p>Cebinde birkaç kuruş, aklında büyük hayaller var. Banka sana <b>$1.500 kuruluş kredisi</b> verdi; sen de bu parayla kasabanın küçük marketini satın aldın.</p>
         <p>Hedefin: marketi büyütmek, tedarikçileri, santralleri ve arazileri almak, sonunda <b>şehrin tamamının sahibi</b> olmak. Ne kadar az günde başarırsan derecen o kadar yüksek olur.</p>
         <p class="small">Kredinin faizi günlük %1. Muhasebe odasından istediğin zaman ödeyebilirsin.</p>
+        <label class="name-field">Marketinin adı
+          <input id="intro-name" maxlength="20" placeholder="Örn. Güneş" autocomplete="off" />
+          <small id="intro-preview">Tabelada: <b>Kasaba Market</b></small>
+        </label>
         <button id="intro-start" class="primary">Marketi aç</button>
       </div>
     </div>

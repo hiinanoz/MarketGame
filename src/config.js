@@ -294,6 +294,22 @@ export const BUSINESSES = {
     modules: [{ level: 28 }, { level: 29, cost: 16000 }, { level: 30, cost: 24000 }, { level: 30, cost: 34000 }, { level: 48, cost: 60000 }],
     interval: 3.5,
   },
+  // ---- Enerji tepeleri (Sv.31+) ----
+  solar: {
+    name: 'Güneşli Tepe Güneş Tarlası', emoji: '☀️', owner: 'Elif Hanım', kind: 'solar', workerName: 'teknisyen',
+    plot: { x: -12, w: 22 }, frontZ: -100, price: 45000, level: 31,
+    products: [], energy: 'solar', energyPerModule: 200, workersPerModule: 1,
+    staffLevels: { manager: 32, accountant: 35 },
+    battery: { level: 34, cost: 18000 },
+    modules: [{ level: 31 }, { level: 32, cost: 20000 }, { level: 33, cost: 28000 }, { level: 35, cost: 36000 }, { level: 48, cost: 60000 }],
+  },
+  wind: {
+    name: 'Rüzgârlı Sırt Rüzgâr Santrali', emoji: '🌬️', owner: 'Kaptan Nuri', kind: 'wind', workerName: 'teknisyen',
+    plot: { x: 18, w: 22 }, frontZ: -100, price: 60000, level: 33,
+    products: [], energy: 'wind', energyPerModule: 320, workersPerModule: 1,
+    staffLevels: { manager: 32, accountant: 35 },
+    modules: [{ level: 33 }, { level: 34, cost: 30000 }, { level: 35, cost: 40000 }, { level: 40, cost: 55000 }, { level: 46, cost: 80000 }],
+  },
   // Lojistik firması: tüm tedarikçiler alındıktan sonra satılığa çıkar, kamyon filosunu yönetir.
   logistics: {
     name: 'Hızlı Nakliyat', emoji: '🚛', owner: 'Rıza Bey', kind: 'garage', workerName: 'şoför',
@@ -330,7 +346,7 @@ export const REGIONS = [
   { id: 'office', name: 'Muhasebe odası', emoji: '🧾', pos: [8.4, -10.6], level: 1 },
   { id: 'valley', name: 'Tedarik vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
   { id: 'logistics', name: 'Lojistik', emoji: '🚛', pos: [38, -35.8], level: 29 },
-  { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [0, -110], level: 31, soon: true },
+  { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [3, -97], level: 31 },
   { id: 'east', name: 'Doğu mahalleleri', emoji: '🏘️', pos: [60, 0], level: 36, soon: true },
   { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-80, 0], level: 51, soon: true },
   { id: 'port', name: 'Liman', emoji: '⚓', pos: [0, 40], level: 69, soon: true },
@@ -372,4 +388,15 @@ export const STAFF_ROLE = {
   cashier: 'cashier', stocker: 'stocker', cleaner: 'cleaner', manager: 'manager', accountant: 'accountant',
   valet: 'valet', security: 'guard', ads: 'advertiser',
 };
-export const ELECTRICITY = { fromLevel: 30, market: 40, perRoom: 25, perModule: 15 }; // günlük fatura
+// ---- Elektrik (Sv.30+) -----------------------------------------------------------------------
+// Günlük tüketim birim cinsinden (1 birim = şebeke fiyatıyla $1). Kendi santrallerin üretirse
+// fatura düşer; fazla üretim, santralde muhasebeci varsa şebekeye satılır.
+export const ELECTRICITY = {
+  fromLevel: 30,
+  market: 60,        // market (1. salon + depo)
+  perRoom: 40,       // açılan her ek salon
+  perModule: 25,     // işletmelerin her modülü (lojistikte kamyon bakım/şarj)
+  nightShare: 0.3,   // tüketimin gece payı: güneş bunu ancak bataryayla karşılar
+  gridPrice: 0.8,    // şebekeye satış fiyatı (birim başı $)
+  wind: [0.5, 1.4],  // günlük rüzgâr gücü aralığı
+};
