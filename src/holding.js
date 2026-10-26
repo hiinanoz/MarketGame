@@ -1,6 +1,6 @@
 import { Business } from './business.js';
 import { formatMoney } from './hud.js';
-import { BUSINESSES, STAFF, REGIONS } from './config.js';
+import { BUSINESSES, STAFF, REGIONS, LOGISTICS } from './config.js';
 
 // Holding: tedarikçi işletmeleri + tablet ekranı (İşletmeler / Harita ile hızlı geçiş).
 
@@ -35,6 +35,11 @@ export class Holding {
     return this.businesses.filter((b) => b.owned);
   }
 
+  /** Kamyon filosunu kendi lojistik firman mı yönetiyor? */
+  get logisticsOwned() {
+    return !!this.get('logistics')?.owned;
+  }
+
   update(dt) {
     for (const b of this.businesses) b.update(dt);
     this.btn.classList.toggle('hidden', this.game.level < 21);
@@ -51,12 +56,14 @@ export class Holding {
   endOfDay(today) {
     let profit = 0;
     let wages = 0;
+    let freight = 0;
     for (const b of this.owned) {
       const r = b.endOfDay();
       profit += r.profit;
       wages += r.wages;
+      freight += r.freight ?? 0;
     }
-    if (this.owned.length) today.holding = { profit, wages, count: this.owned.length };
+    if (this.owned.length) today.holding = { profit, wages, freight, count: this.owned.length };
     this.game.hud.setMoney(this.game.money);
   }
 
@@ -89,18 +96,31 @@ export class Holding {
     const cards = [`
       <div class="biz owned">
         <div class="biz-head"><span class="biz-e">🛒</span><div><b>Market</b><small>Bugün: $${formatMoney(day.revenue)} ciro · ${day.customers} müşteri · ⭐ ${g.rating.stars.toFixed(1)}</small></div></div>
+        <div class="biz-row"><span>👥 Çalışan</span><b>${g.workers.filter((w) => w.role).length}</b><small>maaş $${formatMoney(g.dailyPayroll - g.holding.owned.reduce((a, x) => a + x.dailyWages, 0))}/gün</small></div>
         <div class="biz-row"><span>Muhasebeci</span><b>${acc ? '🧑‍💼 çalışıyor' : g.level >= 21 ? 'muhasebe odasının yanından işe al' : '🔒 Sv.21'}</b></div>
         <div class="biz-btns"><button data-go="market">📍 Git</button><button data-go="office">🧾 Muhasebe</button></div>
       </div>`];
     for (const b of this.businesses) {
       const d = b.def;
+      if (b.seized) {
+        const can = g.bank.totalDebt === 0;
+        cards.push(`
+          <div class="biz locked">
+            <div class="biz-head"><span class="biz-e">${d.emoji}</span><div><b>${d.name}</b><small>🏦 Faiz ödenmediği için bankaya geçti · ${b.modules} modül korunuyor</small></div></div>
+            <div class="biz-btns">
+              ${can ? `<button class="primary" data-back="${b.id}" ${m < b.seizedPrice ? 'disabled' : ''}>Geri al $${formatMoney(b.seizedPrice)}</button>` : `<span class="lock">Geri almak için önce tüm borcu kapat ($${formatMoney(g.bank.totalDebt)})</span>`}
+              <button data-go="biz:${b.id}">📍 Git</button>
+            </div>
+          </div>`);
+        continue;
+      }
       if (!b.owned) {
         const locked = g.level < d.level;
         cards.push(`
           <div class="biz ${locked ? 'locked' : ''}">
             <div class="biz-head"><span class="biz-e">${d.emoji}</span><div><b>${d.name}</b><small>Sahibi: ${d.owner} · Ürün: ${d.products.length} çeşit</small></div></div>
             <div class="biz-btns">
-              ${locked ? `<span class="lock">🔒 Seviye ${d.level}'te satılığa çıkar</span>` : `<button class="primary" data-buy="${b.id}" ${m < d.price ? 'disabled' : ''}>Satın al $${formatMoney(d.price)}</button>`}
+              ${locked ? `<span class="lock">🔒 Seviye ${d.level}'te satılığa çıkar</span>` : b.missingReq.length ? `<span class="lock">🔒 Önce tüm tedarikçileri al (${b.missingReq.map((id) => BUSINESSES[id].emoji).join(' ')})</span>` : `<button class="primary" data-buy="${b.id}" ${m < d.price ? 'disabled' : ''}>Satın al $${formatMoney(d.price)}</button>`}
               ${g.level >= 22 ? `<button data-go="biz:${b.id}">📍 Git</button>` : ''}
             </div>
           </div>`);
@@ -114,10 +134,11 @@ export class Holding {
       cards.push(`
         <div class="biz owned">
           <div class="biz-head"><span class="biz-e">${d.emoji}</span><div><b>${d.name}</b><small>Modül ${b.modules}/${b.maxModules} · verim %${eff}${!b.manager && !b.playerHere ? ' (müdür yok)' : ''}</small></div></div>
-          <div class="biz-row"><span>👷 İşçi</span><b>${b.workers}/${b.workerSlots}</b><button data-hire="${b.id}:worker" ${b.workers >= b.workerSlots || m < H.worker ? 'disabled' : ''}>+ $${H.worker}</button></div>
+          ${b.isLogistics ? `<div class="biz-row"><span>🚛 Kamyon</span><b>${b.trucks}</b><small>~$${formatMoney(b.contractIncome)}/gün taşıma geliri</small></div>` : ''}
+          <div class="biz-row"><span>${b.isLogistics ? '🧑‍✈️ Şoför' : '👷 İşçi'}</span><b>${b.workers}/${b.workerSlots}</b><button data-hire="${b.id}:worker" ${b.workers >= b.workerSlots || m < H.worker ? 'disabled' : ''}>+ $${H.worker}</button></div>
           <div class="biz-row"><span>🟥 Müdür</span><b>${b.manager ? 'var' : 'yok'}</b>${b.manager ? '' : g.level < STAFF.levels.manager ? `<span class="lock">Sv.${STAFF.levels.manager}</span>` : `<button data-hire="${b.id}:manager" ${m < H.manager ? 'disabled' : ''}>Al $${formatMoney(H.manager)}</button>`}</div>
           <div class="biz-row"><span>🟦 Muhasebeci</span><b>${b.accountant ? 'var' : 'yok'}</b>${b.accountant ? '' : g.level < STAFF.levels.accountant ? `<span class="lock">Sv.${STAFF.levels.accountant}</span>` : `<button data-hire="${b.id}:accountant" ${m < H.accountant ? 'disabled' : ''}>Al $${formatMoney(H.accountant)}</button>`}</div>
-          <div class="biz-row"><span>📦 Depo</span><b>${b.stored}/${STAFF.storage}</b><button data-sell="${b.id}" ${!b.stored ? 'disabled' : ''}>Fazlayı sat</button></div>
+          ${b.isLogistics ? `<div class="biz-row"><span>🤝 Filo</span><b>sevkiyat bedava</b><small>sipariş −%${Math.round(LOGISTICS.orderDiscount * 100)} · fazla ürün rakip marketlere ×${LOGISTICS.rivalPrice}</small></div>` : `<div class="biz-row"><span>📦 Depo</span><b>${b.stored}/${STAFF.storage}</b><button data-sell="${b.id}" ${!b.stored ? 'disabled' : ''}>Fazlayı sat</button></div>`}
           ${b.independent ? `<div class="biz-row"><span>🤖 Bağımsız</span><b>işçi alır${b.autoGrow ? ', büyür' : ''}</b><button data-grow="${b.id}">${b.autoGrow ? 'Büyümeyi durdur' : 'Kendi büyüsün'}</button></div>` : ''}
           <div class="biz-row"><span>💵 Dün</span><b>${y ? `${y.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(y.profit))}` : '—'}</b><small>maaş $${b.dailyWages}/gün</small></div>
           <div class="biz-btns">
@@ -144,6 +165,7 @@ export class Holding {
     const d = t.dataset;
     if (d.buy) this.get(d.buy).buy();
     if (d.expand) this.get(d.expand).expand();
+    if (d.back) this.get(d.back).buyBack();
     if (d.hire) {
       const [id, role] = d.hire.split(':');
       this.get(id).hire(role);
@@ -191,5 +213,5 @@ export class Holding {
 
 function W_text() {
   const w = STAFF.wage;
-  return `${w.worker}, müdür $${w.manager}, muhasebeci $${w.accountant} (günlük)`;
+  return `${w.worker}, müdür $${w.manager}, muhasebeci $${w.accountant} (gün sonunda; ödenemezse çalışan ayrılır)`;
 }

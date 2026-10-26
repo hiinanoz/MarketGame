@@ -60,7 +60,7 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 | Sürüm | Seviyeler | İçerik | Bitince |
 |---|---|---|---|
 | **S1** ✅ | 21–25 | Holding tableti, işletme çekirdeği, müdür/muhasebeci rolleri ve şapkalar, market muhasebecisi, kuzey harita genişlemesi, ulaşım, başlangıç hikâyesi, ilk tedarikçi (çiftlik) | Oynat + geri bildirim |
-| **S2** | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
+| **S2** 🚧 | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
 | **S3** | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
 | **S4** | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
 | **S5** | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
@@ -85,6 +85,14 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - Tedarikçilerde elle çalışma: tarlada/üretimde dolaşan oyuncu üretir; 📦 alanından kasa alıp depo paletine ya da reyona kendin taşırsın.
 - Müdür + muhasebeci olan işletme bağımsızdır: eksik işçiyi alır, para yetince kendini büyütür (tabletten durdurulabilir).
 - Kredi limiti ekonomiye göre: seviye + işletme değerinin yarısı + son 3 günün ortalama kazancının 3 katı.
+
+## S2'de yapılanlar (devam ediyor)
+
+- **Maaşlar:** işe alım ucuz (kasiyer/temizlikçi $60, taşıyıcı $80, güvenlik/reklamcı/otopark $100, müdür/muhasebeci $150; tedarikçide işçi $50). Her gün sonunda maaş: çalışan $50, temizlikçi $45, müdür $65, muhasebeci $70. Önce nakitten, yetmezse mevduattan; işe alınma sırasıyla ödenir. Maaşı ödenemeyen çalışan ayrılır, alanı yeniden belirir; para kazanınca tekrar işe alınır (muhasebeci açıksa kendisi alır). Muhasebeci kasada maaş + faiz kadar yedek bırakır.
+- **Banka faizi:** gün sonunda nakitten (yetmezse mevduattan) ödenir; ödenemeyen kısım borca eklenir. Faiz üst üste 3 gün ödenmezse banka en değersiz işletmeye el koyar (değerinin %70'i borçtan düşer, modüller korunur). Borcun tamamı kapanınca işletme aynı fiyata 💼 tabletten geri alınır.
+- **Lojistik firması** (🚛 Hızlı Nakliyat, Sv.29, $40.000; dört tedarikçinin hepsi alındıktan sonra): kamyon filosunu yönetir. Yokken tedarikçi sevkiyatı dış nakliyeyle gider (kasa başı $1). Varken sevkiyat bedava, market siparişleri %10 ucuz ve kamyonlar modül başına %15 hızlı; kamyonlar (modül başına 2, şoför başına) başka firmalara taşıma yapıp günde kamyon başı $220'ye kadar getirir; fazla ürün rakip marketlere (Ucuz Market, Köşe Bakkal) alış fiyatının 1,15 katına satılır.
+- **Yeni modeller:** çiftliğe yel değirmeni, tahıl ambarı, çuval, el arabası; vadinin arkasına orman; enerji tepelerinde (Sv.31'de açılacak) rüzgâr türbinleri ve güneş paneli sıraları; caddede iki rakip market.
+- Sırada: elektrik faturaları (Sv.30), ardından S3 enerji.
 
 ## Bitirme ve derece
 

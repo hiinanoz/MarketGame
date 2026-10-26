@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Character, makeCrate } from './character.js';
 import { textTexture } from './fx.js';
-import { PRODUCTS, BUSINESSES, STAFF, VALLEY_FRONT_Z, MODULE_DEPTH, XP_PER_PROFIT, XP_PER_PURCHASE } from './config.js';
+import { PRODUCTS, BUSINESSES, STAFF, VALLEY_FRONT_Z, MODULE_DEPTH, XP_PER_PROFIT, XP_PER_PURCHASE, LOGISTICS, DAY } from './config.js';
+import { prop } from './assets.js';
 
 // Holding işletmeleri (tedarik vadisi). Yönetim odaklı: satın al → modül ekle → kadro ata.
 // Üretim kendiliğinden yürür; müdür yokken oyuncu işletmedeyse tam hız, değilse yavaş.
@@ -28,6 +29,8 @@ export class Business {
     this.manualT = 0;
     this.pickT = 0;
     this.indepT = 3;
+    this.seized = false;       // banka el koydu (borç ödenince geri alınabilir)
+    this.seizedPrice = 0;
 
     const { x, w } = this.def.plot;
     this.x = x;
@@ -43,6 +46,14 @@ export class Business {
   // ---- Durum ----
 
   get name() { return this.def.name; }
+  get isLogistics() { return this.def.kind === 'garage'; }
+  get trucks() { return this.modules * (this.def.trucksPerModule ?? 0); }
+  /** Lojistik: tam kadroyla beklenen günlük taşıma geliri. */
+  get contractIncome() { return Math.round(LOGISTICS.contractPerTruck * this.trucks * this.efficiency); }
+  /** Satın almak için önce alınması gereken işletmeler. */
+  get missingReq() {
+    return (this.def.requiresAll ?? []).filter((id) => !this.game.holding?.get(id)?.owned);
+  }
   get maxModules() { return this.def.modules.length; }
   get stored() { return Object.values(this.storage).reduce((a, b) => a + b, 0); }
   get workerSlots() { return this.modules * STAFF.workersPerModule; }
@@ -76,7 +87,11 @@ export class Business {
 
   /** İşletmenin toplam değeri (kredi limiti için). */
   get value() {
-    if (!this.owned) return 0;
+    return this.owned ? this.fullValue : 0;
+  }
+
+  /** Arsa + modüllerin değeri (sahibi kim olursa olsun). */
+  get fullValue() {
     let v = this.def.price;
     for (let i = 1; i < this.modules; i++) v += this.def.modules[i].cost ?? 0;
     return v;
@@ -103,17 +118,63 @@ export class Business {
 
   buy() {
     const g = this.game;
-    if (this.owned || g.level < this.def.level || g.money < this.def.price) return false;
+    if (this.owned || this.seized || g.level < this.def.level || g.money < this.def.price || this.missingReq.length) return false;
     g.spend(this.def.price);
     this.owned = true;
     this.modules = 1;
     this.workers = STAFF.workersPerModule; // eski sahibin işçileri kalır
     this.rebuild();
+    this.rebuildStaff();
+    if (this.isLogistics) g.depot.refreshFleet?.();
     g.gainXp(Math.floor(this.def.price / XP_PER_PURCHASE));
     g.hud.toast(`🤝 ${this.def.emoji} ${this.name} artık senin!`);
     g.audio.play('unlock');
     g.save();
     return true;
+  }
+
+  /** Banka işletmeye el koyar: kadro dağılır, modüller kalır. */
+  seize(price) {
+    this.owned = false;
+    this.seized = true;
+    this.seizedPrice = price;
+    this.workers = 0;
+    this.manager = false;
+    this.accountant = false;
+    this.storage = {};
+    this.rebuild();
+    this.rebuildStaff();
+    this.updateLabel(true);
+  }
+
+  /** Borçlar kapandıysa bankadan geri satın al. */
+  buyBack() {
+    const g = this.game;
+    if (!this.seized || g.bank.totalDebt > 0 || g.money < this.seizedPrice) return false;
+    g.spend(this.seizedPrice);
+    this.seized = false;
+    this.owned = true;
+    this.workers = Math.min(STAFF.workersPerModule, this.workerSlots);
+    this.rebuild();
+    this.rebuildStaff();
+    g.hud.toast(`🤝 ${this.def.emoji} ${this.name} bankadan geri alındı`);
+    g.audio.play('unlock');
+    g.save();
+    return true;
+  }
+
+  /** Bordro listesi (pahalıdan ucuza değil, kıdem sırasıyla: müdür, muhasebeci, işçiler). */
+  payrollEntries() {
+    if (!this.owned) return [];
+    const W = STAFF.wage;
+    const out = [];
+    const self = this;
+    const lbl = `${this.def.emoji} ${this.name}`;
+    const wn = this.def.workerName ?? 'işçi';
+    if (this.manager) out.push({ wage: W.manager, label: `${lbl} müdürü`, biz: this, fire() { self.manager = false; self.rebuildStaff(); } });
+    if (this.accountant) out.push({ wage: W.accountant, label: `${lbl} muhasebecisi`, biz: this, fire() { self.accountant = false; self.rebuildStaff(); } });
+    for (let i = 0; i < this.workers; i++) out.push({ wage: W.worker, label: `${lbl} ${wn}`, biz: this, fire() { self.workers = Math.max(0, self.workers - 1); self.rebuildStaff(); } });
+    return out;
   }
 
   expand() {
@@ -154,7 +215,9 @@ export class Business {
       if (!sell) continue;
       this.storage[p] -= sell;
       n += sell;
-      income += Math.round(sell * PRODUCTS[p].cost * STAFF.surplusPrice);
+      // Lojistik firması varsa fazla, sözleşmeyle rakip marketlere daha iyi fiyata gider
+      const price = this.game.holding?.logisticsOwned ? LOGISTICS.rivalPrice : STAFF.surplusPrice;
+      income += Math.round(sell * PRODUCTS[p].cost * price);
     }
     if (income) {
       this.game.money += income;
@@ -169,8 +232,12 @@ export class Business {
   update(dt) {
     for (const c of this.staffChars) c.update(dt);
     if (!this.owned) return;
-    this.updateManual(dt);
     this.updateIndependent(dt);
+    if (this.isLogistics) {
+      this.updateLogistics(dt);
+      return;
+    }
+    this.updateManual(dt);
     // Üretim
     const eff = this.efficiency;
     if (eff > 0 && this.stored < STAFF.storage) {
@@ -200,9 +267,29 @@ export class Business {
           this.today.supplied += send * this.game.supply.costOf(p);
         }
       }
-      if (n) depot.order(items, { free: true });
+      if (n) {
+        depot.order(items, { free: true });
+        // Kendi lojistik firman yoksa dış nakliye ücreti
+        if (!this.game.holding.logisticsOwned) {
+          const fee = n * LOGISTICS.freightPerCrate;
+          this.game.money -= fee;
+          this.today.freight += fee;
+        }
+      }
       // Muhasebeci fazlayı satar (depoda biraz bırakır)
       if (this.accountant && this.stored > STAFF.storage * 0.5) this.sellSurplus(5);
+    }
+    this.updateLabel();
+  }
+
+  /** Lojistik: boştaki kamyonlar başka firmalara taşıma yapar, gelir gün boyu kasaya akar. */
+  updateLogistics(dt) {
+    this.cashT = (this.cashT ?? 0) + LOGISTICS.contractPerTruck * this.trucks * this.efficiency * dt / DAY.length;
+    if (this.cashT >= 1) {
+      const n = Math.floor(this.cashT);
+      this.cashT -= n;
+      this.game.money += n;
+      this.today.sales += n;
     }
     this.updateLabel();
   }
@@ -260,10 +347,8 @@ export class Business {
   /** Gün sonu: maaşlar ödenir, kâr hesaplanır, XP. */
   endOfDay() {
     if (!this.owned) return null;
-    const wages = this.dailyWages;
-    this.game.money -= wages;
-    this.today.wages = wages;
-    const profit = this.today.sales + this.today.supplied - wages;
+    const wages = this.today.wages; // bordroda ödendi (game.payroll)
+    const profit = this.today.sales + this.today.supplied - wages - (this.today.freight ?? 0);
     this.today.profit = profit;
     if (profit > 0) this.game.gainXp(Math.floor(profit / XP_PER_PROFIT));
     this.yesterday = this.today;
@@ -276,8 +361,8 @@ export class Business {
   buildFront() {
     const g = new THREE.Group();
     const kind = this.def.kind;
-    const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5 }[kind];
-    const roofColor = { field: 0x5d4037, barn: 0x5d4037, hall: 0x546e7a }[kind];
+    const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5, garage: 0x4f7cac }[kind];
+    const roofColor = { field: 0x5d4037, barn: 0x5d4037, hall: 0x546e7a, garage: 0x37474f }[kind];
     const w = Math.min(this.w - 4, 9);
     const body = new THREE.Mesh(new THREE.BoxGeometry(w, 3.4, 5), new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
     body.position.set(0, 1.7, -2.8);
@@ -338,7 +423,9 @@ export class Business {
     const g = this.game;
     let text;
     if (this.owned) text = `${this.def.emoji} ${this.name} · ${this.modules}/${this.maxModules}`;
+    else if (this.seized) text = `${this.def.emoji} 🏦 Bankaya ait`;
     else if (g.level < this.def.level) text = `${this.def.emoji} ${this.def.owner} · 🔒 Sv.${this.def.level}`;
+    else if (this.missingReq.length) text = `${this.def.emoji} ${this.def.owner} · 🔒 önce tedarikçiler`;
     else text = `${this.def.emoji} SATILIK $${this.def.price.toLocaleString('tr-TR')}`;
     if (!force && text === this.labelText) return;
     this.labelText = text;
@@ -351,7 +438,7 @@ export class Business {
   }
 
   rebuild() {
-    if (this.pickupPad) this.pickupPad.visible = this.owned;
+    if (this.pickupPad) this.pickupPad.visible = this.owned && !this.isLogistics;
     // Modüller: arkaya doğru eklenen tarla/ahır/hat şeritleri
     this.moduleGroup.clear();
     const count = Math.max(1, this.modules);
@@ -395,6 +482,7 @@ export class Business {
     return {
       owned: this.owned, modules: this.modules, workers: this.workers, manager: this.manager,
       accountant: this.accountant, storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
+      seized: this.seized, seizedPrice: this.seizedPrice,
     };
   }
 
@@ -403,14 +491,14 @@ export class Business {
     Object.assign(this, {
       owned: !!d.owned, modules: d.modules ?? 0, workers: d.workers ?? 0, manager: !!d.manager,
       accountant: !!d.accountant, storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
-      autoGrow: d.autoGrow ?? true,
+      autoGrow: d.autoGrow ?? true, seized: !!d.seized, seizedPrice: d.seizedPrice ?? 0,
     });
     this.rebuild();
   }
 }
 
 function blank() {
-  return { produced: 0, supplied: 0, sales: 0, wages: 0, profit: 0 };
+  return { produced: 0, supplied: 0, sales: 0, wages: 0, freight: 0, profit: 0 };
 }
 
 // ---- Modül görselleri --------------------------------------------------------------------
@@ -468,6 +556,30 @@ function moduleMesh(kind, w, d, x, z, alpha, index) {
       cow.position.set(w * 0.2, 0, -d / 3 + i * (d / 3));
       cow.rotation.y = i * 1.3;
       g.add(cow);
+    }
+  } else if (kind === 'garage') {
+    // Kamyon park yeri: asfalt, park çizgileri, iki kamyon (Kenney Starter Kit Racing, MIT)
+    const pad = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x5b6067, roughness: 1, transparent: alpha < 1, opacity: alpha }));
+    pad.rotation.x = -Math.PI / 2;
+    pad.position.y = 0.01;
+    pad.receiveShadow = true;
+    g.add(pad);
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xf2f2f2 });
+    for (const lx of [-w / 2 + 0.4, 0, w / 2 - 0.4]) {
+      const line = new THREE.Mesh(new THREE.PlaneGeometry(0.15, d * 0.8), lineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.position.set(lx, 0.02, 0);
+      g.add(line);
+    }
+    if (alpha >= 1) {
+      for (const [i, side] of [[0, -1], [1, 1]]) {
+        const t = prop(i % 2 ? 'vehicle-truck-red' : 'vehicle-truck-green');
+        t.scale.setScalar(2.2);
+        t.position.set(side * w / 4, 0, 0);
+        t.rotation.y = (index + i) % 2 ? Math.PI : 0;
+        t.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+        g.add(t);
+      }
     }
   } else {
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0xb0b6bd, roughness: 1, transparent: alpha < 1, opacity: alpha }));

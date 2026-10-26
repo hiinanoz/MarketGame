@@ -28,7 +28,7 @@ export class World {
 
     // Çimen
     const grass = new THREE.Mesh(
-      new THREE.PlaneGeometry(200, 200),
+      new THREE.PlaneGeometry(420, 420),
       new THREE.MeshStandardMaterial({ color: 0x86c96b, roughness: 1 }),
     );
     grass.rotation.x = -Math.PI / 2;
@@ -166,7 +166,8 @@ export class World {
       if (x > -17 && x < 32 && z > -30 && z < 8) continue; // mağaza ve depo
       if (x > -52 && x < -11 && z > 2 && z < 14) continue; // otopark
       if (x > -34 && x < -11 && z > -32 && z < 2) continue; // 3. salon, üretimhaneler
-      if (x > -46 && x < 36 && z < -34) continue; // tedarik vadisi arsaları
+      if (x > -46 && x < 46 && z < -34) continue;
+      if (x > 31 && x < 48 && z > 0 && z < 13) continue; // rakip marketler // tedarik vadisi arsaları
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }
@@ -180,6 +181,59 @@ export class World {
     s.add(this.room2Trees);
     for (let i = 0; i < 14; i++) {
       this.addTree(15 + rng() * 12, -14 + rng() * 16, 0.7 + rng() * 0.4, rng, false, this.room2Trees);
+    }
+    this.addScenery(rng);
+  }
+
+  /**
+   * Uzak manzara ve bölge süsleri (KayKit Medieval Hexagon + Space Base Bits, CC0):
+   * çiftliğe yel değirmeni ve çuvallar, kuzeyde orman ve dağlar, enerji tepelerinde
+   * (Sv.31'de açılacak) rüzgâr türbinleri ve güneş panelleri.
+   */
+  addScenery(rng) {
+    const s = this.scene;
+    const place = (name, x, z, scale, rot = 0, shadow = true) => {
+      const m = prop(name);
+      m.scale.setScalar(scale);
+      m.position.set(x, 0, z);
+      m.rotation.y = rot;
+      if (shadow) m.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+      s.add(m);
+      return m;
+    };
+    // Çiftlik (Yeşil Vadi): yel değirmeni, tahıl ambarı, çuvallar, el arabası
+    place('building_windmill_green', -21.6, -40, 4, Math.PI / 6);
+    place('building_grain', -8.6, -39.6, 3.2);
+    place('sack', -10.2, -35.6, 2.2, 0.4);
+    place('sack', -9.3, -35.3, 2.2, -0.3);
+    place('wheelbarrow', -20, -35.4, 2.2, 1.2);
+    place('barrel', 13.2, -35.6, 2.2);
+    // Kuzey ormanı (vadinin arkası)
+    for (let i = 0; i < 26; i++) {
+      const x = -70 + rng() * 140;
+      const z = -100 - rng() * 30;
+      place(rng() < 0.5 ? 'trees_A_large' : 'trees_B_medium', x, z, 3 + rng() * 2, rng() * 6, false);
+    }
+    // Rakip marketler (Kenney City Builder, MIT): lojistik firmasıyla fazla ürün bunlara satılır
+    const rivals = [['building-small-a', 36.5, 'Ucuz Market'], ['building-small-c', 43.5, 'Köşe Bakkal']];
+    for (const [name, x, title] of rivals) {
+      place(name, x, 7.5, 6, 0);
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTexture(title), transparent: true, depthTest: false }));
+      label.scale.set(4.2, 1.05, 1);
+      label.position.set(x, 7.2, 8);
+      label.renderOrder = 6;
+      s.add(label);
+      this.game.nav.setBox(`rival-${x}`, { minX: x - 3, maxX: x + 3, minZ: 4.5, maxZ: 10.5 });
+    }
+    // Enerji tepeleri (Sv.31): rüzgâr türbinleri ve güneş paneli sıraları
+    this.energy = new THREE.Group();
+    s.add(this.energy);
+    for (let i = 0; i < 5; i++) {
+      const t = place(i % 2 ? 'windturbine_low' : 'windturbine_tall', -40 + i * 12, -118 - (i % 2) * 5, 7, 0);
+      this.energy.add(t);
+    }
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 6; c++) this.energy.add(place('solarpanel', 22 + c * 3.2, -106 - r * 3.4, 3, 0));
     }
   }
 
@@ -409,4 +463,23 @@ function mulberry(a) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+function signTexture(text) {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(40,40,48,0.78)';
+  ctx.beginPath();
+  ctx.roundRect(8, 16, 496, 96, 40);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 56px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`🏪 ${text}`, 256, 66);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }

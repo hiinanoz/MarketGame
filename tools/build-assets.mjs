@@ -5,6 +5,10 @@
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Restaurant-Bits-1.0
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0
+//   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Space-Base-Bits-1.0
+//   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
+//   git clone --depth 1 https://github.com/KenneyNL/Starter-Kit-Racing
+//   git clone --depth 1 https://github.com/KenneyNL/Starter-Kit-City-Builder
 //   node tools/build-assets.mjs <bu klasörlerin bulunduğu dizin>
 //
 // Çıktı: src/assets/characters/*.glb, src/assets/characters/anims.glb ve src/assets/props.glb
@@ -68,6 +72,10 @@ for (const name of CHARACTERS) {
 const REST = path.join(SRC, 'KayKit-Restaurant-Bits-1.0/addons/kaykit_restaurant_bits/Assets/gltf');
 const FURN = path.join(SRC, 'KayKit-Furniture-Bits-1.0/addons/kaykit_furniture_bits/Assets/gltf');
 const CITY = path.join(SRC, 'KayKit-City-Builder-Bits-1.0/addons/kaykit_city_builder_bits/Assets/gltf');
+const SPACE = path.join(SRC, 'KayKit-Space-Base-Bits-1.0/addons/kaykit_space_base_bits/Assets/gltf');
+const MED = path.join(SRC, 'KayKit-Medieval-Hexagon-Pack-1.0/addons/kaykit_medieval_hexagon_pack/Assets/gltf');
+const KENNEY_RACING = path.join(SRC, 'Starter-Kit-Racing/models');
+const KENNEY_CITY = path.join(SRC, 'Starter-Kit-City-Builder/models');
 const PROPS = {
   [REST]: [
     'crate', 'crate_lid', 'crate_tomatoes', 'crate_carrots', 'crate_cheese', 'crate_lettuce', 'crate_onions',
@@ -84,12 +92,23 @@ const PROPS = {
   [CITY]: [
     'car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_police', 'streetlight', 'bench', 'bush',
   ],
+  // Enerji (güneş, rüzgâr) ve lojistik konteynerleri — KayKit Space Base Bits (CC0)
+  [SPACE]: ['solarpanel', 'windturbine_tall', 'windturbine_low'],
+  // Çiftlik ve kasaba — KayKit Medieval Hexagon (CC0)
+  [path.join(MED, 'buildings/green')]: ['building_windmill_green'],
+  [path.join(MED, 'buildings/neutral')]: ['building_grain'],
+  [path.join(MED, 'decoration/nature')]: ['trees_A_large', 'trees_B_medium'],
+  [path.join(MED, 'decoration/props')]: ['sack', 'wheelbarrow', 'barrel'],
+  // Kamyonlar ve kasaba binaları — Kenney Starter Kits (MIT)
+  [KENNEY_RACING]: ['vehicle-truck-red', 'vehicle-truck-green'],
+  [KENNEY_CITY]: ['building-garage', 'building-small-a', 'building-small-b', 'building-small-c'],
 };
 
 const merged = new Document();
 for (const [dir, names] of Object.entries(PROPS)) {
   for (const name of names) {
-    const doc = await io.read(path.join(dir, `${name}.gltf`));
+    const file = fs.existsSync(path.join(dir, `${name}.gltf`)) ? `${name}.gltf` : `${name}.glb`;
+    const doc = await io.read(path.join(dir, file));
     const scene = doc.getRoot().getDefaultScene() ?? doc.getRoot().listScenes()[0];
     // Tüm kök düğümleri modelin adını taşıyan tek bir kök altında topla.
     const wrapper = doc.createNode(name);

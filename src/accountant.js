@@ -24,7 +24,9 @@ export class MarketAccountant extends Character {
 
   /** Kasada tutulacak en az para (maaş, acil sipariş için). */
   get reserve() {
-    return 300 + this.game.level * 60;
+    // Gün sonu maaşları + yarının faizi kasada kalsın
+    const b = this.game.bank;
+    return 200 + this.game.level * 40 + this.game.dailyPayroll + Math.round(b.debt * 0.04 + b.startDebt * 0.01);
   }
 
   note(text) {

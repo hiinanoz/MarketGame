@@ -90,22 +90,77 @@ export class Bank {
     this.game.save();
   }
 
-  /** Gün sonu: borca faiz eklenir, mevduat faiz kazanır, kazanç geçmişi (limit için) güncellenir. */
+  /**
+   * Gün sonu faiz: nakitten (yetmezse mevduattan) ödenir. Ödenemeyen kısım borca eklenir.
+   * Faiz üst üste BANK.missLimit gün ödenemezse banka en değersiz işletmeye el koyar;
+   * değerinin bir kısmı borçtan düşülür. Borç kapanınca işletme aynı fiyata geri alınabilir.
+   */
+  payInterest(today) {
+    const g = this.game;
+    const a = Math.round(this.debt * BANK.loanRate);
+    const b = Math.round(this.startDebt * START_LOAN.rate);
+    const due = a + b;
+    let paid = Math.min(due, Math.max(0, Math.floor(g.money)));
+    g.money -= paid;
+    if (paid < due && this.deposit > 0) {
+      const take = Math.min(this.deposit, due - paid);
+      this.deposit -= take;
+      paid += take;
+    }
+    const unpaid = due - paid;
+    if (unpaid > 0) {
+      // Ödenmeyen faiz, ait olduğu krediye eklenir
+      const ua = Math.round(unpaid * (due ? a / due : 1));
+      this.debt += ua;
+      this.startDebt += unpaid - ua;
+      this.missed = (this.missed ?? 0) + 1;
+    } else this.missed = 0;
+    today.interestPaid = paid;
+    today.interestUnpaid = unpaid;
+    today.missed = this.missed;
+    if (this.missed >= BANK.missLimit) {
+      const s = this.seizeOne();
+      if (s) {
+        today.seized = s;
+        this.missed = 0;
+      } else today.seizeNone = true;
+    } else if (unpaid > 0) {
+      g.hud.toast(`⚠️ Kredi faizi ödenemedi (${this.missed}/${BANK.missLimit}) — ${BANK.missLimit}. günde banka bir işletmene el koyar`);
+    }
+  }
+
+  /** En değersiz işletmeye el koy, değerinin bir kısmını borçtan düş. */
+  seizeOne() {
+    const g = this.game;
+    const owned = g.holding.owned.slice().sort((x, y) => x.fullValue - y.fullValue);
+    const biz = owned[0];
+    if (!biz) return null;
+    const price = Math.round(biz.fullValue * BANK.seizeRatio);
+    biz.seize(price);
+    let left = price;
+    const d1 = Math.min(left, this.debt);
+    this.debt -= d1;
+    left -= d1;
+    const d2 = Math.min(left, this.startDebt);
+    this.startDebt -= d2;
+    left -= d2;
+    if (left > 0) g.money += left; // borçtan artan para sana kalır
+    g.hud.toast(`🏦 Banka ${biz.def.emoji} ${biz.name} işletmesine el koydu (−$${formatMoney(price)} borç)`);
+    return { name: biz.name, emoji: biz.def.emoji, price, change: left };
+  }
+
+  /** Gün sonu: mevduat faizi, kazanç geçmişi (limit için). */
   endOfDay(today) {
     this.history ??= [];
     this.history.push((today.revenue ?? 0) + (today.holding?.profit ?? 0));
     if (this.history.length > 3) this.history.shift();
-    const interest = Math.round(this.debt * BANK.loanRate + this.startDebt * START_LOAN.rate);
     const earned = Math.floor(this.deposit * BANK.depositRate);
-    this.debt += Math.round(this.debt * BANK.loanRate);
-    this.startDebt += Math.round(this.startDebt * START_LOAN.rate);
     this.deposit += earned;
-    today.interestPaid = interest;
     today.interestEarned = earned;
   }
 
   serialize() {
-    return { debt: this.debt, startDebt: this.startDebt, deposit: this.deposit, history: this.history ?? [] };
+    return { debt: this.debt, startDebt: this.startDebt, deposit: this.deposit, history: this.history ?? [], missed: this.missed ?? 0 };
   }
 
   restore(d) {
@@ -114,5 +169,6 @@ export class Bank {
     this.startDebt = d.startDebt ?? 0;
     this.history = d.history ?? [];
     this.deposit = d.deposit ?? 0;
+    this.missed = d.missed ?? 0;
   }
 }

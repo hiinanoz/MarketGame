@@ -21,7 +21,7 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY,
+  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -224,6 +224,7 @@ export class Game {
 
   applyUnlock(def, silent = false) {
     this.unlocked.add(def.id);
+    const staffBefore = this.workers.length;
     switch (def.type) {
       case 'shelf': {
         const shelf = this.addShelf(def.target);
@@ -307,6 +308,11 @@ export class Game {
         this.addCheckout(def.target);
         break;
     }
+    // Yeni çalışanı satın alma alanıyla eşle (maaş ödenemezse ayrılınca alan geri gelir)
+    for (let i = staffBefore; i < this.workers.length; i++) {
+      this.workers[i].unlockId = def.id;
+      this.workers[i].role = STAFF_ROLE[def.type];
+    }
     if (!silent) {
       const l = this.padLabel(def);
       this.hud.toast(`${l.emoji} ${l.title} açıldı!`);
@@ -346,6 +352,84 @@ export class Game {
   }
 
   // ---- Müşteriler ------------------------------------------------------------
+
+  /** Bugünkü toplam maaş yükü (market + işletmeler). */
+  get dailyPayroll() {
+    let n = 0;
+    for (const w of this.workers) n += WAGES[w.role] ?? 0;
+    for (const b of this.holding.owned) n += b.dailyWages;
+    return n;
+  }
+
+  /**
+   * Gün sonu bordro: önce nakitten, yetmezse mevduattan. İşe alınma sırasına göre ödenir;
+   * maaşı ödenemeyen çalışan işten ayrılır (alanı yeniden belirir, sonra tekrar işe alınabilir).
+   */
+  payroll(today) {
+    const entries = [];
+    for (const w of this.workers) {
+      if (WAGES[w.role]) entries.push({ wage: WAGES[w.role], label: ROLE_NAMES[w.role], fire: () => this.fireWorker(w) });
+    }
+    for (const b of this.holding.owned) entries.push(...b.payrollEntries());
+    let paid = 0;
+    let market = 0;
+    const quit = [];
+    for (const e of entries) {
+      if (this.money < e.wage && this.bank.deposit > 0) {
+        const take = Math.min(this.bank.deposit, Math.ceil(e.wage - this.money));
+        this.bank.deposit -= take;
+        this.money += take;
+      }
+      if (this.money >= e.wage) {
+        this.money -= e.wage;
+        paid += e.wage;
+        if (e.biz) e.biz.today.wages += e.wage;
+        else market += e.wage;
+      } else quit.push(e);
+    }
+    for (const e of quit) e.fire();
+    today.wages = paid;
+    today.marketWages = market;
+    today.quit = quit.map((e) => e.label);
+    if (quit.length) {
+      this.refreshPads();
+      this.hud.toast(`😞 Maaşı ödenemeyen ${quit.length} çalışan işten ayrıldı`);
+    }
+    this.hud.setMoney(this.money);
+  }
+
+  /** Çalışan işten ayrılır: karakter kalkar, satın alma alanı yeniden belirir. */
+  fireWorker(w) {
+    const i = this.workers.indexOf(w);
+    if (i < 0) return;
+    this.workers.splice(i, 1);
+    this.scene.remove(w.root);
+    if (w.unlockId) this.unlocked.delete(w.unlockId);
+    switch (w.role) {
+      case 'cashier':
+        for (const co of this.checkouts) {
+          const k = co.cashiers.indexOf(w);
+          if (k >= 0) co.cashiers.splice(k, 1);
+          if (!co.cashiers.length) co.zone.visible = true;
+        }
+        break;
+      case 'stocker':
+        w.finishJob?.();
+        break;
+      case 'accountant':
+        if (this.accountant === w) {
+          this.savedAccountant = w.serialize?.();
+          this.accountant = null;
+        }
+        break;
+      case 'valet':
+        this.traffic.lot.valet = this.workers.some((x) => x.role === 'valet');
+        break;
+      case 'advertiser':
+        this.adBoost -= ADS.advertiser;
+        break;
+    }
+  }
 
   // ---- Ek mesai ----------------------------------------------------------------
 

@@ -343,7 +343,8 @@ export class Customer extends Character {
 
 export class Cashier extends Character {
   constructor(game, checkout) {
-    const second = checkout.cashiers.length > 0;
+    // Boş olan yeri al (ilk kasiyer ayrılırsa yeni gelen onun yerine geçer)
+    const second = checkout.cashiers.some((c) => !c.second);
     super(game, second ? 'Rogue' : 'Mage', { speed: WORKER_SPEED, look: 'uniform' });
     // İkinci kasiyer tezgahın diğer ucunda durur, ödemeler iki kat hızlı alınır
     this.position.set(checkout.cashierSpot[0], 0, checkout.cashierSpot[1] + (second ? -1.5 : 0));
@@ -351,6 +352,7 @@ export class Cashier extends Character {
     this.root.rotation.y = this.heading;
     this.root.add(workerBadge('💳'));
     game.scene.add(this.root);
+    this.second = second;
     checkout.cashiers.push(this);
     checkout.zone.visible = false;
   }

@@ -10,4 +10,6 @@
 - Çalışanlar `look: 'uniform'` ile, müşteriler `look: 0..5` renk çeşidiyle oluşturulur (`assets.js` → `character()`); yeni işçi eklerken üniforma kullan.
 - Oyun zamanıyla gecikmeli iş için `setTimeout` değil `game.later.push({ t, fn })` kullan (testlerde `game.update` ile hızlandırılan simülasyonda da çalışsın).
 - Sv.21+ holding: `src/business.js` (tedarikçi işletmesi), `src/holding.js` (tablet + hızlı geçiş), `src/accountant.js` (market muhasebecisi). İşletme tanımları `config.js` → `BUSINESSES`, kadro → `STAFF`, bölgeler → `REGIONS`. Tasarım: `docs/LEVELS.md`, sıra: `docs/ROADMAP.md`.
+- Maaşlar: `config.js` → `WAGES` (market rolleri), `STAFF.wage` (işletmeler). Çalışan nesnelerinde `role` ve `unlockId` var; `game.payroll()` gün sonunda öder, ödenemeyeni `game.fireWorker()` ile çıkarır (pad geri gelir). Yeni personel tipi eklerken `STAFF_ROLE`, `WAGES`, `ROLE_NAMES` ve `fireWorker` içindeki rol temizliğini güncelle.
+- Banka: `bank.payInterest()` (gün sonu faiz, 3 gün → `seizeOne()`), işletmede `seize()/buyBack()`. Lojistik firması `BUSINESSES.logistics` (`kind: 'garage'`), etkileri `LOGISTICS` ve `holding.logisticsOwned`.
 - Şapka renkleri: işçi `cap: 'yellow'`, müdür `'red'`, muhasebeci `'blue'`.

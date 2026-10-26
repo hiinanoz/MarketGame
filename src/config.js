@@ -71,6 +71,8 @@ export const BANK = {
   loanRate: 0.04,       // günlük kredi faizi
   depositRate: 0.02,    // günlük mevduat faizi
   limitBase: 500,       // kredi limiti = limitBase + seviye × limitPerLevel
+  missLimit: 3,         // faiz üst üste bu kadar gün ödenmezse banka bir işletmeye el koyar
+  seizeRatio: 0.7,      // el konan işletmenin değerinin bu kadarı borçtan düşülür (geri alım fiyatı)
   limitPerLevel: 800,
   assetRatio: 0.5,      // + sahip olunan işletmelerin değerinin yarısı
   incomeDays: 3,        // + son 3 günün ortalama kazancının 3 katı
@@ -292,11 +294,29 @@ export const BUSINESSES = {
     modules: [{ level: 28 }, { level: 29, cost: 16000 }, { level: 30, cost: 24000 }, { level: 30, cost: 34000 }, { level: 48, cost: 60000 }],
     interval: 3.5,
   },
+  // Lojistik firması: tüm tedarikçiler alındıktan sonra satılığa çıkar, kamyon filosunu yönetir.
+  logistics: {
+    name: 'Hızlı Nakliyat', emoji: '🚛', owner: 'Rıza Bey', kind: 'garage', workerName: 'şoför',
+    plot: { x: 38, w: 12 }, price: 40000, level: 29, requiresAll: ['farm', 'dairy', 'bakery', 'meat'],
+    products: [],
+    modules: [{ level: 29 }, { level: 30, cost: 15000 }, { level: 32, cost: 22000 }, { level: 35, cost: 30000 }, { level: 48, cost: 50000 }],
+    trucksPerModule: 2,
+  },
+};
+// Lojistik firması yokken tedarikçi sevkiyatları dış nakliyeyle (kasa başı ücret) gider.
+// Firma alınınca: sevkiyat bedava, market siparişleri indirimli ve daha hızlı, boş kamyonlar
+// başka firmalara taşıma yapıp gelir getirir, fazla ürün rakip marketlere daha iyi fiyata satılır.
+export const LOGISTICS = {
+  freightPerCrate: 1,     // dış nakliye ücreti (kasa başı)
+  orderDiscount: 0.1,     // market siparişlerinde indirim
+  speedPerModule: 0.15,   // modül başına kamyon hız artışı
+  contractPerTruck: 220,  // tam kadroyla kamyon başı günlük taşıma geliri
+  rivalPrice: 1.15,       // fazlanın rakip marketlere satış fiyatı (alış fiyatına oranla)
 };
 export const STAFF = {
   workersPerModule: 2,
-  wage: { worker: 40, manager: 120, accountant: 100 }, // günlük maaş
-  hire: { worker: 150, manager: 1200, accountant: 1000 }, // işe alım ücreti
+  wage: { worker: 50, manager: 65, accountant: 70 },  // günlük maaş (gün sonunda)
+  hire: { worker: 50, manager: 150, accountant: 150 }, // işe alım ücreti (ucuz)
   levels: { manager: 25, accountant: 25 },               // tedarikçilere müdür/muhasebeci
   noManagerRate: 0.4,  // müdür yok ve oyuncu da orada değilken üretim hızı
   storage: 60,         // işletme deposu (kasa)
@@ -309,6 +329,7 @@ export const REGIONS = [
   { id: 'depot', name: 'Arka depo', emoji: '📦', pos: [0, -18.5], level: 1 },
   { id: 'office', name: 'Muhasebe odası', emoji: '🧾', pos: [8.4, -10.6], level: 1 },
   { id: 'valley', name: 'Tedarik vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
+  { id: 'logistics', name: 'Lojistik', emoji: '🚛', pos: [38, -35.8], level: 29 },
   { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [0, -110], level: 31, soon: true },
   { id: 'east', name: 'Doğu mahalleleri', emoji: '🏘️', pos: [60, 0], level: 36, soon: true },
   { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-80, 0], level: 51, soon: true },
@@ -327,3 +348,28 @@ export const WORKER_CAPACITY = 4;
 export const PLAYER_SPEED = 7.5;
 export const WORKER_SPEED = 5;
 export const CUSTOMER_SPEED = 3.6;
+
+// ---- Maaşlar ------------------------------------------------------------------------------
+// İşe alım ucuzdur; her çalışana gün sonunda maaş ödenir. Ödenemeyen çalışan işten ayrılır,
+// alanı yeniden belirir ve para kazanınca tekrar işe alınabilir.
+export const ROLE_NAMES = {
+  cashier: '💳 Kasiyer', stocker: '📦 Taşıyıcı', cleaner: '🧹 Temizlikçi', manager: '🟥 Müdür', accountant: '🟦 Muhasebeci',
+  guard: '🛡️ Güvenlik', advertiser: '📣 Reklamcı', valet: '🅿️ Otopark görevlisi',
+};
+export const WAGES = {
+  cashier: 50, stocker: 50, cleaner: 45, manager: 65, accountant: 70,
+  guard: 50, advertiser: 50, valet: 50, worker: 50,
+};
+export const HIRE_COST = {
+  cashier: 60, stocker: 80, cleaner: 60, manager: 150, accountant: 150, valet: 100, security: 100, advertiser: 100,
+};
+for (const u of UNLOCKS) {
+  if (u.type in HIRE_COST) u.cost = HIRE_COST[u.type];
+  if (u.type === 'ads' && u.target === 'advertiser') u.cost = HIRE_COST.advertiser;
+}
+/** Satın alma tipinden çalışan rolüne. */
+export const STAFF_ROLE = {
+  cashier: 'cashier', stocker: 'stocker', cleaner: 'cleaner', manager: 'manager', accountant: 'accountant',
+  valet: 'valet', security: 'guard', ads: 'advertiser',
+};
+export const ELECTRICITY = { fromLevel: 30, market: 40, perRoom: 25, perModule: 15 }; // günlük fatura

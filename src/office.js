@@ -189,6 +189,10 @@ class OfficePanel {
         ${b.startDebt ? row('Kuruluş kredisi (%1/gün)', b.startDebt, 'warn') : ''}
         ${row('Kullanılabilir kredi', b.available)}
       </div>
+      ${row('Günlük faiz (gün sonu nakitten)', b.debt * 0.04 + b.startDebt * 0.01, b.missed ? 'warn' : '')}
+      ${row('Günlük maaşlar (gün sonu)', this.game.dailyPayroll)}
+      ${b.missed ? `<p class="note warn">⚠️ Faiz ${b.missed} gündür ödenemedi. ${3 - b.missed} gün daha ödenmezse banka en değersiz işletmene el koyar.</p>` : ''}
+      ${this.game.holding.businesses.some((x) => x.seized) ? `<p class="note">🏦 Bankaya geçen işletmeler borcun tamamen kapanınca 💼 tabletten geri alınabilir.</p>` : ''}
       <p class="note">Kredi limiti $${formatMoney(b.limit)} = seviye $${formatMoney(b.limitParts.base)} + işletmeler $${formatMoney(b.limitParts.assets)} + kazanç $${formatMoney(b.limitParts.income)}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.</p>
       <div class="bank-group"><span>Kredi çek</span>
         ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}

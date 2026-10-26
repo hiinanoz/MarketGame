@@ -85,10 +85,13 @@ export class DayCycle {
   }
 
   endDay() {
-    this.game.campaign.endOfDay(this.today);
-    this.game.holding.endOfDay(this.today);
-    this.game.accountant?.endOfDay();
-    this.game.bank.endOfDay(this.today);
+    const g = this.game;
+    g.campaign.endOfDay(this.today);
+    g.bank.payInterest(this.today);   // önce banka faizi (3 gün ödenmezse el koyma)
+    g.payroll(this.today);            // sonra maaşlar (ödenemeyen ayrılır)
+    g.holding.endOfDay(this.today);
+    g.accountant?.endOfDay();
+    g.bank.endOfDay(this.today);
     this.phase = 'night';
     this.nightT = 0;
     this.game.hud.showSummary(this.day, this.today);

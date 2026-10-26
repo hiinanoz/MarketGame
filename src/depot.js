@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Pallet } from './stations.js';
-import { PRODUCTS, PALLETS, SPECIAL_PALLET, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z } from './config.js';
+import { PRODUCTS, PALLETS, SPECIAL_PALLET, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z, LOGISTICS } from './config.js';
 
 // Arka depo: ürün paletleri, sipariş noktası, sipariş paneli ve toptancı kamyonları.
 
@@ -76,6 +76,12 @@ export class Depot {
    * Sipariş ver: parası hemen ödenir, kamyon gelip kasaları indirir.
    * @param {Record<string, number>} items ürün → adet
    */
+  /** Kendi lojistik firman varsa kamyonlar daha hızlı. */
+  get speedFactor() {
+    const l = this.game.holding?.get('logistics');
+    return l?.owned ? 1 + l.modules * LOGISTICS.speedPerModule : 1;
+  }
+
   order(items, { free = false } = {}) {
     let total = 0;
     const cargo = [];
@@ -85,6 +91,7 @@ export class Depot {
       total += qty * this.game.supply.costOf(product);
     }
     if (!cargo.length) return 0;
+    if (this.game.holding?.logisticsOwned) total = Math.round(total * (1 - LOGISTICS.orderDiscount));
     if (!free) {
       if (this.game.money < total) return 0;
       this.game.spend(total, new THREE.Vector3(this.kiosk.x, 0, this.kiosk.z));
@@ -162,9 +169,10 @@ export class Depot {
 // ---- Kamyon ---------------------------------------------------------------------------
 
 let truckParts;
-function truckMesh() {
+function truckMesh(fleet = false) {
   if (!truckParts) {
     truckParts = {
+      fleetCab: new THREE.MeshStandardMaterial({ color: 0x2f6fb5, roughness: 0.6 }), // Hızlı Nakliyat mavisi
       cab: new THREE.MeshStandardMaterial({ color: 0xe2483d, roughness: 0.6 }),
       box: new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.8 }),
       dark: new THREE.MeshStandardMaterial({ color: 0x2b2f36, roughness: 0.7 }),
@@ -172,7 +180,7 @@ function truckMesh() {
       stripe: new THREE.MeshStandardMaterial({ color: 0x3fae4a, roughness: 0.6 }),
     };
   }
-  const m = truckParts;
+  const m = fleet ? { ...truckParts, cab: truckParts.fleetCab } : truckParts;
   const g = new THREE.Group();
   const add = (geo, mat, x, y, z) => {
     const mesh = new THREE.Mesh(geo, mat);
@@ -203,7 +211,7 @@ class Truck {
     this.depot = depot;
     this.cargo = [];
     this.state = 'arriving';
-    this.mesh = truckMesh();
+    this.mesh = truckMesh(game.holding?.logisticsOwned);
     this.mesh.position.set(-80 + offset, 0, LANE_Z);
     game.scene.add(this.mesh);
     this.timer = 0;
@@ -214,7 +222,7 @@ class Truck {
     if (this.state === 'arriving') {
       // Rampaya yaklaşınca yavaşla
       const d = DOCK_X - p.x;
-      const v = Math.min(TRUCK_SPEED, Math.max(3, d * 1.5));
+      const v = Math.min(TRUCK_SPEED * this.depot.speedFactor, Math.max(3, d * 1.5));
       p.x = Math.min(DOCK_X, p.x + v * dt);
       if (p.x >= DOCK_X - 0.01) {
         this.state = 'unloading';
@@ -239,7 +247,7 @@ class Truck {
         }
       }
     } else {
-      p.x += TRUCK_SPEED * dt;
+      p.x += TRUCK_SPEED * this.depot.speedFactor * dt;
       if (p.x > 90) {
         this.game.scene.remove(this.mesh);
         this.depot.removeTruck(this);

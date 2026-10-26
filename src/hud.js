@@ -82,7 +82,12 @@ export class Hud {
     document.getElementById('sum-angry').textContent = st.angry;
     document.getElementById('sum-stolen').textContent = st.stolen ?? 0;
     const extra = [];
-    if (st.interestPaid) extra.push(`<div class="bad"><span>🏦 Kredi faizi</span><b>−$${formatMoney(st.interestPaid)}</b></div>`);
+    if (st.interestPaid) extra.push(`<div class="bad"><span>🏦 Kredi faizi (ödendi)</span><b>−$${formatMoney(st.interestPaid)}</b></div>`);
+    if (st.interestUnpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen faiz borca eklendi (${st.missed}/3)</span><b>$${formatMoney(st.interestUnpaid)}</b></div>`);
+    if (st.seized) extra.push(`<div class="bad"><span>🏦 Banka el koydu: ${st.seized.emoji} ${st.seized.name} (borç kapanınca 💼 tabletten geri al)</span><b>−$${formatMoney(st.seized.price)} borç</b></div>`);
+    if (st.seizeNone) extra.push(`<div class="bad"><span>⚠️ Faiz 3 gündür ödenmiyor — borcunu azalt!</span><b></b></div>`);
+    if (st.marketWages) extra.push(`<div class="bad"><span>👥 Market çalışanlarının maaşı</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
+    if (st.quit?.length) extra.push(`<div class="bad"><span>😞 Maaşı ödenemeyip ayrılan: ${summarize(st.quit)}</span><b>${st.quit.length}</b></div>`);
     if (st.interestEarned) extra.push(`<div class="good"><span>🏦 Mevduat faizi</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);
     for (const c of st.campaigns ?? []) {
       const info = PRODUCTS[c.product];
@@ -92,7 +97,8 @@ export class Hud {
     }
     if (st.holding) {
       const h = st.holding;
-      extra.push(`<div class="${h.profit >= 0 ? 'good' : 'bad'}"><span>💼 ${h.count} işletme kârı (maaş $${formatMoney(h.wages)} dahil)</span><b>${h.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(h.profit))}</b></div>`);
+      if (h.freight) extra.push(`<div class="bad"><span>🚚 Dış nakliye (lojistik firman yok)</span><b>−$${formatMoney(h.freight)}</b></div>`);
+      extra.push(`<div class="${h.profit >= 0 ? 'good' : 'bad'}"><span>💼 ${h.count} işletme kârı (maaş $${formatMoney(h.wages)}${h.freight ? ', nakliye' : ''} dahil)</span><b>${h.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(h.profit))}</b></div>`);
     }
     document.getElementById('sum-extra').innerHTML = extra.join('');
     // Gece çalışmak isteyen çalışanlara ek mesai ödenir
@@ -166,4 +172,11 @@ export function formatMoney(v) {
   if (v >= 100000) return `${(v / 1000).toFixed(0)}K`;
   if (v >= 10000) return `${(v / 1000).toFixed(1)}K`;
   return String(v);
+}
+
+/** ['A','A','B'] → 'A ×2, B' */
+function summarize(list) {
+  const m = new Map();
+  for (const x of list) m.set(x, (m.get(x) ?? 0) + 1);
+  return [...m].map(([k, n]) => (n > 1 ? `${k} ×${n}` : k)).join(', ');
 }

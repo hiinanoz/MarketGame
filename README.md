@@ -39,8 +39,9 @@ Yeni ürün eklemek: `PRODUCTS`, `SHELVES` ve `UNLOCKS` listelerine birer satır
 
 ## Modeller
 
-Tüm 3D modeller [KayKit — Kay Lousberg](https://kaylousberg.com) paketlerinden (CC0, ticari kullanım serbest):
-Character Pack: Adventurers, Restaurant Bits, Furniture Bits, City Builder Bits. `src/assets/` altındaki dosyalar `tools/build-assets.mjs` ile üretildi: kullanılmayan animasyonlar ve silahlar atıldı, tüm karakterler tek bir animasyon dosyasını paylaşıyor (18 MB → 1.9 MB).
+3D modellerin çoğu [KayKit — Kay Lousberg](https://kaylousberg.com) paketlerinden (CC0, ticari kullanım serbest):
+Character Pack: Adventurers, Restaurant Bits, Furniture Bits, City Builder Bits, Medieval Hexagon Pack (yel değirmeni, tahıl ambarı, çuval, orman ağaçları), Space Base Bits (güneş paneli, rüzgâr türbini).
+Kamyonlar ve rakip market binaları [Kenney](https://kenney.nl) Starter Kit Racing ve Starter Kit City Builder'dan (MIT). `src/assets/` altındaki dosyalar `tools/build-assets.mjs` ile üretildi: kullanılmayan animasyonlar ve silahlar atıldı, tüm karakterler tek bir animasyon dosyasını paylaşıyor (18 MB → 1.9 MB).
 
 ## Yol haritası
 
