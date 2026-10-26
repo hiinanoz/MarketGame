@@ -22,6 +22,9 @@ export class Housing {
   constructor(game) {
     this.game = game;
     this.company = false; // kendi inşaat şirketin
+    this.accountant = false; // emlak muhasebecisi (Sv.44)
+    this.amenities = {};     // okul, sağlık ocağı
+    this.deed = false;       // Doğu Mahallesi tapusu (Sv.50)
     this.plots = HOUSING.plots.map(([x, z], i) => ({
       i, x, z, owned: false, type: null, progress: 0, built: false, agent: false,
       units: [], accrued: 0, name: '', color: COLORS[i % COLORS.length],
@@ -38,7 +41,38 @@ export class Housing {
       this.root.add(p.label);
       this.rebuild(p);
     }
+    this.amenityGroup = new THREE.Group();
+    this.root.add(this.amenityGroup);
+    this.buildAmenities();
     this.root.visible = false;
+  }
+
+  /** Okul ve sağlık ocağı (alınmadıysa boş arsa tabelası). */
+  buildAmenities() {
+    const grp = this.amenityGroup;
+    for (const c of [...grp.children]) grp.remove(c);
+    for (const [k, a] of Object.entries(HOUSING.amenities)) {
+      const g = new THREE.Group();
+      g.position.set(a.pos[0], 0, a.pos[1]);
+      if (this.amenities[k]) {
+        if (k === 'school') {
+          g.add(box(10, 3.4, 5, 0xf2c14e, 0, 1.7, 0));
+          g.add(box(10.4, 0.3, 5.4, 0x8d4b3a, 0, 3.55, 0));
+          g.add(box(0.12, 5, 0.12, 0xdddddd, -6, 2.5, 2.5));
+          g.add(box(1.4, 0.9, 0.05, 0xd32f2f, -5.3, 4.5, 2.5));
+          windows(g, 10, 1, 3, 2.53, 5);
+        } else {
+          g.add(box(8, 3, 5, 0xfafafa, 0, 1.5, 0));
+          g.add(box(8.4, 0.3, 5.4, 0x90a4ae, 0, 3.15, 0));
+          g.add(box(1.4, 0.4, 0.06, 0xd32f2f, 0, 2.3, 2.53));
+          g.add(box(0.4, 1.4, 0.06, 0xd32f2f, 0, 2.3, 2.54));
+          windows(g, 8, 1, 2.6, 2.53, 4);
+        }
+      } else {
+        g.add(signPost(`${a.name.toLocaleUpperCase('tr-TR')} ARSASI`));
+      }
+      grp.add(g);
+    }
   }
 
   get unlocked() {
@@ -68,6 +102,60 @@ export class Housing {
     return Math.round(v);
   }
 
+  /** Okul, sağlık ocağı ve tapu kiraları artırır. */
+  get rentFactor() {
+    let f = 1;
+    for (const [k, a] of Object.entries(HOUSING.amenities)) if (this.amenities[k]) f += a.rentBoost;
+    if (this.deed) f += HOUSING.deed.rentBoost;
+    return f;
+  }
+
+  rentOf(p) {
+    return Math.round(this.type(p).rent * this.rentFactor);
+  }
+
+  buyAmenity(k) {
+    const g = this.game;
+    const a = HOUSING.amenities[k];
+    if (!a || this.amenities[k] || g.level < a.level || g.money < a.price) return false;
+    g.spend(a.price);
+    this.amenities[k] = true;
+    g.gainXp(Math.floor(a.price / XP_PER_PURCHASE));
+    g.hud.toast(`${a.emoji} ${a.name} açıldı: kiralar +%${Math.round(a.rentBoost * 100)}`);
+    g.audio.play('unlock');
+    this.buildAmenities();
+    g.save();
+    return true;
+  }
+
+  hireAccountant() {
+    const g = this.game;
+    const A = HOUSING.accountant;
+    if (this.accountant || g.level < A.level || g.money < A.hire) return false;
+    g.spend(A.hire);
+    this.accountant = true;
+    g.hud.toast('🟦 Emlak muhasebecisi işe başladı: kiraları her gün tahsil eder, emlakçısız binaları yönetir');
+    for (const p of this.plots) this.manage(p);
+    g.save();
+    return true;
+  }
+
+  /** Emlakçı ya da emlak muhasebecisi binayı yönetir. */
+  manage(p) {
+    if (p.agent) this.agentWork(p);
+    else if (this.accountant) this.agentWork(p, true);
+  }
+
+  /** Tüm arsalar dolunca (Sv.50) mahallenin tapusu. */
+  checkDeed() {
+    const g = this.game;
+    if (this.deed || g.level < HOUSING.deed.level || !this.plots.every((p) => p.built)) return;
+    this.deed = true;
+    g.gainXp(HOUSING.deed.xp);
+    g.hud.toast(`📜 Doğu Mahallesi tapusu senin! Kiralar +%${Math.round(HOUSING.deed.rentBoost * 100)}`);
+    g.audio.play('unlock');
+  }
+
   get agents() {
     return this.plots.filter((p) => p.agent).length;
   }
@@ -81,8 +169,7 @@ export class Housing {
     let n = 0;
     for (const p of this.plots) {
       if (!p.built) continue;
-      const t = this.type(p);
-      n += p.units.filter((u) => u.state === 'rented').length * t.rent;
+      n += p.units.filter((u) => u.state === 'rented').length * this.rentOf(p);
     }
     return n;
   }
@@ -142,7 +229,7 @@ export class Housing {
     g.spend(a.hire);
     p.agent = true;
     g.hud.toast('🧑‍💼 Emlakçı işe başladı: kiracı ve tadilatla o ilgilenir (%10 komisyon)');
-    this.agentWork(p);
+    this.manage(p);
     this.rebuild(p);
     g.save();
     return true;
@@ -203,8 +290,8 @@ export class Housing {
   }
 
   /** Emlakçı: boş daireyi ilana verir, çıkan kiracının dairesini tadilat ettirir. */
-  agentWork(p) {
-    if (!p.agent || !p.built) return;
+  agentWork(p, byAccountant = false) {
+    if ((!p.agent && !byAccountant) || !p.built) return;
     const g = this.game;
     const t = this.type(p);
     for (const u of p.units) {
@@ -249,7 +336,8 @@ export class Housing {
         this.game.hud.toast(`🎉 ${this.type(p).emoji} ${this.type(p).name} bitti — kiraya verebilirsin`);
         this.game.audio.play('unlock');
         this.game.gainXp(20);
-        this.agentWork(p);
+        this.manage(p);
+        this.checkDeed();
         this.rebuild(p);
         this.game.save();
       } else if (Math.floor(p.progress * 10) !== step || stageIndex(p.progress) !== before) {
@@ -267,7 +355,7 @@ export class Housing {
       const t = this.type(p);
       for (const u of p.units) {
         if (u.state === 'rented') {
-          p.accrued += t.rent / RENT.week;
+          p.accrued += this.rentOf(p) / RENT.week;
           u.t--;
           if (u.t <= 0) {
             u.state = 'dirty'; // kiracı çıktı, tadilat gerekli
@@ -284,14 +372,14 @@ export class Housing {
           if (u.t <= 0) u.state = 'empty';
         }
       }
-      this.agentWork(p);
+      this.manage(p);
       this.rebuild(p);
     }
     const info = {};
     if (left) info.left = left;
     if (this._today?.renovation) info.renovation = this._today.renovation;
-    // Haftalık kira ödemesi
-    if (g.day.day % RENT.week === 0) {
+    // Kira ödemesi: haftalık (emlak muhasebecisi varsa her gün tahsil edilir)
+    if (this.accountant || g.day.day % RENT.week === 0) {
       let gross = 0;
       let commission = 0;
       for (const p of this.plots) {
@@ -306,6 +394,7 @@ export class Housing {
         g.money += gross - commission;
         info.rent = gross;
         info.commission = commission;
+        info.daily = this.accountant;
         if (gross - commission > 0) g.gainXp(Math.floor((gross - commission) / 100));
       }
     }
@@ -361,7 +450,7 @@ export class Housing {
 
   serialize() {
     return {
-      company: this.company,
+      company: this.company, accountant: this.accountant, amenities: this.amenities, deed: this.deed,
       plots: this.plots.map((p) => ({ owned: p.owned, type: p.type, progress: p.progress, built: p.built, agent: p.agent, units: p.units, accrued: p.accrued, name: p.name })),
     };
   }
@@ -369,6 +458,10 @@ export class Housing {
   restore(d) {
     if (!d) return;
     this.company = !!d.company;
+    this.accountant = !!d.accountant;
+    this.amenities = d.amenities ?? {};
+    this.deed = !!d.deed;
+    this.buildAmenities();
     (d.plots ?? []).forEach((s, i) => {
       const p = this.plots[i];
       if (!p || !s) return;

@@ -112,6 +112,14 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Belediye:** 4 ve üzeri işletmede her sabah %25 olasılıkla ceza (ruhsat, kaldırım işgali…). Belediye başkanı olunca (Sv.60) kesilmez.
 - **HUD:** Sv.21'den sonra toplam çalışan sayısı (👥) görünür.
 
+## S4 tamamlananlar (Sv.41–50)
+
+- **Akçay Barajı** (Sv.41, $90.000, enerji tepelerinin batısı): modül başı 500 birim/gün, gece payını da karşılar.
+- **Emlak muhasebecisi** (Sv.44, $150 + $70/gün): emlakçısı olmayan binalarda kiracı bulur, tadilat yaptırır; kiraları her gün tahsil eder.
+- **Okul ve sağlık ocağı** (Sv.45, arka yolun kuzeyinde): her biri kiraları %10 artırır.
+- **Doğu Mahallesi tapusu** (Sv.50): 12 arsanın hepsinde bina bitince +500 XP, kiralar +%10.
+- Mahalle memnuniyeti ve altyapı (Sv.40) kullanıcı kararıyla ertelendi.
+
 ## Bitirme ve derece
 
 Oyun, şehrin son parseli alındığında biter. Final ekranında: toplam gün, toplam oyun süresi, şirket değeri, en büyük işletme, istatistikler ve **derece** (S/A/B/C/D). Derece eşikleri ilk tam oynanış testinden sonra ayarlanır.

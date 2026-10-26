@@ -6,7 +6,7 @@
 - Dünya: y yukarı, kamera güneyden (+z) bakar; ekranda yukarı = −z. Salon 1: x −12..12, salon 2: x 12..28, z −16..4.
 - Modeller `src/assets/` altında; yeniden üretmek için KayKit repolarını klonlayıp `node tools/build-assets.mjs <klasör>` çalıştır. GLB'ler bilerek sıkıştırmasız: tek dosyalık sürüm WebAssembly'ye izin vermeyen sayfalarda da açılmalı (meshopt/draco kullanma).
 - Test: `npm run dev`, tarayıcı konsolunda `window.game` erişilebilir (ör. `game.money = 5000`). `game.update(dt)` elle çağrılarak simülasyon hızlandırılabilir.
-- `npm run build:single` çıktısı 5 MB'ın altında kalmalı (reklam ağları sınırı).
+- Hedef: oyun bitince Apple ekosistemi (iPhone, iPad, Apple TV) için App Store sürümü hazırlanacak (bkz. `docs/APPLE.md`). Boyut için özellik kısılmaz ama dosyalar mümkün olduğunca küçük tutulur; `npm run build:single` çıktısını 5 MB civarında tutmaya çalış, yeni model eklerken sadece kullanılan parçaları al.
 - Çalışanlar `look: 'uniform'` ile, müşteriler `look: 0..5` renk çeşidiyle oluşturulur (`assets.js` → `character()`); yeni işçi eklerken üniforma kullan.
 - Oyun zamanıyla gecikmeli iş için `setTimeout` değil `game.later.push({ t, fn })` kullan (testlerde `game.update` ile hızlandırılan simülasyonda da çalışsın).
 - Sv.21+ holding: `src/business.js` (tedarikçi işletmesi), `src/holding.js` (tablet + hızlı geçiş), `src/accountant.js` (market muhasebecisi). İşletme tanımları `config.js` → `BUSINESSES`, kadro → `STAFF`, bölgeler → `REGIONS`. Tasarım: `docs/LEVELS.md`, sıra: `docs/ROADMAP.md`.

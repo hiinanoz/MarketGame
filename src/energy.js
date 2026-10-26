@@ -23,7 +23,7 @@ export class Energy {
   /** Üretim çarpanı: güneş sadece mağaza açıkken (gündüz), rüzgâr günün rüzgârı kadar. */
   factor(kind) {
     const open = this.game.day.phase === 'open';
-    if (kind === 'solar') return open ? 1 : 0;
+    if (kind === 'solar' || kind === 'hydro') return open ? 1 : 0; // baraj gece de üretir (gece payı sorun değil)
     return open ? this.wind : 0;
   }
 

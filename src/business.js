@@ -460,8 +460,8 @@ export class Business {
     }
     const g = new THREE.Group();
     const kind = this.def.kind;
-    const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5, garage: 0x4f7cac, solar: 0xf2c14e, wind: 0xe8eef2 }[kind];
-    const roofColor = { field: 0x5d4037, barn: 0x5d4037, hall: 0x546e7a, garage: 0x37474f, solar: 0x3b5b8c, wind: 0x4a7a9a }[kind];
+    const color = { field: 0xb5523b, barn: 0xc0392b, hall: 0xd9c7a5, garage: 0x4f7cac, solar: 0xf2c14e, wind: 0xe8eef2, hydro: 0xb0bec5 }[kind];
+    const roofColor = { field: 0x5d4037, barn: 0x5d4037, hall: 0x546e7a, garage: 0x37474f, solar: 0x3b5b8c, wind: 0x4a7a9a, hydro: 0x37627e }[kind];
     const w = Math.min(this.w - 4, 9);
     const body = new THREE.Mesh(new THREE.BoxGeometry(w, 3.4, 5), new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
     body.position.set(0, 1.7, -2.8);
@@ -702,6 +702,22 @@ function moduleMesh(kind, w, d, x, z, alpha, index) {
           g.add(p);
         }
       }
+    }
+  } else if (kind === 'hydro') {
+    // Baraj gölü + beton set + türbin binası
+    const lake = new THREE.Mesh(new THREE.PlaneGeometry(w, d * 0.7), new THREE.MeshStandardMaterial({ color: 0x4f9fd8, roughness: 0.3, transparent: true, opacity: alpha < 1 ? 0.45 : 0.9 }));
+    lake.rotation.x = -Math.PI / 2;
+    lake.position.set(0, 0.03, -d * 0.15);
+    g.add(lake);
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 1.6, 0.8), new THREE.MeshStandardMaterial({ color: 0xb0b6bd, roughness: 0.9, transparent: alpha < 1, opacity: alpha }));
+    wall.position.set(0, 0.8, d * 0.22);
+    wall.castShadow = true;
+    g.add(wall);
+    if (alpha >= 1) {
+      const house = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.8, 1.6), new THREE.MeshStandardMaterial({ color: 0xeceff1 }));
+      house.position.set(w / 4, 0.9, d * 0.38);
+      house.castShadow = true;
+      g.add(house);
     }
   } else if (kind === 'wind') {
     // Rüzgâr türbinleri (KayKit Space Base Bits, CC0)

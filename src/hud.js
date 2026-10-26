@@ -102,7 +102,7 @@ export class Hud {
     }
     if (st.housing) {
       const h = st.housing;
-      if (h.rent) extra.push(`<div class="good"><span>🏘️ Haftalık kira geliri${h.commission ? ` (emlakçı %10: −$${formatMoney(h.commission)})` : ''}</span><b>+$${formatMoney(h.rent - (h.commission ?? 0))}</b></div>`);
+      if (h.rent) extra.push(`<div class="good"><span>🏘️ ${h.daily ? 'Kira geliri (muhasebeci günlük tahsil eder)' : 'Haftalık kira geliri'}${h.commission ? ` (emlakçı %10: −$${formatMoney(h.commission)})` : ''}</span><b>+$${formatMoney(h.rent - (h.commission ?? 0))}</b></div>`);
       if (h.left) extra.push(`<div class="bad"><span>🚪 Kiracısı çıkan daire (tadilat gerekli)</span><b>${h.left}</b></div>`);
       if (h.renovation) extra.push(`<div class="bad"><span>🔧 Emlakçının yaptırdığı tadilat</span><b>−$${formatMoney(h.renovation)}</b></div>`);
     }

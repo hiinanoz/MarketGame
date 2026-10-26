@@ -341,6 +341,13 @@ export const BUSINESSES = {
     price: 80000, level: 52, products: [], revenuePerModule: 700, workersPerModule: 2,
     modules: [{ level: 52 }, { level: 55, cost: 30000 }, { level: 60, cost: 50000 }],
   },
+  dam: {
+    name: 'Akçay Barajı', emoji: '💧', owner: 'DSİ', kind: 'hydro', workerName: 'teknisyen',
+    plot: { x: -42, w: 22 }, frontZ: -100, price: 90000, level: 41,
+    products: [], energy: 'hydro', energyPerModule: 500, workersPerModule: 1,
+    staffLevels: { manager: 41, accountant: 41 },
+    modules: [{ level: 41 }, { level: 43, cost: 45000 }, { level: 46, cost: 60000 }, { level: 52, cost: 80000 }, { level: 60, cost: 110000 }],
+  },
   // Lojistik firması: tüm tedarikçiler alındıktan sonra satılığa çıkar, kamyon filosunu yönetir.
   logistics: {
     name: 'Hızlı Nakliyat', emoji: '🚛', owner: 'Rıza Bey', kind: 'garage', workerName: 'şoför',
@@ -458,6 +465,12 @@ export const HOUSING = {
   searchDays: [1, 2],      // elle ilana verince kiracı bulma süresi
   agentSearchDays: [0, 1], // emlakçıyla
   company: { level: 38, price: 25000, timeFactor: 0.6, costFactor: 0.85 }, // kendi inşaat şirketin
+  accountant: { level: 44, hire: 150 }, // emlak muhasebecisi: emlakçısız binaları yönetir, kirayı her gün tahsil eder
+  amenities: {
+    school: { name: 'Okul', emoji: '🏫', level: 45, price: 40000, rentBoost: 0.1, pos: [67, -40] },
+    clinic: { name: 'Sağlık ocağı', emoji: '🏥', level: 45, price: 35000, rentBoost: 0.1, pos: [91, -40] },
+  },
+  deed: { level: 50, rentBoost: 0.1, xp: 500 }, // tüm arsalar dolunca Doğu Mahallesi tapusu
 };
 
 // ---- Belediye ve reklam ---------------------------------------------------------------------

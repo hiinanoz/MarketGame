@@ -383,7 +383,7 @@ export class Game {
   get totalStaff() {
     let n = this.workers.filter((w) => w.role).length;
     for (const b of this.holding.owned) n += b.workers + (b.manager ? 1 : 0) + (b.accountant ? 1 : 0);
-    return n + this.housing.agents;
+    return n + this.housing.agents + (this.housing.accountant ? 1 : 0);
   }
 
   /** Bugünkü toplam maaş yükü (market + işletmeler). */
@@ -391,6 +391,7 @@ export class Game {
     let n = 0;
     for (const w of this.workers) n += WAGES[w.role] ?? 0;
     for (const b of this.holding.owned) n += b.dailyWages;
+    if (this.housing.accountant) n += WAGES.accountant;
     return n;
   }
 
@@ -404,6 +405,7 @@ export class Game {
       if (WAGES[w.role]) entries.push({ wage: WAGES[w.role], label: ROLE_NAMES[w.role], fire: () => this.fireWorker(w) });
     }
     for (const b of this.holding.owned) entries.push(...b.payrollEntries());
+    if (this.housing.accountant) entries.push({ wage: WAGES.accountant, label: '🏘️ Emlak muhasebecisi', fire: () => { this.housing.accountant = false; } });
     let paid = 0;
     let market = 0;
     const quit = [];

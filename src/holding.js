@@ -180,7 +180,11 @@ export class Holding {
     if (!H.unlocked) return `<p class="note">🏘️ Doğu mahallesindeki arsalar Seviye ${HOUSING.fromLevel}'da satışa çıkar. Arsayı al, ev tipini seç, birkaç günde inşa edilsin, kiraya ver.</p>`;
     const C = HOUSING.company;
     const parts = [`<p class="note">Kira geliri her gün birikir, 7. günün sonunda kasaya geçer (sonraki ödeme ${g.rent.daysLeft === 0 ? 'bu akşam' : `${g.rent.daysLeft} gün sonra`}). Kiracılar zamanla çıkar, daire tadilat ister. Her binaya ayrı emlakçı alınabilir: kiracı ve tadilatla o ilgilenir, kiradan %${Math.round(HOUSING.agent.commission * 100)} alır.</p>
-      <div class="biz ${H.company ? 'owned' : ''}"><div class="biz-row"><span>🏗️ İnşaat şirketi</span><b>${H.company ? 'senin: %40 hızlı, %15 ucuz' : 'yok'}</b>${H.company ? '' : g.level < C.level ? `<span class="lock">Sv.${C.level}</span>` : `<button data-company ${m < C.price ? 'disabled' : ''}>Kur $${formatMoney(C.price)}</button>`}</div></div>`];
+      <div class="biz ${H.company ? 'owned' : ''}"><div class="biz-row"><span>🏗️ İnşaat şirketi</span><b>${H.company ? 'senin: %40 hızlı, %15 ucuz' : 'yok'}</b>${H.company ? '' : g.level < C.level ? `<span class="lock">Sv.${C.level}</span>` : `<button data-company ${m < C.price ? 'disabled' : ''}>Kur $${formatMoney(C.price)}</button>`}</div>
+      <div class="biz-row"><span>🟦 Emlak muhasebecisi</span><b>${H.accountant ? 'var: kira her gün' : 'yok'}</b>${H.accountant ? '<small>emlakçısız binaları yönetir · $70/gün</small>' : g.level < HOUSING.accountant.level ? `<span class="lock">Sv.${HOUSING.accountant.level}</span>` : `<button data-haccountant ${m < HOUSING.accountant.hire ? 'disabled' : ''}>Al $${HOUSING.accountant.hire}</button>`}</div>
+      ${Object.entries(HOUSING.amenities).map(([k, a]) => `<div class="biz-row"><span>${a.emoji} ${a.name}</span><b>${H.amenities[k] ? `var: kira +%${Math.round(a.rentBoost * 100)}` : 'yok'}</b>${H.amenities[k] ? '' : g.level < a.level ? `<span class="lock">Sv.${a.level}</span>` : `<button data-amenity="${k}" ${m < a.price ? 'disabled' : ''}>Yap $${formatMoney(a.price)}</button>`}</div>`).join('')}
+      <div class="biz-row"><span>📜 Mahalle tapusu</span><b>${H.deed ? `senin: kira +%${Math.round(HOUSING.deed.rentBoost * 100)}` : `${H.plots.filter((p) => p.built).length}/${H.plots.length} arsa dolu`}</b><small>${H.deed ? '' : `Sv.${HOUSING.deed.level}'de tüm arsalar dolunca`}</small></div>
+      ${H.rentFactor > 1 ? `<p class="note">Kiralar şu an ×${H.rentFactor.toFixed(2)}</p>` : ''}</div>`];
     for (const p of H.plots) {
       const go = `<button data-go="plot:${p.i}">📍 Git</button>`;
       if (!p.owned) {
@@ -210,13 +214,13 @@ export class Holding {
       const empty = cnt('empty');
       const dirty = cnt('dirty');
       const busy = cnt('listed') + cnt('renovating');
-      parts.push(`<div class="biz owned"><div class="biz-head"><span class="biz-e">${t.emoji}</span><div><b>${t.name}</b><small>Arsa ${p.i + 1} · ${rented}/${p.units.length} kirada · haftalık $${formatMoney(rented * t.rent)}</small></div></div>
+      parts.push(`<div class="biz owned"><div class="biz-head"><span class="biz-e">${t.emoji}</span><div><b>${t.name}</b><small>Arsa ${p.i + 1} · ${rented}/${p.units.length} kirada · haftalık $${formatMoney(rented * H.rentOf(p))}</small></div></div>
         <div class="biz-row"><span>💵 Biriken kira</span><b>$${formatMoney(Math.round(p.accrued))}</b><small>7. günün sonunda ödenir</small></div>
         <div class="biz-row"><span>🧑‍💼 Emlakçı</span><b>${p.agent ? 'var (%10)' : 'yok'}</b>${p.agent ? '' : g.level < HOUSING.agent.level ? `<span class="lock">Sv.${HOUSING.agent.level}</span>` : `<button data-agent="${p.i}" ${m < HOUSING.agent.hire ? 'disabled' : ''}>İşe al $${HOUSING.agent.hire}</button>`}</div>
         ${busy ? `<div class="biz-row"><span>⏳ Süreçte</span><b>${cnt('listed')} ilanda · ${cnt('renovating')} tadilatta</b></div>` : ''}
         <div class="biz-btns">
-          ${empty && !p.agent ? `<button class="primary" data-list="${p.i}">Kiraya ver (${empty})</button>` : ''}
-          ${dirty && !p.agent ? `<button data-renovate="${p.i}" ${m < t.renovation ? 'disabled' : ''}>🔧 Tadilat ${dirty}×$${formatMoney(t.renovation)}</button>` : ''}
+          ${empty && !p.agent && !H.accountant ? `<button class="primary" data-list="${p.i}">Kiraya ver (${empty})</button>` : ''}
+          ${dirty && !p.agent && !H.accountant ? `<button data-renovate="${p.i}" ${m < t.renovation ? 'disabled' : ''}>🔧 Tadilat ${dirty}×$${formatMoney(t.renovation)}</button>` : ''}
           ${go}
         </div></div>`);
     }
@@ -259,6 +263,8 @@ export class Holding {
     if (d.renovate) H.renovate(Number(d.renovate));
     if (d.agent) H.hireAgent(Number(d.agent));
     if (d.company !== undefined) H.buyCompany();
+    if (d.haccountant !== undefined) H.hireAccountant();
+    if (d.amenity) H.buyAmenity(d.amenity);
     if (d.battery) this.get(d.battery).buyBattery();
     if (d.rename) {
       this.renaming = d.rename;

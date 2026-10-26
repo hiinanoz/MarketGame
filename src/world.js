@@ -232,7 +232,7 @@ export class World {
     for (let i = 0; i < 44; i++) {
       const x = -70 + rng() * 140;
       const z = -100 - rng() * 60;
-      if (x > -28 && x < 34) continue; // enerji tepeleri arsaları
+      if (x > -55 && x < 34) continue; // enerji tepeleri arsaları (baraj, güneş, rüzgâr)
       place(rng() < 0.5 ? 'trees_A_large' : 'trees_B_medium', x, z, 3 + rng() * 2, rng() * 6, false);
     }
   }
