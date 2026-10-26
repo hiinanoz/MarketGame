@@ -405,7 +405,7 @@ export class Business {
           const mesh = makeCrate(prod);
           mesh.position.set(px, 1, pz);
           g.scene.add(mesh);
-          p.receive(mesh, prod);
+          p.receive(mesh, prod, { ext: true });
           g.audio.play('pick');
         }
       }

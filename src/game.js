@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Nav } from './nav.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
-import { Hud } from './hud.js';
+import { Hud, formatMoney } from './hud.js';
 import { Input } from './input.js';
 import { World } from './world.js';
 import { Character } from './character.js';
@@ -25,7 +25,7 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES,
+  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -222,7 +222,11 @@ export class Game {
       if (def.level > this.level + 1) continue;
       if (def.type === 'shelfStage' && !this.shelves.some((s) => s.id === def.target)) continue;
       const [x, z] = this.padPosition(def);
-      const pad = new UnlockPad(this, def, x, z, this.padLabel(def));
+      const label = this.padLabel(def);
+      // Personel alanında günlük maaş da yazsın (işe alım ucuz ama her gün maaş ödenir)
+      const role = def.type === 'ads' ? (def.target === 'advertiser' ? 'advertiser' : null) : STAFF_ROLE[def.type];
+      if (role && WAGES[role]) label.title = `${label.title} · $${WAGES[role]}/gün`;
+      const pad = new UnlockPad(this, def, x, z, label);
       pad.setLocked(def.level > this.level);
       if (this.savedPads?.[def.id]) {
         pad.paid = Math.min(this.savedPads[def.id], def.cost - 1);
@@ -377,6 +381,43 @@ export class Game {
       this.hud.toast(`🏪 ${this.marketTitle}`);
       this.save();
     }
+  }
+
+  /** Gün sonunda ödenecekler (maaş, faiz, fatura, kira günü ise kira). */
+  get dueTonight() {
+    const b = this.bank;
+    let n = this.dailyPayroll + Math.round(b.debt * BANK.loanRate + b.startDebt * START_LOAN.rate) + this.energy.estimatedBill;
+    if (this.day.day % RENT.week === 0) n += this.rent.weeklyTotal;
+    return n;
+  }
+
+  /**
+   * Tıkanma koruması: rafta da depoda da mal yoksa, yolda kamyon yoksa ve sipariş verecek para
+   * kalmadıysa oyuncuya bankadan kredi çekmesini söyle (kredi her zaman açık).
+   */
+  checkStuck(dt) {
+    this.stuckT = (this.stuckT ?? 0) + dt;
+    if (this.stuckT < 5) return;
+    this.stuckT = 0;
+    const shelvesEmpty = this.shelves.every((s) => s.count === 0);
+    const depotEmpty = [...this.depot.pallets.values()].every((p) => p.stock === 0) && this.depot.trucks.length === 0;
+    const carrying = this.player.stack.length > 0 || this.workers.some((w) => w.stack?.length);
+    const cash = this.money + this.checkouts.reduce((a, c) => a + c.cash.value, 0);
+    const cheapest = Math.min(...[...this.depot.pallets.keys()].map((k) => this.supply.costOf(k)));
+    if (!shelvesEmpty || !depotEmpty || carrying || cash >= cheapest * 3) return;
+    if (this.stuckWarnedDay === this.day.day) return;
+    this.stuckWarnedDay = this.day.day;
+    this.hud.toast(`🏦 Mal kalmadı, para da yetmiyor: muhasebe odası → Banka'dan kredi çekip sipariş ver (limit $${formatMoney(this.bank.available)})`);
+  }
+
+  /** Akşam 19:00: kasa gün sonu ödemelerine yetmiyorsa uyar. */
+  checkDueWarning() {
+    const d = this.day;
+    if (d.phase !== 'open' || d.hour < 19 || this.dueWarnedDay === d.day) return;
+    this.dueWarnedDay = d.day;
+    const due = this.dueTonight;
+    const have = this.money + this.bank.deposit + this.checkouts.reduce((a, c) => a + c.cash.value, 0);
+    if (due > 0 && have < due) this.hud.toast(`⚠️ Gün sonu ödemeler $${Math.round(due)}, kasada $${Math.round(have)} — yetmezse çalışanlar ayrılır`);
   }
 
   /** Toplam çalışan: market + işletmeler + emlakçılar. */
@@ -631,6 +672,8 @@ export class Game {
     this.traffic.update(dt);
     this.holding.update(dt);
     this.housing.update(dt);
+    this.checkDueWarning();
+    this.checkStuck(dt);
     this.hud.setStaff?.(this.level >= 21 ? this.totalStaff : null);
     for (let i = this.later.length - 1; i >= 0; i--) {
       const l = this.later[i];
@@ -693,9 +736,9 @@ export class Game {
       if (this.droppedAt && !this.droppedAt.inRange(p.position)) this.droppedAt = null;
       for (const pal of this.depot.pallets.values()) {
         if (!pal.inRange(p.position)) continue;
-        // Elinde bu üründen varsa palete bırak (tedarikçiden getirilen mal), yoksa al
-        if (p.has(pal.product) && pal.space > 0) {
-          const e = p.take(pal.product);
+        // Tedarikçiden getirdiğin bu üründen kasa varsa palete bırak, yoksa paletten al
+        if (p.hasExt(pal.product) && pal.space > 0) {
+          const e = p.take(pal.product, { ext: true });
           e.mesh.removeFromParent();
           pal.stock++;
           pal.syncVisual();
@@ -709,7 +752,7 @@ export class Game {
         else if (pal.stock === 0 && !this.warnedEmpty) {
           this.warnedEmpty = true;
           this.hud.toast(`${PRODUCTS[pal.product].emoji} stokta yok — sipariş ver 🚚`);
-          setTimeout(() => (this.warnedEmpty = false), 3000);
+          this.later.push({ t: 3, fn: () => (this.warnedEmpty = false) });
         }
         break;
       }

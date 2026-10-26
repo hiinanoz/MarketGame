@@ -51,7 +51,7 @@ export class Supply {
       ? `${info.emoji} ${info.name} zamlandı (+%${Math.round((CRISIS.priceMult - 1) * 100)})`
       : `${info.emoji} ${info.name} kıtlığı: bugün en fazla ${CRISIS.shortageLimit} kasa`;
     g.hud.setCrisis(`⚠️ ${text}`);
-    setTimeout(() => g.hud.toast(`⚠️ Tedarik sorunu: ${info.name}`), 1900);
+    g.later.push({ t: 1.9, fn: () => g.hud.toast(`⚠️ Tedarik sorunu: ${info.name}`) });
   }
 
   serialize() {

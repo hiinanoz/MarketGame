@@ -123,9 +123,10 @@ export class Character {
   }
 
   /** Kasayı dünyadaki yerinden yığının üstüne uçurur. */
-  receive(mesh, productId) {
+  receive(mesh, productId, { ext = false } = {}) {
     const index = this.stack.length;
-    const entry = { mesh, product: productId, landing: true };
+    // ext: depo dışından (tedarikçiden) getirilen kasa — depo paletine bırakılabilir
+    const entry = { mesh, product: productId, landing: true, ext };
     this.stack.push(entry);
     this.game.fx.fly(mesh, this.stackAnchor, () => this.slotPosition(this.stack.indexOf(entry)), {
       duration: 0.22,
@@ -136,11 +137,12 @@ export class Character {
   }
 
   /** Belirli üründen (veya herhangi birinden) en üstteki kasayı yığından çıkarır. */
-  take(productId = null) {
+  take(productId = null, { ext = false } = {}) {
     for (let i = this.stack.length - 1; i >= 0; i--) {
       const e = this.stack[i];
       if (e.landing) continue;
       if (productId && e.product !== productId) continue;
+      if (ext && !e.ext) continue;
       this.stack.splice(i, 1);
       this.layoutStack();
       return e;
@@ -150,6 +152,11 @@ export class Character {
 
   has(productId) {
     return this.stack.some((e) => !e.landing && e.product === productId);
+  }
+
+  /** Tedarikçiden getirilmiş (depoya bırakılacak) bu üründen kasa var mı? */
+  hasExt(productId) {
+    return this.stack.some((e) => !e.landing && e.ext && e.product === productId);
   }
 
   layoutStack() {
