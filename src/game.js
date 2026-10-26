@@ -25,6 +25,8 @@ import { Finance } from './finance.js';
 import { Music } from './music.js';
 import { City } from './city.js';
 import { Life } from './life.js';
+import { Achievements } from './achievements.js';
+import { platform, LEADERBOARDS } from './platform.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
@@ -114,6 +116,7 @@ export class Game {
     this.finance = new Finance(this);
     this.city = new City(this);
     this.life = new Life(this);
+    this.achievements = new Achievements(this);
     this.isMayor = false; // Sv.60: belediye başkanı (ceza kesilmez)
     this.marketName = 'Kasaba';
 
@@ -360,6 +363,7 @@ export class Game {
       this.workers[i].role = STAFF_ROLE[def.type];
     }
     if (!silent) {
+      platform.haptic('LIGHT');
       const l = this.padLabel(def);
       this.hud.toast(`${l.emoji} ${l.title} açıldı!`);
       this.audio.play('unlock');
@@ -724,6 +728,7 @@ export class Game {
     this.politics.update(dt);
     this.city.update(dt);
     this.life.update(dt);
+    this.achievements.update(dt);
     this.stats.playTime = (this.stats.playTime ?? 0) + dt;
     this.checkDueWarning();
     this.checkStuck(dt);
@@ -988,11 +993,16 @@ export class Game {
       finance: this.finance.serialize(),
       city: this.city.serialize(),
       life: this.life.serialize(),
+      achievements: this.achievements.serialize(),
+      savedAt: Date.now(),
+      levelCache: this.level,
       stats: this.stats,
       marketName: this.marketName,
     };
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      const json = JSON.stringify(data);
+      localStorage.setItem(SAVE_KEY, json);
+      platform.persist(json); // iOS: cihaz yedeği + iCloud
     } catch {
       /* gizli mod vb. — kayıt olmadan devam */
     }
@@ -1049,6 +1059,7 @@ export class Game {
     this.finance.restore(data.finance);
     this.city.restore(data.city);
     this.life.restore(data.life);
+    this.achievements.restore(data.achievements);
     if (data.stats) Object.assign(this.stats, data.stats);
     if (data.marketName) this.setMarketName(data.marketName, true);
     if (data.depot) this.depot.restore(data.depot);
@@ -1058,14 +1069,16 @@ export class Game {
     }
   }
 
-  reset() {
+  async reset() {
+    this.resetting = true;
+    clearTimeout(platform.cloudT);
     try {
       localStorage.removeItem(SAVE_KEY);
       localStorage.removeItem(OLD_SAVE_KEY);
     } catch {
       /* yok say */
     }
-    this.resetting = true;
+    await platform.clearSave(); // iOS: cihaz yedeği ve iCloud kopyası da silinir
     location.reload();
   }
 }

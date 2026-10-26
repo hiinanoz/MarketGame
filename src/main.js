@@ -1,5 +1,6 @@
 import { loadAssets } from './assets.js';
 import { Game } from './game.js';
+import { platform } from './platform.js';
 
 const bar = document.getElementById('loading-bar');
 
@@ -7,7 +8,20 @@ async function start() {
   await loadAssets((p) => {
     bar.style.width = `${Math.round(p * 100)}%`;
   });
+  // iOS: cihaz ve iCloud kayıtları farklıysa oyuncuya seçtir (oyun kurulmadan önce)
+  await platform.prepareSave(chooseSave);
   const game = new Game(document.getElementById('app'));
+  if (platform.native) document.documentElement.classList.add('native');
+  // Game Center: sessiz giriş; bağlanınca önceki başarımları da gönder
+  platform.signIn().then((ok) => { if (ok) game.achievements.syncAll(); });
+  platform.keepAwake(true);
+  // Arka plana geçince kaydet ve menüyü aç (oyun duraklar)
+  platform.onAppState((active) => {
+    if (!active) {
+      game.save();
+      if (!game.paused && !game.hud.summaryOpen) document.getElementById('menu-btn').click();
+    }
+  });
   window.game = game; // tarayıcı konsolundan hata ayıklama için
   const zoomBtn = document.getElementById('zoom-btn');
   zoomBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -66,3 +80,20 @@ start().catch((err) => {
   console.error(err);
   bar.parentElement.insertAdjacentHTML('afterend', `<p style="color:#9b2c2c">Yüklenemedi: ${err.message}</p>`);
 });
+
+/** İki kayıt arasında seçim kartları (cihaz / iCloud). */
+function chooseSave({ device, cloud }) {
+  return new Promise((resolve) => {
+    const el = document.createElement('div');
+    el.className = 'overlay';
+    const card = (key, title, m) => `<button class="save-card" data-pick="${key}"><b>${title}</b><span>${m.name} · Gün ${m.day} · Sv.${m.level}</span><small>$${m.money.toLocaleString('tr-TR')} · ${m.savedAt ? new Date(m.savedAt).toLocaleString('tr-TR') : 'tarih yok'}</small></button>`;
+    el.innerHTML = `<div class="panel"><h2>Hangi kayıtla devam?</h2><p class="note">Bu cihazdaki kayıt ile iCloud'daki kayıt farklı.</p>${card('device', '📱 Bu cihaz', device)}${card('cloud', '☁️ iCloud', cloud)}</div>`;
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pick]');
+      if (!b) return;
+      el.remove();
+      resolve(b.dataset.pick);
+    });
+    document.body.appendChild(el);
+  });
+}

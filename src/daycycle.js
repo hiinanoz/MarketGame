@@ -1,3 +1,4 @@
+import { platform, LEADERBOARDS } from './platform.js';
 import * as THREE from 'three';
 import { DAY, rushFactor } from './config.js';
 
@@ -96,6 +97,9 @@ export class DayCycle {
     g.politics.endOfDay(this.today);  // nüfuz, vergi, projeler, seçim
     g.finance.endOfDay(this.today);   // temettü, banka geliri
     g.life.endOfDay();                // şehir büyür
+    // Game Center liderlik tabloları
+    platform.score(LEADERBOARDS.companyValue, g.finance.companyValue);
+    platform.score(LEADERBOARDS.customers, g.stats.customers ?? 0);
     g.holding.endOfDay(this.today);
     g.accountant?.endOfDay();
     g.bank.endOfDay(this.today);

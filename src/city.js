@@ -1,3 +1,4 @@
+import { platform, LEADERBOARDS } from './platform.js';
 import * as THREE from 'three';
 import { CITY, LEVELS } from './config.js';
 import { prop } from './assets.js';
@@ -93,6 +94,7 @@ export class City {
     if (m.props || m.biz) return;
     this.finished = true;
     this.finishDay = g.day.day;
+    platform.score(LEADERBOARDS.fastestRuler, this.finishDay);
     g.level = 100;
     g.xp = Math.max(g.xp, LEVELS[99] ?? g.xp);
     g.hud.setLevel(100, 1);

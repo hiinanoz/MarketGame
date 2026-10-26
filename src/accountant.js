@@ -131,7 +131,13 @@ export class MarketAccountant extends Character {
     const g = this.game;
     const c = g.campaign;
     if (!c.unlocked || !g.day.isOpen || g.day.hour < 19 || this.decidedDay === g.day.day) return;
-    this.decidedDay = g.day.day;
+    if (c.slotsFree <= 0) {
+      this.decidedDay = g.day.day;
+      return;
+    }
+    // 19:00'dan sonra yarım saatte bir dener; para gün içinde gelebilir. 21:00'de son karar.
+    if (this.campaignTryT && g.day.t < this.campaignTryT) return;
+    this.campaignTryT = g.day.t + 7.5;
     const score = (k) => {
       const p = PRODUCTS[k];
       const r = c.lastResults[k];
@@ -152,11 +158,9 @@ export class MarketAccountant extends Character {
       while (qty > CAMPAIGN.minStock && c.costFor(product, qty, staff) > budget) qty -= 10;
       const cost = c.costFor(product, qty, staff);
       if (cost > budget) break;
-      // Tecrübeli, talep stoğu çok aşacaksa (çok mağdur müşteri) kampanyayı yapmaz
-      if (this.expert && qty < this.expertEstimate(extra, CAMPAIGN.maxCampaigns, staff) * 0.8) {
-        this.note(`📢 ${PRODUCTS[product].emoji} için bütçe talebe yetmiyor, kampanya yapılmadı`);
-        break;
-      }
+      // Tecrübeli: bütçe talebin çok altında kalıyorsa (stok talebin %40'ından azsa) bu ürünü atlar,
+      // daha ucuz bir ürünle dener; personel tutuyorsa ürün bitince müşteri az üzülür
+      if (this.expert && qty < this.expertEstimate(extra, CAMPAIGN.maxCampaigns, staff) * 0.4) continue;
       if (c.prepare(product, qty, { by: 'accountant', extra, staff })) {
         budget -= cost;
         made++;
@@ -164,7 +168,14 @@ export class MarketAccountant extends Character {
       }
       if (budget < c.fee() * 3) break;
     }
-    if (!made && !c.scheduled.length) this.note('📢 Kampanya için bütçe yetmedi');
+    if (made || g.day.hour >= 21) {
+      this.decidedDay = g.day.day;
+      this.campaignTryT = 0;
+      if (!made && !c.scheduled.length) {
+        this.note(`📢 Kampanya yapılamadı: bütçe yetmedi (kasa $${Math.round(g.money)}, yedek $${this.reserve})`);
+        g.hud.toast('🧑‍💼 Muhasebeci: yarın için kampanya bütçesi yetmedi');
+      }
+    }
   }
 
   /**

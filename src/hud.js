@@ -1,3 +1,4 @@
+import { platform } from './platform.js';
 import { PRODUCTS } from './config.js';
 // DOM tabanlı arayüz: para göstergesi, ipucu, bildirim, menü.
 
@@ -196,6 +197,7 @@ export class Hud {
   }
 
   levelUp(level, features) {
+    platform.haptic('MEDIUM');
     this.levelupEl.innerHTML = `⭐ Seviye ${level}!${features.length ? `<small>Yeni: ${features.join(', ')}</small>` : ''}`;
     this.levelupEl.classList.remove('hidden');
     this.levelupEl.style.animation = 'none';

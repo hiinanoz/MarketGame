@@ -15,7 +15,8 @@
     "@capacitor/preferences": "^8.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
-    "@capacitor/splash-screen": "^8.0.0"
+    "@capacitor/splash-screen": "^8.0.0",
+    "market-native": "file:plugins/market-native"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.3"
