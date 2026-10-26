@@ -531,8 +531,11 @@ export class Checkout {
 
 // ---- Satın alma alanı ---------------------------------------------------------------
 
+// Alana basınca ödeme başlamadan önceki bekleme (sn). Koşarak geçmek ~0.3 sn sürer.
+export const PAD_DWELL = 0.5;
+
 export class UnlockPad {
-  constructor(game, def, x, z, { title, emoji, size = 2.6 }) {
+  constructor(game, def, x, z, { title, emoji, size = 2.6, marker = null }) {
     this.game = game;
     this.def = def;
     this.locked = false; // seviye yetmiyorsa gri görünür, ödeme alınmaz
@@ -545,6 +548,7 @@ export class UnlockPad {
     this.rate = Math.max(def.cost / 1.6, 25); // $/sn
     this.acc = 0;
     this.billTimer = 0;
+    this.dwell = 0; // alanın üstünden geçerken yanlışlıkla ödeme olmasın: kısa bir bekleme
 
     this.canvas = padCanvas(256, 256);
     this.tex = new THREE.CanvasTexture(this.canvas);
@@ -554,6 +558,18 @@ export class UnlockPad {
     this.mesh.position.set(x, 0.04, z);
     game.scene.add(this.mesh);
     this.label = null;
+    // Görünmeyen yerdeki alanlar (raf arkası) için üstte yüzen tabela
+    if (marker) {
+      this.markerText = marker;
+      this.markerCanvas = padCanvas(320, 96);
+      const tex = new THREE.CanvasTexture(this.markerCanvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      this.marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+      this.marker.scale.set(4.4, 1.32, 1);
+      this.marker.position.set(x, 3.2, z);
+      this.marker.renderOrder = 5;
+      game.scene.add(this.marker);
+    }
     this.redraw();
   }
 
@@ -595,7 +611,45 @@ export class UnlockPad {
     ctx.font = 'bold 46px "Trebuchet MS", sans-serif';
     ctx.fillStyle = this.locked ? '#e6e6e6' : '#ffe066';
     ctx.fillText(this.locked ? `🔒 Sv.${this.def.level}` : `$${Math.ceil(this.remaining)}`, w / 2, 202);
+    if (this.marker) this.drawMarker();
+    // Bekleme halkası: dolunca ödeme başlar
+    if (this.dwell > 0 && this.dwell < PAD_DWELL && this.paid < this.cost) {
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#ffe066';
+      ctx.beginPath();
+      ctx.arc(w / 2, w / 2, 112, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * this.dwell) / PAD_DWELL);
+      ctx.stroke();
+    }
     this.tex.needsUpdate = true;
+  }
+
+  /** Yüzen tabela: yeşil hap, metin ve kalan tutar; altında alanı gösteren ok. */
+  drawMarker() {
+    const c = this.markerCanvas;
+    const ctx = c.getContext('2d');
+    const text = `${this.markerText} · $${Math.ceil(this.remaining)}`;
+    if (text === this.markerDrawn) return;
+    this.markerDrawn = text;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#3fae49';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.roundRect(6, 6, c.width - 12, 62, 31);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(c.width / 2 - 14, 66);
+    ctx.lineTo(c.width / 2 + 14, 66);
+    ctx.lineTo(c.width / 2, 88);
+    ctx.closePath();
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 34px "Trebuchet MS", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, c.width / 2, 38, c.width - 36);
+    this.marker.material.map.needsUpdate = true;
   }
 
   playerInRange(p) {
@@ -606,6 +660,7 @@ export class UnlockPad {
     if (this.locked === locked) return;
     this.locked = locked;
     this.mesh.material.opacity = locked ? 0.7 : 1;
+    if (this.marker) this.marker.visible = !locked;
     this.redraw();
   }
 
@@ -615,6 +670,15 @@ export class UnlockPad {
     this.mesh.scale.set(pulse, pulse, 1);
     if (this.locked || !this.playerInRange(player.position) || this.game.money <= 0) {
       this.acc = 0;
+      if (this.dwell > 0) {
+        this.dwell = 0;
+        this.redraw();
+      }
+      return false;
+    }
+    if (this.dwell < PAD_DWELL) {
+      this.dwell += dt;
+      this.redraw();
       return false;
     }
     this.acc += dt * this.rate;
@@ -642,6 +706,10 @@ export class UnlockPad {
 
   dispose() {
     this.game.scene.remove(this.mesh);
+    if (this.marker) {
+      this.game.scene.remove(this.marker);
+      this.marker.material.map.dispose();
+    }
     this.tex.dispose();
   }
 }

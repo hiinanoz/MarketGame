@@ -195,7 +195,8 @@ export class Game {
         const info = PRODUCTS[sh.product];
         return { title: sh.id === sh.product ? info.name : `${info.name} 2`, emoji: info.emoji };
       }
-      case 'shelfStage': return { title: `Raf ${[8, 16, 24][def.value]}`, emoji: '📶', size: 2.0 };
+      // Alan rafın arkasında kalıyor: üstünde yüzen tabela ile görünür olsun
+      case 'shelfStage': return { title: `Raf ${[8, 16, 24][def.value]}`, emoji: '📶', size: 2.0, marker: `📶 Raf ${[8, 16, 24][def.value]}` };
       case 'stockerCap': return { title: `Taşıyıcı ${def.value}`, emoji: '🛒' };
       case 'door': return { title: '2. kapı', emoji: '🚪' };
       case 'depot': return { title: 'Depo 40', emoji: '🏭' };
