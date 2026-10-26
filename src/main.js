@@ -29,6 +29,7 @@ async function start() {
   // Masaüstü: fare tekerleği ile yakınlaş/uzaklaş
   window.addEventListener('wheel', (e) => game.setZoom((game.zoomTarget ?? 1) * (e.deltaY > 0 ? 1.12 : 1 / 1.12)), { passive: true });
   document.getElementById('loading').classList.add('hidden');
+  if (!game.isNewGame) showHome(game);
   if (game.isNewGame) {
     const intro = document.getElementById('intro');
     intro.classList.remove('hidden');
@@ -95,5 +96,61 @@ function chooseSave({ device, cloud }) {
       resolve(b.dataset.pick);
     });
     document.body.appendChild(el);
+  });
+}
+
+// ---- Ana menü (açılışta, kayıtlı oyun varsa) ----
+
+const HELP = [
+  ['🕹️', 'Ekrana dokunup sürükleyerek yürü. Depodaki paletten kasa al, aynı ürünün reyonuna bırak.'],
+  ['💳', 'Müşteriler kasada bekler: kasiyer alana kadar kasanın arkasında dur, parayı topla.'],
+  ['🟩', 'Yerdeki alanların üstünde durarak para öde: reyon, çalışan, genişleme açılır.'],
+  ['🧾', 'Muhasebe odası: sipariş, banka, kampanya ve reklam. Sv.21\'den sonra 💼 tabletle işletmeleri yönet.'],
+  ['🌙', 'Gün 22:00\'de biter. Çalışanların maaşı, kira ve faiz gün sonunda ödenir.'],
+  ['👑', 'Hedef: şehrin her şeyini almak ve Kasabanın Hakimi olmak. Derecen oyun gününe göre verilir.'],
+];
+
+function showHome(game) {
+  const el = document.getElementById('home');
+  const sub = document.getElementById('home-sub');
+  game.paused = true;
+  el.classList.remove('hidden');
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+  document.getElementById('home-title').textContent = game.marketTitle;
+  document.getElementById('home-meta').textContent = `Gün ${game.day.day} · Seviye ${game.level} · $${Math.round(game.money).toLocaleString('tr-TR')}`;
+  const gc = document.getElementById('home-gc');
+  const refreshGc = () => {
+    gc.classList.toggle('hidden', !platform.gameCenter);
+    platform.accessPoint(!el.classList.contains('hidden'));
+  };
+  setTimeout(refreshGc, 1500);
+  const close = () => {
+    el.classList.add('hidden');
+    sub.classList.add('hidden');
+    platform.accessPoint(false);
+    game.paused = false;
+  };
+  const showSub = (html) => {
+    sub.innerHTML = `${html}<button data-back class="primary">Geri</button>`;
+    sub.classList.remove('hidden');
+  };
+  sub.addEventListener('click', (e) => { if (e.target.closest('[data-back]')) sub.classList.add('hidden'); });
+  document.getElementById('home-continue').addEventListener('click', close);
+  gc.addEventListener('click', () => platform.showGameCenter());
+  document.getElementById('home-settings').addEventListener('click', () => {
+    close();
+    document.getElementById('menu-btn').click();
+  });
+  document.getElementById('home-help').addEventListener('click', () => {
+    showSub(`<h3>Nasıl oynanır</h3>${HELP.map(([e, t]) => `<p class="help-row"><span>${e}</span>${t}</p>`).join('')}`);
+  });
+  document.getElementById('home-ach').addEventListener('click', async () => {
+    const { ACHIEVEMENTS } = await import('./achievements.js');
+    const earned = game.achievements.earned;
+    showSub(`<h3>Başarımlar ${earned.size}/${ACHIEVEMENTS.length}</h3><div class="ach-list">${ACHIEVEMENTS.map((a) => `<div class="${earned.has(a.id) ? 'on' : ''}"><span>${earned.has(a.id) ? a.emoji : '🔒'}</span>${a.name}</div>`).join('')}</div>`);
+  });
+  document.getElementById('home-new').addEventListener('click', () => {
+    showSub(`<h3>Yeni oyun?</h3><p>Mevcut oyunun (${game.marketTitle}, Gün ${game.day.day}) silinir${platform.native ? ' — iCloud kopyası dahil' : ''}. Bu geri alınamaz.</p><button data-reset class="danger">Sil ve yeni oyuna başla</button>`);
+    sub.querySelector('[data-reset]').addEventListener('click', () => game.reset());
   });
 }

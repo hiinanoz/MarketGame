@@ -451,3 +451,18 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .save-card small { opacity: 0.7; font-weight: 600; }
 /* iOS: dokunma alanları en az 44 pt */
 .native .round { width: 46px; height: 46px; }
+
+/* Ana menü */
+.overlay.home { background: linear-gradient(160deg, rgba(60, 140, 70, 0.92), rgba(30, 80, 45, 0.94)); }
+.home-panel { gap: 10px; text-align: center; position: relative; }
+.home-logo { font-size: 56px; line-height: 1; }
+.home-meta { margin: -4px 0 6px; font-weight: 700; opacity: 0.7; }
+.home-panel > button { min-height: 48px; font-size: 17px; }
+.home-sub { position: absolute; inset: 0; background: var(--panel); border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.home-sub h3 { margin: 0 0 4px; text-align: center; }
+.help-row { display: flex; gap: 10px; margin: 0; font-weight: 600; font-size: 14px; }
+.help-row span { font-size: 22px; }
+.ach-list { display: flex; flex-direction: column; gap: 4px; }
+.ach-list div { display: flex; gap: 8px; align-items: center; background: #ece6d8; border-radius: 10px; padding: 6px 10px; font-weight: 700; opacity: 0.55; font-size: 14px; }
+.ach-list div.on { opacity: 1; background: #e3f2dc; }
+.panel button.danger { background: #c0392b; color: #fff; }

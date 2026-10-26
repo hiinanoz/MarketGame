@@ -9,6 +9,12 @@
     "scrollEnabled": false
   },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 0, "launchAutoHide": true }
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true
+    },
+    "SystemBars": {
+      "hidden": true
+    }
   }
 }
