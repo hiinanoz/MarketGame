@@ -22,10 +22,12 @@ export class Audio {
           this.ctx = null;
         }
       }
-      this.ctx?.resume?.();
+      const p = this.ctx?.resume?.();
+      if (p?.then) p.then(() => this.onUnlock?.());
+      else this.onUnlock?.();
     };
-    window.addEventListener('pointerdown', unlock);
-    window.addEventListener('keydown', unlock);
+    // Yakalama aşamasında dinle: paneller pointerdown'ı durdursa da ses açılsın (iOS: touchend/click)
+    for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, { capture: true });
   }
 
   play(name, volume = 1) {

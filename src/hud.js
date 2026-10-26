@@ -13,12 +13,42 @@ export class Hud {
     this.displayed = 0;
     this.toastTimer = null;
 
-    document.getElementById('menu-btn').addEventListener('click', () => this.menu.classList.remove('hidden'));
-    document.getElementById('close-menu').addEventListener('click', () => this.menu.classList.add('hidden'));
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      this.menu.classList.remove('hidden');
+      game.menuOpen = true;
+      this.syncPaused();
+    });
+    document.getElementById('close-menu').addEventListener('click', () => {
+      this.menu.classList.add('hidden');
+      game.menuOpen = false;
+    });
     document.getElementById('reset-btn').addEventListener('click', () => game.reset());
-    const sound = document.getElementById('opt-sound');
-    sound.checked = game.audio.enabled;
-    sound.addEventListener('change', () => { game.audio.enabled = sound.checked; });
+    // Ayarlar (bu cihazda saklanır)
+    const opts = game.options;
+    const bind = (id, key, apply) => {
+      const el = document.getElementById(id);
+      el.checked = !!opts[key];
+      el.addEventListener('change', () => {
+        opts[key] = el.checked;
+        game.saveOptions();
+        apply?.(el.checked);
+        this.syncPaused();
+      });
+    };
+    bind('opt-sound', 'sound', (on) => { game.audio.enabled = on; });
+    bind('opt-music', 'music', (on) => game.music.setEnabled(on));
+    bind('opt-speed', 'fast', () => this.syncSpeed());
+    bind('opt-bg', 'background');
+    this.speedBtn = document.getElementById('speed-btn');
+    this.speedBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    this.speedBtn.addEventListener('click', () => {
+      opts.fast = !opts.fast;
+      document.getElementById('opt-speed').checked = opts.fast;
+      game.saveOptions();
+      this.syncSpeed();
+      this.toast(opts.fast ? '⏩ Zaman 2 kat hızlı' : '▶️ Normal hız');
+    });
+    this.syncSpeed();
     // Seviye, saat, gün sonu
     this.levelValue = document.getElementById('level-value');
     this.levelFill = document.getElementById('level-fill');
@@ -48,6 +78,16 @@ export class Hud {
     const el = document.getElementById('crisis');
     el.textContent = text ?? '';
     el.classList.toggle('hidden', !text);
+  }
+
+  syncSpeed() {
+    this.speedBtn.classList.toggle('on', !!this.game.options.fast);
+    this.speedBtn.textContent = this.game.options.fast ? '⏩' : '▶️';
+    this.speedBtn.title = this.game.options.fast ? 'Zaman 2× — normale dön' : 'Zamanı 2× hızlandır';
+  }
+
+  syncPaused() {
+    document.getElementById('menu-paused').textContent = this.game.options.background ? '▶️ Oyun arka planda devam ediyor' : '⏸️ Oyun duraklatıldı';
   }
 
   /** Sv.21+: toplam çalışan sayısı (null: gizle). */

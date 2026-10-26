@@ -1,13 +1,22 @@
 import { Character } from './character.js';
-import { PRODUCTS, SPECIALS } from './config.js';
+import { workerBadge } from './actors.js';
+import { PRODUCTS, SPECIALS, STAFF_ROLE, WAGES, ACCOUNTANT_TIERS, CAMPAIGN } from './config.js';
 
-// Market muhasebecisi (mavi şapka): marketin tüm işlerini takip eder (banka işleri hariç):
-// siparişler, kampanyalar (3'e kadar) ve yatırımlar (açılmış market alanlarını satın alma).
-// Oyuncu her alanı muhasebe odasındaki "Muhasebeci" sekmesinden açıp kapatabilir.
+// Market muhasebecisi (mavi şapka): marketin işlerini takip eder. Her yetki muhasebe odasındaki
+// 🧑‍💼 sekmesinden açılıp kapatılır:
+//   sipariş · kampanya (akşam yarın için) · alan yatırımı · personel alımı · kredi ile ödemeler
+// Tecrübe: stajyer (ucuz, geçmişe bakarak tahmin eder) / tecrübeli (pahalı, pazar araştırmasıyla
+// kampanya talebini bilir, maaşı karşılanamayacak personeli almaz, ödemelere göre yedek tutar).
 
-// Muhasebecinin satın alabileceği market alanları (oyuncunun kendi taşıma kapasitesi ve holding hariç)
-const INVEST_TYPES = new Set(['shelf', 'shelfStage', 'cashier', 'stocker', 'stockerCap', 'cleaner', 'checkout', 'door',
-  'depot', 'parking', 'valet', 'security', 'ads', 'manager', 'expansion', 'room3', 'wholesaler', 'producer']);
+// Yatırım (personel dışı) alanları
+const INVEST_TYPES = new Set(['shelf', 'shelfStage', 'stockerCap', 'checkout', 'door',
+  'depot', 'parking', 'expansion', 'room3', 'wholesaler', 'producer']);
+
+/** Bu alan bir çalışan mı işe alıyor? */
+function isStaffPad(def) {
+  if (def.type === 'ads') return def.target === 'advertiser';
+  return def.type in STAFF_ROLE && def.type !== 'accountant';
+}
 
 export class MarketAccountant extends Character {
   constructor(game) {
@@ -16,23 +25,66 @@ export class MarketAccountant extends Character {
     this.heading = Math.PI; // masaya bak
     this.root.rotation.y = this.heading;
     game.scene.add(this.root);
-    this.settings = { order: true, campaign: true, invest: true };
+    this.settings = { order: true, campaign: true, invest: true, hire: false, credit: true };
+    this.tier = 'junior';
     this.log = [];
     this.timer = 2;
     this.decidedDay = 0;
+    this.badge = null;
+    this.applyTier();
   }
 
-  /** Kasada tutulacak en az para (maaş, acil sipariş için). */
+  get expert() {
+    return this.tier === 'expert';
+  }
+
+  /** Günlük maaş (bordro bunu kullanır). */
+  get wage() {
+    return ACCOUNTANT_TIERS[this.tier].wage;
+  }
+
+  applyTier() {
+    if (this.badge) this.root.remove(this.badge);
+    this.badge = null;
+    if (this.expert) {
+      this.badge = workerBadge('🎓');
+      this.root.add(this.badge);
+    }
+  }
+
+  /** Stajyer ↔ tecrübeli muhasebeci. */
+  setTier(tier) {
+    const g = this.game;
+    if (tier === this.tier) return false;
+    if (tier === 'expert') {
+      const cost = ACCOUNTANT_TIERS.expert.hire;
+      if (g.money < cost) return false;
+      g.spend(cost);
+    }
+    this.tier = tier;
+    this.applyTier();
+    g.hud.toast(`${ACCOUNTANT_TIERS[tier].emoji} ${ACCOUNTANT_TIERS[tier].name} işe başladı (günlük $${this.wage})`);
+    g.save();
+    return true;
+  }
+
+  /** Kasada tutulacak en az para. Tecrübeli: bu akşamın tüm ödemeleri + pay; stajyer: kabaca maaşlar. */
   get reserve() {
-    // Gün sonu maaşları + yarının faizi kasada kalsın
-    const b = this.game.bank;
-    return 200 + this.game.level * 40 + this.game.dailyPayroll + this.game.energy.estimatedBill + Math.round(b.debt * 0.04 + b.startDebt * 0.01);
+    const g = this.game;
+    if (this.expert) return Math.round(g.dueTonight * 1.15 + 150 + g.level * 30);
+    return 200 + g.level * 40 + g.dailyPayroll;
+  }
+
+  /** Son günlerin ortalama kazancı (maaşı karşılayabilir miyiz?). */
+  get avgIncome() {
+    const h = this.game.bank.history ?? [];
+    return h.length ? h.reduce((a, b) => a + b, 0) / h.length : 0;
   }
 
   note(text) {
     const d = this.game.day;
     this.log.unshift(`Gün ${d.day} ${d.clockText} · ${text}`);
-    this.log.length = Math.min(this.log.length, 8);
+    this.log.length = Math.min(this.log.length, 10);
   }
 
   update(dt) {
@@ -42,6 +94,7 @@ export class MarketAccountant extends Character {
       if (this.settings.order) this.manageOrders();
       if (this.settings.campaign) this.manageCampaign();
       if (this.settings.invest) this.manageInvestments();
+      if (this.settings.hire) this.manageHiring();
     }
     super.update(dt);
   }
@@ -51,7 +104,7 @@ export class MarketAccountant extends Character {
   manageOrders() {
     const g = this.game;
     const depot = g.depot;
-    let budget = g.money - this.reserve;
+    let budget = g.money - (this.expert ? g.dueTonight : this.reserve * 0.5);
     if (budget <= 0) return;
     const items = {};
     let total = 0;
@@ -72,14 +125,13 @@ export class MarketAccountant extends Character {
     if (count && depot.order(items)) this.note(`🚚 ${count} kasa sipariş ($${total})`);
   }
 
-  // ---- Kampanya: akşam yarının kampanyalarına karar ver (bütçe yettikçe 3'e kadar) ----
+  // ---- Kampanya: akşam yarının kampanyalarına karar ver ----
 
   manageCampaign() {
     const g = this.game;
     const c = g.campaign;
     if (!c.unlocked || !g.day.isOpen || g.day.hour < 19 || this.decidedDay === g.day.day) return;
     this.decidedDay = g.day.day;
-    // Kâr marjına ve son sonuca göre sırala; satılamayan (çok stok kalan) ürünler geride
     const score = (k) => {
       const p = PRODUCTS[k];
       const r = c.lastResults[k];
@@ -87,60 +139,125 @@ export class MarketAccountant extends Character {
       return (p.price - p.cost) * (0.5 + sellRate);
     };
     const ranked = SPECIALS.filter((k) => !c.isScheduled(k)).sort((a, b) => score(b) - score(a));
-    let budget = (g.money - this.reserve) * 0.6;
+    let budget = (g.money - this.reserve) * (this.expert ? 0.7 : 0.6);
     let made = 0;
     for (const product of ranked) {
       if (c.slotsFree <= 0) break;
-      let qty = this.estimate(product);
-      while (qty > 20 && c.costFor(product, qty) > budget) qty -= 20;
+      // Tecrübeli: pazar araştırmasıyla gelecek müşteriyi bilir, stoğu talebe göre ayarlar
+      const extra = c.rollExtra();
+      let qty = this.expert ? this.expertEstimate(extra, CAMPAIGN.maxCampaigns) : this.estimate(product);
+      while (qty > CAMPAIGN.minStock && c.costFor(product, qty) > budget) qty -= 10;
       const cost = c.costFor(product, qty);
       if (cost > budget) break;
-      if (c.prepare(product, qty, { by: 'accountant' })) {
+      // Tecrübeli, talep stoğu çok aşacaksa (çok mağdur müşteri) kampanyayı yapmaz
+      if (this.expert && qty < this.expertEstimate(extra, CAMPAIGN.maxCampaigns) * 0.8) {
+        this.note(`📢 ${PRODUCTS[product].emoji} için bütçe talebe yetmiyor, kampanya yapılmadı`);
+        break;
+      }
+      if (c.prepare(product, qty, { by: 'accountant', extra })) {
         budget -= cost;
         made++;
-        this.note(`📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası (${qty} kasa)`);
+        this.note(`📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası (${qty} kasa${this.expert ? `, ~${extra} müşteri bekleniyor` : ''})`);
       }
-      // Bütçe ilk kampanyadan sonra zayıfsa durdur
       if (budget < c.fee() * 3) break;
     }
     if (!made && !c.scheduled.length) this.note('📢 Kampanya için bütçe yetmedi');
   }
 
-  /** Stok tahmini: son kampanyada satılan + ürün bulamayanların talebi. */
+  /**
+   * Tecrübeli: gelecek müşteri (pazar araştırması) ile mağazanın bir günde kaldırabileceği kampanya
+   * müşterisinin küçüğü × müşteri başı 2 kasa + %5 pay (mağduriyet ve kalan stok az).
+   */
+  expertEstimate(extra, together = 1) {
+    const come = Math.min(extra, this.campaignCapacity(together));
+    return Math.max(CAMPAIGN.minStock, Math.min(CAMPAIGN.maxStock, Math.ceil((come * 2 * 1.05) / 10) * 10));
+  }
+
+  /** Geçmiş kampanyalardan: aynı anda N kampanya varken bir kampanyaya en fazla kaç kişi gelebildi. */
+  campaignCapacity(together) {
+    const seen = Object.values(this.game.campaign.lastResults).filter((r) => r.planned && r.extra < r.planned);
+    if (!seen.length) return Math.round(420 / Math.max(1, together)); // ilk tahmin
+    const perDay = Math.max(...seen.map((r) => r.extra * (r.together ?? 1)));
+    return Math.round(perDay / Math.max(1, together));
+  }
+
+  /** Stajyer: son kampanyaya bakarak tahmin eder (talep her seferinde değiştiği için sık yanılır). */
   estimate(product) {
     const r = this.game.campaign.lastResults[product];
     let qty = 120;
     if (r) qty = r.left > 0 ? r.sold * 1.05 : (r.sold + (r.unhappy ?? 0) * 2) * 1.1;
-    return Math.max(20, Math.min(1000, Math.round(qty / 10) * 10));
+    return Math.max(CAMPAIGN.minStock, Math.min(CAMPAIGN.maxStock, Math.round(qty / 10) * 10));
   }
 
-  // ---- Yatırım: açılmış market alanlarını satın al (kasada yedek bırakarak) ----
+  // ---- Yatırım: personel dışı alanlar ----
 
   manageInvestments() {
     const g = this.game;
     const spare = g.money - this.reserve * 2;
     if (spare <= 0) return;
-    const pads = [...g.pads.values()]
+    const pad = [...g.pads.values()]
       .filter((p) => !p.locked && INVEST_TYPES.has(p.def.type) && p.remaining <= spare * 0.5)
-      .sort((a, b) => a.remaining - b.remaining);
-    const pad = pads[0];
+      .sort((a, b) => a.remaining - b.remaining)[0];
     if (!pad) return;
+    this.buyPad(pad, '🏗️');
+  }
+
+  // ---- Personel alımı ----
+
+  manageHiring() {
+    const g = this.game;
+    const spare = g.money - this.reserve * 1.5;
+    if (spare <= 0) return;
+    const pads = [...g.pads.values()].filter((p) => !p.locked && isStaffPad(p.def) && p.remaining <= spare * 0.5);
+    for (const pad of pads.sort((a, b) => a.remaining - b.remaining)) {
+      const role = pad.def.type === 'ads' ? 'advertiser' : STAFF_ROLE[pad.def.type];
+      const wage = WAGES[role] ?? 50;
+      // Tecrübeli: ortalama günlük kazanç yeni maaşı rahat karşılamıyorsa almaz
+      if (this.expert && this.avgIncome < (g.dailyPayroll + wage) * 1.6) continue;
+      this.buyPad(pad, '👥');
+      return;
+    }
+  }
+
+  buyPad(pad, emoji) {
+    const g = this.game;
     const label = g.padLabel(pad.def);
     const cost = Math.ceil(pad.remaining);
     g.completePad(pad.def.id);
-    this.note(`🏗️ ${label.emoji} ${label.title} satın aldı ($${cost})`);
+    this.note(`${emoji} ${label.emoji} ${label.title} satın aldı ($${cost})`);
   }
 
-  /** Banka işleri oyuncuya ait; gün sonunda muhasebeci bankaya dokunmaz. */
+  // ---- Gün sonu: ödemeler için kredi ----
+
+  /**
+   * Gün sonu ödemelerinden hemen önce (faiz, maaş, fatura, kira): kasa + mevduat yetmiyorsa
+   * eksik kadar kredi çeker. Öncelik çalışanların maaşını tam ödemek.
+   */
+  beforeSettlement() {
+    if (!this.settings.credit) return;
+    const g = this.game;
+    const due = g.dueTonight;
+    const have = g.money + g.bank.deposit;
+    const short = Math.ceil(due - have);
+    if (short <= 0) return;
+    // Stajyer biraz fazla çeker (gereksiz faiz), tecrübeli tam ihtiyaç kadar
+    const amount = this.expert ? short : Math.ceil(short * 1.2 + 50);
+    const got = g.bank.borrow(amount);
+    if (got) this.note(`🏦 Ödemeler için $${got} kredi çekildi${got < amount ? ' (limit yetmedi)' : ''}`);
+    else this.note('🏦 Kredi limiti dolu: ödemeler eksik kalabilir');
+  }
+
   endOfDay() {}
 
   serialize() {
-    return { settings: this.settings, log: this.log, lastCampaign: this.game.campaign.lastResult ?? null };
+    return { settings: this.settings, log: this.log, tier: this.tier };
   }
 
   restore(d) {
     if (!d) return;
     Object.assign(this.settings, d.settings ?? {});
     this.log = d.log ?? [];
+    this.tier = d.tier ?? 'junior';
+    this.applyTier();
   }
 }

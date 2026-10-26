@@ -87,6 +87,7 @@ export class DayCycle {
   endDay() {
     const g = this.game;
     g.campaign.endOfDay(this.today);
+    g.accountant?.beforeSettlement(); // muhasebeci: ödemeler yetmiyorsa kredi çeker
     g.bank.payInterest(this.today);   // önce banka faizi (3 gün ödenmezse el koyma)
     g.payroll(this.today);            // sonra maaşlar (ödenemeyen ayrılır)
     g.energy.settle(this.today);      // elektrik faturası / kendi üretim / şebeke satışı

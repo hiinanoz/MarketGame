@@ -50,7 +50,8 @@ async function start() {
   const loop = (now) => {
     const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
     last = now;
-    if (!game.paused) game.update(dt);
+    // 2× hız: aynı karede simülasyonu iki kez ilerlet (adım küçük kalsın)
+    if (game.running) for (let i = 0; i < (game.options.fast ? 2 : 1); i++) game.update(dt);
     game.render();
     requestAnimationFrame(loop);
   };

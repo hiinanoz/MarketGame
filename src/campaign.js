@@ -41,13 +41,18 @@ export class Campaign {
   }
 
   /** Yarın için kampanya hazırla. */
-  prepare(product, qty, { by = 'player' } = {}) {
+  /** Bir kampanyanın getireceği ek müşteri (hazırlıkta belirlenir; tecrübeli muhasebeci önceden bilir). */
+  rollExtra() {
+    return CAMPAIGN.extraMin + Math.floor(Math.random() * (CAMPAIGN.extraMax - CAMPAIGN.extraMin + 1));
+  }
+
+  prepare(product, qty, { by = 'player', extra = null } = {}) {
     if (!this.unlocked || this.slotsFree <= 0 || this.isScheduled(product)) return false;
     qty = Math.max(CAMPAIGN.minStock, Math.min(CAMPAIGN.maxStock, qty));
     const total = this.costFor(product, qty);
     if (this.game.money < total) return false;
     this.game.spend(total);
-    this.scheduled.push({ product, qty, paid: total, by });
+    this.scheduled.push({ product, qty, paid: total, by, extra: extra ?? this.rollExtra() });
     const who = by === 'accountant' ? '🧾 Muhasebeci: ' : '';
     this.game.hud.toast(`${who}📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası!`);
     this.game.audio.play('unlock');
@@ -114,7 +119,7 @@ export class Campaign {
       const pallet = this.game.depot.addPallet(s.product, Math.max(1, rest), [px, pz]);
       pallet.stock = rest;
       pallet.syncVisual();
-      const extra = CAMPAIGN.extraMin + Math.floor(Math.random() * (CAMPAIGN.extraMax - CAMPAIGN.extraMin + 1));
+      const extra = s.extra ?? this.rollExtra();
       this.active.push({ index: i, product: s.product, qty: s.qty, extra, spawned: 0, sold: 0, timer: Math.random() * 2, stand });
     });
     this.scheduled = [];
@@ -206,7 +211,7 @@ export class Campaign {
         ch.layoutStack?.();
       }
       const unhappy = today.campaignUnhappyBy?.[product] ?? 0;
-      const r = { product, qty: a.qty, sold: a.sold, left, loss: left * PRODUCTS[product].cost, extra: a.spawned, unhappy };
+      const r = { product, qty: a.qty, sold: a.sold, left, loss: left * PRODUCTS[product].cost, extra: a.spawned, planned: a.extra, unhappy, together: this.active.length };
       today.campaigns.push(r);
       this.lastResults[product] = r;
       this.lastResult = r;

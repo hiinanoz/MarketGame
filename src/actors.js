@@ -5,7 +5,7 @@ import { bubbleTexture } from './fx.js';
 import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT } from './config.js';
 
 /** İşçilerin başının üstündeki küçük rozet (müşterilerden ayırt etmek için). */
-function workerBadge(emoji) {
+export function workerBadge(emoji) {
   const c = document.createElement('canvas');
   c.width = c.height = 96;
   const ctx = c.getContext('2d');

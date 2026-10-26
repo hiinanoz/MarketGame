@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
-import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES } from './config.js';
+import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Muhasebe odası: mağazanın arka sağ köşesi. İçeri girince Sipariş / Banka / Kampanya paneli açılır.
@@ -107,6 +107,13 @@ class OfficePanel {
     this.el.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => this.setTab(b.dataset.tab)));
     document.getElementById('bank-sec').addEventListener('click', (e) => this.onBank(e));
     document.getElementById('campaign-sec').addEventListener('click', (e) => this.onCampaign(e));
+    document.getElementById('acc-sec').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-tier]');
+      if (b && !b.disabled && this.game.accountant) {
+        this.game.accountant.setTier(b.dataset.tier);
+        this.renderAccountant();
+      }
+    });
     document.getElementById('acc-sec').addEventListener('change', (e) => {
       const k = e.target.dataset.set;
       if (k && this.game.accountant) this.game.accountant.settings[k] = e.target.checked;
@@ -166,12 +173,21 @@ class OfficePanel {
     const sec = document.getElementById('acc-sec');
     if (!a) return;
     const t = (k, label, desc) => `<label class="row toggle"><span>${label}<small>${desc}</small></span><input type="checkbox" data-set="${k}" ${a.settings[k] ? 'checked' : ''} /></label>`;
+    const T = ACCOUNTANT_TIERS;
+    const other = a.expert ? 'junior' : 'expert';
     sec.innerHTML = `
-      <p class="note">Muhasebeci marketin işlerini senin yerine takip eder; banka işleri sende kalır. Kapattığın işi sen yönetirsin, istediğin zaman diğer sekmelerden müdahale edebilirsin.</p>
+      <div class="acc-tier">
+        <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · günlük $${a.wage}
+        <small>${a.expert ? 'Pazar araştırması yapar: kampanya talebini doğru bilir (az mağdur müşteri, az kalan stok), maaşı karşılanmayacak personeli almaz, akşam ödemelerine göre yedek tutar, tam ihtiyaç kadar kredi çeker.' : 'Ucuz ama tecrübesiz: kampanya stoğunu son kampanyaya bakarak tahmin eder (talep her gün değişir, sık yanılır), personeli parası yettikçe alır, kredi çekerken fazla çeker.'}</small>
+        <button data-tier="${other}" ${other === 'expert' && this.game.money < T.expert.hire ? 'disabled' : ''}>${other === 'expert' ? `🎓 Tecrübeli muhasebeciyle değiştir ($${T.expert.hire} · $${T.expert.wage}/gün)` : `🧑‍💼 Stajyere dön ($${T.junior.wage}/gün)`}</button>
+      </div>
+      <p class="note"><b>Yetkiler</b> — kapattığın işi sen yaparsın.</p>
       ${t('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
-      ${t('campaign', '📢 Kampanyalar', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar')}
-      ${t('invest', '🏗️ Yatırımlar', 'Açılmış market alanlarını (reyon, çalışan, genişleme…) yedek bırakarak satın alır')}
-      <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)}</p>
+      ${t('campaign', '📢 Kampanya seçimi', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar')}
+      ${t('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
+      ${t('hire', '👥 Personel alımı', 'Kasiyer, taşıyıcı, temizlikçi, güvenlik… işe alır')}
+      ${t('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
+      <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)} · bu akşamki ödemeler $${formatMoney(this.game.dueTonight)}</p>
       <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : '<div>Henüz karar yok.</div>'}</div>`;
   }
 

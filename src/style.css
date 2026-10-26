@@ -357,6 +357,8 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
   z-index: 5;
 }
 .side-btns .round.hidden { display: none; }
+#speed-btn.on { background: rgba(240, 160, 0, 0.92); }
+.menu-paused { margin: -4px 0 8px; font-weight: 800; opacity: 0.75; }
 .pill.crisis { right: 64px; }
 .panel.holding { width: min(94vw, 440px); max-height: 84vh; padding: 14px; gap: 10px; }
 #holding-body { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
@@ -429,3 +431,6 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .final-grade { font-size: 84px; font-weight: 900; line-height: 1; color: #f2b705; text-shadow: 0 4px 0 #b07d00; margin-top: 6px; }
 .final-title { font-size: 22px; font-weight: 900; margin: 4px 0 10px; }
 .panel.final .stats { text-align: left; margin-bottom: 10px; }
+.acc-tier { background: #eef4fb; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.acc-tier small { font-size: 12px; opacity: 0.8; font-weight: 600; }
+.acc-tier button { border: none; border-radius: 10px; padding: 8px 10px; font-weight: 800; font-family: inherit; background: #fff; }

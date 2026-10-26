@@ -17,4 +17,5 @@
 - Siyaset: `src/politics.js` (nüfuz, anket, seçim, rakip aday karakterleri, başkanlık, otokrasi), ayarlar `POLITICS`. Takvim: 1 ay = 2 gün. `game.isMayor` belediye cezasını kapatır.
 - Finans: `src/finance.js` (borsa `FINANCE.companies`, kendi banka, halka arz, şirket değeri, deniz/kumsal). Liman bölgesi işletmeleri `def.building.facing: -1` (caddenin güneyinde, kuzeye bakar), `procedural: 'port'|'factory'|'airport'`.
 - Final: `src/city.js` (şehir mülkleri, pazarlık, bitiş, final ekranı, derece; `CITY`). Sv.100 sadece `city.checkFinish()` ile; `gainXp` Sv.99'da durur. Yaşayan şehir: `src/life.js` (kasabalılar kaldırım şeritlerinde yürür, büyüme süsleri; `LIFE`).
+- Ayarlar `game.options` (localStorage `marketgame-options`): ses, müzik (`src/music.js`), 2× hız (`main.js` döngüsü), menüde arka planda devam (`game.running`). Muhasebeci tecrübesi `ACCOUNTANT_TIERS`, kampanyanın ek müşterisi hazırlıkta belirlenir (`campaign.rollExtra`).
 - Şapka renkleri: işçi `cap: 'yellow'`, müdür `'red'`, muhasebeci `'blue'`.

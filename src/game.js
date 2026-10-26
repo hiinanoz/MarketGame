@@ -22,6 +22,7 @@ import { Housing } from './housing.js';
 import { Ads } from './ads.js';
 import { Politics } from './politics.js';
 import { Finance } from './finance.js';
+import { Music } from './music.js';
 import { City } from './city.js';
 import { Life } from './life.js';
 import { Depot } from './depot.js';
@@ -65,6 +66,14 @@ export class Game {
     this.nav = new Nav({ minX: -50, maxX: 31, minZ: -30, maxZ: 21 });
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
+    // Ayarlar (cihazda saklanır): ses, müzik, 2× hız, menüde arka planda devam
+    this.options = { sound: true, music: true, fast: false, background: false };
+    try { Object.assign(this.options, JSON.parse(localStorage.getItem('marketgame-options') || '{}')); } catch { /* yok */ }
+    this.audio.enabled = this.options.sound;
+    this.music = new Music(this.audio);
+    this.music.enabled = this.options.music;
+    this.audio.onUnlock = () => this.music.start();
+    this.menuOpen = false;
     this.input = new Input(this.renderer.domElement);
     this.day = new DayCycle(this);
     this.hud = new Hud(this);
@@ -375,6 +384,15 @@ export class Game {
 
   // ---- Müşteriler ------------------------------------------------------------
 
+  saveOptions() {
+    try { localStorage.setItem('marketgame-options', JSON.stringify(this.options)); } catch { /* gizli mod */ }
+  }
+
+  /** Bu karede oyun ilerlesin mi (menü açıkken duraklatma)? */
+  get running() {
+    return !this.paused && !(this.menuOpen && !this.options.background);
+  }
+
   /** Tabelalarda görünen ad: "<isim> Market" (isimde zaten market/bakkal geçiyorsa eklenmez). */
   get marketTitle() {
     const n = this.marketName || 'Kasaba';
@@ -438,7 +456,7 @@ export class Game {
   /** Bugünkü toplam maaş yükü (market + işletmeler). */
   get dailyPayroll() {
     let n = 0;
-    for (const w of this.workers) n += WAGES[w.role] ?? 0;
+    for (const w of this.workers) n += w.wage ?? WAGES[w.role] ?? 0;
     for (const b of this.holding.owned) n += b.dailyWages;
     if (this.housing.accountant) n += WAGES.accountant;
     return n;
@@ -451,7 +469,7 @@ export class Game {
   payroll(today) {
     const entries = [];
     for (const w of this.workers) {
-      if (WAGES[w.role]) entries.push({ wage: WAGES[w.role], label: ROLE_NAMES[w.role], fire: () => this.fireWorker(w) });
+      if (WAGES[w.role]) entries.push({ wage: w.wage ?? WAGES[w.role], label: ROLE_NAMES[w.role], fire: () => this.fireWorker(w) });
     }
     for (const b of this.holding.owned) entries.push(...b.payrollEntries());
     if (this.housing.accountant) entries.push({ wage: WAGES.accountant, label: '🏘️ Emlak muhasebecisi', fire: () => { this.housing.accountant = false; } });

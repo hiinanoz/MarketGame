@@ -148,6 +148,12 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Yaşayan şehir (Sv.20+):** kasabalılar evlerinden (yoksa şehir dışından) çıkar, kaldırımlarda yürür; senin dükkânlarına uğrayıp para bırakır, parka, sahile, işletmelere gider; akşam eve döner. Sayı seviye ve evlerle artar (en fazla 16).
 - **Şehir zamanla değişir:** Sv.20'den sonra her gün kaldırımlara yeni ağaç, çiçeklik, bank ve lamba eklenir; alınan mülkler bayrakla görünür.
 
+## Sonradan eklenenler
+
+- **Menü:** açılınca oyun duraklar; "Menü açıkken arka planda devam et" seçeneği; "Devam et". **Günü hızlandır (2×)** menüden ya da sağdaki ⏩/▶️ düğmesinden açılıp kapanır. Ayarlar cihazda saklanır.
+- **Müzik:** dosyasız, WebAudio ile çalan 16-bit tarzı polifonik döngü (104 BPM, bas + arpej + melodi + hafif ritim). Menüden kapatılabilir; boyut eklemez.
+- **Market muhasebecisi yetkileri:** sipariş, kampanya seçimi, alan yatırımı, personel alımı, ödemeler için kredi (gün sonu kasa yetmezse eksik kadar kredi; önce maaşlar). **Stajyer** ($70/gün) geçmişe bakarak tahmin eder; **tecrübeli** ($600 + $140/gün, 🎓) pazar araştırmasıyla kampanya talebini ve mağazanın kaldırabileceği müşteri sayısını bilir (az mağdur, az kalan stok), maaşı karşılanmayacak personeli almaz, tam ihtiyaç kadar kredi çeker.
+
 ## Bitirme ve derece
 
 Derece eşikleri ilk tam oynanış testinden sonra ayarlanabilir (`config.js` → `CITY.grades`).

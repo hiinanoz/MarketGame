@@ -647,3 +647,12 @@ export const LIFE = {
   spendBase: 6, spendPerLevel: 0.3, // senin dükkânına uğrayanın bıraktığı para
   growthPerDay: 2,    // her gün şehre eklenen süs (ağaç, bank, lamba, çiçeklik)
 };
+
+// ---- Market muhasebecisi: tecrübe ----
+// Stajyer ucuzdur ama kampanya stoğunu geçmişe bakarak tahmin eder (sık hata yapar).
+// Tecrübeli muhasebeci pazar araştırması yapar: kampanya talebini doğru bilir, personeli
+// ancak maaşı karşılanabilirse alır, gün sonu ödemelerine göre yedek tutar.
+export const ACCOUNTANT_TIERS = {
+  junior: { name: 'Stajyer muhasebeci', emoji: '🧑‍💼', wage: 70 },
+  expert: { name: 'Tecrübeli muhasebeci', emoji: '🎓', wage: 140, hire: 600 },
+};

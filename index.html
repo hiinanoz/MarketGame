@@ -25,6 +25,7 @@
       <button id="map-btn" class="round" aria-label="Harita">🗺️</button>
       <button id="zoom-btn" class="round" aria-label="Yakınlaş / uzaklaş">🔍</button>
       <button id="holding-btn" class="round hidden" aria-label="Holding">💼</button>
+      <button id="speed-btn" class="round" aria-label="Zamanı hızlandır">⏩</button>
     </div>
     <div id="holding" class="overlay hidden">
       <div class="panel holding">
@@ -95,7 +96,11 @@
     <div id="menu" class="overlay hidden">
       <div class="panel">
         <h2>Market Tycoon</h2>
-        <label class="row"><span>Ses</span><input id="opt-sound" type="checkbox" checked /></label>
+        <p class="menu-paused" id="menu-paused">⏸️ Oyun duraklatıldı</p>
+        <label class="row"><span>Ses efektleri</span><input id="opt-sound" type="checkbox" checked /></label>
+        <label class="row"><span>Müzik</span><input id="opt-music" type="checkbox" checked /></label>
+        <label class="row"><span>Günü hızlandır (2×)</span><input id="opt-speed" type="checkbox" /></label>
+        <label class="row"><span>Menü açıkken arka planda devam et</span><input id="opt-bg" type="checkbox" /></label>
         <label class="name-field">Marketin adı
           <span class="name-row"><input id="menu-name" maxlength="20" autocomplete="off" /><button id="menu-name-save">Kaydet</button></span>
         </label>
