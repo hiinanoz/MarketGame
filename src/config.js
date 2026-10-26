@@ -387,7 +387,7 @@ export const REGIONS = [
   { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [3, -97], level: 31 },
   { id: 'east', name: 'Doğu mahallesi', emoji: '🏘️', pos: [78, 14], level: 36 },
   { id: 'branches', name: 'Rakip marketler', emoji: '🏪', pos: [43, 12.5], level: 50 },
-  { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-58, 12.5], level: 51 },
+  { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-66, 12.5], level: 51 },
   { id: 'port', name: 'Liman', emoji: '⚓', pos: [0, 40], level: 69, soon: true },
 ];
 
@@ -470,7 +470,8 @@ export const HOUSING = {
     school: { name: 'Okul', emoji: '🏫', level: 45, price: 40000, rentBoost: 0.1, pos: [67, -40] },
     clinic: { name: 'Sağlık ocağı', emoji: '🏥', level: 45, price: 35000, rentBoost: 0.1, pos: [91, -40] },
   },
-  deed: { level: 50, rentBoost: 0.1, xp: 500 }, // tüm arsalar dolunca Doğu Mahallesi tapusu
+  deed: { level: 50, rentBoost: 0.1, xp: 500 },
+  zonedPlots: [[61, -54], [73, -54], [85, -54], [97, -54]], // başkanken imar izniyle açılır // tüm arsalar dolunca Doğu Mahallesi tapusu
 };
 
 // ---- Belediye ve reklam ---------------------------------------------------------------------
@@ -487,3 +488,39 @@ export const AD_TYPES = {
   tv: { name: 'TV reklamı', emoji: '📺', cost: 1500, boost: 0.8, level: 25 },
 };
 export const MEDIA = { adDiscount: 0.6, salesBoost: 1.15 }; // medya sende: reklam %60 ucuz, müşteri +%15
+
+// ---- Siyaset (Sv.51+) ------------------------------------------------------------------------
+// 1 oyun ayı = 2 gün, 1 yıl = 24 gün. Seçim 2 yılda bir; rakipler seçime 6 ay kala sahaya iner.
+export const POLITICS = {
+  fromLevel: 51,
+  daysPerMonth: 2,
+  termYears: 2,
+  campaignMonths: 6,
+  mainMin: 25,          // ana rakip her zaman en az %25
+  minorMax: 8,          // diğer adaylar en fazla %8
+  voteFactor: 0.8,      // popülerlik → oy oranı
+  maxPopularity: 95,
+  decay: 0.03,          // geçici nüfuz günlük azalma
+  donationPerPoint: 900, // + seviye × 20: 1 nüfuz puanı için bağış
+  donations: [2000, 10000, 50000],
+  sponsorCost: 300, sponsorPoints: 0.8,   // günlük (+ seviye × 20)
+  rallyCost: 1000, rallyPoints: 3,        // seçim döneminde günde bir (+ seviye × 60)
+  amenityInfluence: 4,  // okul / sağlık ocağı
+  jobs: { min: 100, base: 8, per: 25, max: 20 }, // 100+ çalışan: +8, her 25 çalışanda +1 (en fazla 20)
+  buildings: {
+    park: { name: 'Şehir parkı', emoji: '🌳', cost: 40000, influence: 8, pos: [-60, -6], size: [10, 8] },
+    library: { name: 'Kütüphane', emoji: '📚', cost: 80000, influence: 12, pos: [-60, -18], size: [9, 6] },
+    gym: { name: 'Spor salonu', emoji: '🏟️', cost: 150000, influence: 18, pos: [-76, -6], size: [11, 7] },
+  },
+  autocracyWins: 4,
+  revoltYears: 2,       // otokraside memnuniyet bu kadar yıl %50 altında kalırsa seçim gelir
+  winXp: 1000,
+  taxMax: 30,
+  taxBase: 15000,       // + seviye × 100 + arsa başı 300 → vergi oranıyla çarpılır (günlük)
+  zoningCost: 20000,    // imar izni: doğu mahallesinde 4 yeni arsa
+  projects: {
+    bus: { name: 'Otogar', emoji: '🚌', cost: 80000, income: 1200, customers: 1.05, desc: '+günlük gelir, +%5 müşteri', pos: [-77, 8], size: [12, 8] },
+    stadium: { name: 'Stadyum', emoji: '🏟️', cost: 150000, income: 2000, customers: 1.4, everyDays: 7, desc: 'haftada bir maç günü +%40 müşteri', pos: [-78, -20], size: [20, 14] },
+  },
+  names: ['Ahmet Kaya', 'Selin Demir', 'Murat Aksoy', 'Zeynep Yıldız', 'Kemal Şahin', 'Elif Arslan', 'Hasan Çelik', 'Ayşe Koç', 'Burak Öztürk'],
+};

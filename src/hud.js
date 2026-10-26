@@ -106,6 +106,14 @@ export class Hud {
       if (h.left) extra.push(`<div class="bad"><span>🚪 Kiracısı çıkan daire (tadilat gerekli)</span><b>${h.left}</b></div>`);
       if (h.renovation) extra.push(`<div class="bad"><span>🔧 Emlakçının yaptırdığı tadilat</span><b>−$${formatMoney(h.renovation)}</b></div>`);
     }
+    if (st.politics) {
+      const p = st.politics;
+      if (p.sponsor) extra.push(`<div class="bad"><span>⚽ Sponsorluk</span><b>−$${formatMoney(p.sponsor)}</b></div>`);
+      if (p.tax) extra.push(`<div class="good"><span>💰 Belediye vergi geliri</span><b>+$${formatMoney(p.tax)}</b></div>`);
+      if (p.projects) extra.push(`<div class="good"><span>🚌 Şehir projeleri geliri</span><b>+$${formatMoney(p.projects)}</b></div>`);
+      if (p.election) extra.push(`<div class="${p.election.won ? 'good' : 'bad'}"><span>🗳️ Seçim: ${p.election.won ? 'KAZANDIN, belediye başkanısın' : `${p.election.mainName} kazandı`}</span><b>%${p.election.me} – %${p.election.main}</b></div>`);
+      if (p.revolt) extra.push(`<div class="bad"><span>📢 Halk memnun değil: seçimler geri geldi</span><b></b></div>`);
+    }
     if (st.marketWages) extra.push(`<div class="bad"><span>👥 Market çalışanlarının maaşı</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
     if (st.quit?.length) extra.push(`<div class="bad"><span>😞 Maaşı ödenemeyip ayrılan: ${summarize(st.quit)}</span><b>${st.quit.length}</b></div>`);
     if (st.interestEarned) extra.push(`<div class="good"><span>🏦 Mevduat faizi</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);

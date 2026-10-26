@@ -183,9 +183,9 @@ export class Holding {
       <div class="biz ${H.company ? 'owned' : ''}"><div class="biz-row"><span>🏗️ İnşaat şirketi</span><b>${H.company ? 'senin: %40 hızlı, %15 ucuz' : 'yok'}</b>${H.company ? '' : g.level < C.level ? `<span class="lock">Sv.${C.level}</span>` : `<button data-company ${m < C.price ? 'disabled' : ''}>Kur $${formatMoney(C.price)}</button>`}</div>
       <div class="biz-row"><span>🟦 Emlak muhasebecisi</span><b>${H.accountant ? 'var: kira her gün' : 'yok'}</b>${H.accountant ? '<small>emlakçısız binaları yönetir · $70/gün</small>' : g.level < HOUSING.accountant.level ? `<span class="lock">Sv.${HOUSING.accountant.level}</span>` : `<button data-haccountant ${m < HOUSING.accountant.hire ? 'disabled' : ''}>Al $${HOUSING.accountant.hire}</button>`}</div>
       ${Object.entries(HOUSING.amenities).map(([k, a]) => `<div class="biz-row"><span>${a.emoji} ${a.name}</span><b>${H.amenities[k] ? `var: kira +%${Math.round(a.rentBoost * 100)}` : 'yok'}</b>${H.amenities[k] ? '' : g.level < a.level ? `<span class="lock">Sv.${a.level}</span>` : `<button data-amenity="${k}" ${m < a.price ? 'disabled' : ''}>Yap $${formatMoney(a.price)}</button>`}</div>`).join('')}
-      <div class="biz-row"><span>📜 Mahalle tapusu</span><b>${H.deed ? `senin: kira +%${Math.round(HOUSING.deed.rentBoost * 100)}` : `${H.plots.filter((p) => p.built).length}/${H.plots.length} arsa dolu`}</b><small>${H.deed ? '' : `Sv.${HOUSING.deed.level}'de tüm arsalar dolunca`}</small></div>
+      <div class="biz-row"><span>📜 Mahalle tapusu</span><b>${H.deed ? `senin: kira +%${Math.round(HOUSING.deed.rentBoost * 100)}` : `${H.plots.filter((p) => !p.zoned && p.built).length}/${HOUSING.plots.length} arsa dolu`}</b><small>${H.deed ? '' : `Sv.${HOUSING.deed.level}'de tüm arsalar dolunca`}</small></div>
       ${H.rentFactor > 1 ? `<p class="note">Kiralar şu an ×${H.rentFactor.toFixed(2)}</p>` : ''}</div>`];
-    for (const p of H.plots) {
+    for (const p of H.visiblePlots) {
       const go = `<button data-go="plot:${p.i}">📍 Git</button>`;
       if (!p.owned) {
         parts.push(`<div class="biz"><div class="biz-head"><span class="biz-e">📜</span><div><b>Arsa ${p.i + 1}</b><small>Boş arsa · ${HOUSING.plotSize}×${HOUSING.plotSize}</small></div></div>

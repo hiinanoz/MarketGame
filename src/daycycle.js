@@ -92,6 +92,7 @@ export class DayCycle {
     g.energy.settle(this.today);      // elektrik faturası / kendi üretim / şebeke satışı
     g.rent.settle(this.today);        // haftalık kiralar (7. günün sonunda)
     g.housing.endOfDay(this.today);   // kiracılar, tadilat, haftalık kira geliri
+    g.politics.endOfDay(this.today);  // nüfuz, vergi, projeler, seçim
     g.holding.endOfDay(this.today);
     g.accountant?.endOfDay();
     g.bank.endOfDay(this.today);

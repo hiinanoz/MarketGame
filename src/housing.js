@@ -25,8 +25,8 @@ export class Housing {
     this.accountant = false; // emlak muhasebecisi (Sv.44)
     this.amenities = {};     // okul, sağlık ocağı
     this.deed = false;       // Doğu Mahallesi tapusu (Sv.50)
-    this.plots = HOUSING.plots.map(([x, z], i) => ({
-      i, x, z, owned: false, type: null, progress: 0, built: false, agent: false,
+    this.plots = [...HOUSING.plots, ...HOUSING.zonedPlots].map(([x, z], i) => ({
+      i, x, z, zoned: i >= HOUSING.plots.length, owned: false, type: null, progress: 0, built: false, agent: false,
       units: [], accrued: 0, name: '', color: COLORS[i % COLORS.length],
     }));
     this.root = new THREE.Group();
@@ -40,6 +40,7 @@ export class Housing {
       p.label.position.set(p.x, 7, p.z + 2);
       this.root.add(p.label);
       this.rebuild(p);
+      if (p.zoned) p.group.visible = p.label.visible = false;
     }
     this.amenityGroup = new THREE.Group();
     this.root.add(this.amenityGroup);
@@ -146,10 +147,21 @@ export class Housing {
     else if (this.accountant) this.agentWork(p, true);
   }
 
+  /** İmar izniyle gizli arsaları aç (başkanlık). */
+  openZoned() {
+    this.zoneOpen = true;
+    for (const p of this.plots) if (p.zoned) p.group.visible = p.label.visible = true;
+  }
+
+  /** Görünen (satın alınabilir) arsalar. */
+  get visiblePlots() {
+    return this.plots.filter((p) => !p.zoned || this.zoneOpen);
+  }
+
   /** Tüm arsalar dolunca (Sv.50) mahallenin tapusu. */
   checkDeed() {
     const g = this.game;
-    if (this.deed || g.level < HOUSING.deed.level || !this.plots.every((p) => p.built)) return;
+    if (this.deed || g.level < HOUSING.deed.level || !this.plots.filter((p) => !p.zoned).every((p) => p.built)) return;
     this.deed = true;
     g.gainXp(HOUSING.deed.xp);
     g.hud.toast(`📜 Doğu Mahallesi tapusu senin! Kiralar +%${Math.round(HOUSING.deed.rentBoost * 100)}`);
@@ -179,7 +191,7 @@ export class Housing {
   buyPlot(i) {
     const g = this.game;
     const p = this.plots[i];
-    if (!this.unlocked || p.owned || g.money < HOUSING.plotPrice) return false;
+    if (!this.unlocked || p.owned || (p.zoned && !this.zoneOpen) || g.money < HOUSING.plotPrice) return false;
     g.spend(HOUSING.plotPrice);
     p.owned = true;
     g.gainXp(Math.floor(HOUSING.plotPrice / XP_PER_PURCHASE));

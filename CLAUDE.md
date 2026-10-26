@@ -14,4 +14,5 @@
 - Banka: `bank.payInterest()` (gün sonu faiz, 3 gün → `seizeOne()`), işletmede `seize()/buyBack()`. Lojistik firması `BUSINESSES.logistics` (`kind: 'garage'`), etkileri `LOGISTICS` ve `holding.logisticsOwned`.
 - Enerji: `src/energy.js` (gün sonu `settle()`), santraller `BUSINESSES.solar/wind` (`energy`, `frontZ: -100`, `staffLevels`, `workersPerModule`). İşletmeler `frontZ` ile farklı bölgelere konabilir. Market adı `game.marketName` / `game.marketTitle`, `world.setMarketTitle()`; işletme adı `business.customName`.
 - Kira/konut/reklam: `src/rent.js` (market kirası, haftalık `settle`), `src/housing.js` (arsalar, inşaat, kiracı, emlakçı), `src/ads.js` (ücretli reklam, medya etkisi, belediye cezası). Hazır binada çalışan işletmeler `def.building` (şube `kind: 'shop'`, medya `'media'`), kiralıklar `def.lease`. Haftalık işler `day.day % RENT.week === 0`.
+- Siyaset: `src/politics.js` (nüfuz, anket, seçim, rakip aday karakterleri, başkanlık, otokrasi), ayarlar `POLITICS`. Takvim: 1 ay = 2 gün. `game.isMayor` belediye cezasını kapatır.
 - Şapka renkleri: işçi `cap: 'yellow'`, müdür `'red'`, muhasebeci `'blue'`.

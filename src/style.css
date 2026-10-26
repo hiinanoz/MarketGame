@@ -399,3 +399,27 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .ad-btns small { font-weight: 600; opacity: 0.8; }
 .progress { height: 10px; border-radius: 6px; background: #e3dccb; overflow: hidden; margin: 6px 0; }
 .progress i { display: block; height: 100%; background: linear-gradient(90deg, #f2b705, #3fae4a); }
+
+/* Siyaset */
+.pill.election {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 128px);
+  left: 12px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border: none;
+  font-family: inherit;
+  color: #fff;
+  background: rgba(120, 40, 140, 0.85);
+  z-index: 6;
+  cursor: pointer;
+}
+#politics-body { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+#politics-body button { border: none; border-radius: 10px; padding: 7px 10px; font-weight: 800; font-family: inherit; background: #fff; color: var(--ink); font-size: 13px; }
+#politics-body button.primary { background: var(--green); color: #fff; }
+#politics-body button:disabled { opacity: 0.45; }
+.poll-row { display: grid; grid-template-columns: 120px 1fr 44px; gap: 8px; align-items: center; font-size: 13px; font-weight: 700; }
+.poll-row .progress { margin: 0; }
+.poll-row.me .progress i { background: linear-gradient(90deg, #7b3fa0, #c06bd8); }

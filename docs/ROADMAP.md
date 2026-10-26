@@ -63,7 +63,7 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 | **S2** ✅ | 26–30 | Mandıra, fırın, et tesisi; rakip marketlere satış; kamyon filosu; maaş ve elektrik giderleri | Ekonomi dengesi soruları |
 | **S3** ✅ | 31–35 | Güneş, rüzgâr, batarya, şebekeye satış, enerji kadrosu | |
 | **S4** 🚧 | 36–50 | Arazi ofisi, evler, apartman, site, inşaat şirketi, mahalle memnuniyeti, 2.–3. market şubeleri, baraj | Konut oynanışı soruları |
-| **S5** | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
+| **S5** 🚧 | 51–65 | Şehir merkezi, nüfuz, gazete, seçimler, başkanlık, şehir projeleri | Siyaset mekaniği soruları |
 | **S6** | 66–80 | Yatırım şirketi, rakip zincirleri alma, liman, kendi banka, şubeler | |
 | **S7** | 81–100 | Bölge bölge satın alma, mega projeler, final, derece ekranı | |
 
@@ -119,6 +119,16 @@ Her işletmenin bir **arsa şeridi** vardır (ön cephe yola bakar, modüller ar
 - **Okul ve sağlık ocağı** (Sv.45, arka yolun kuzeyinde): her biri kiraları %10 artırır.
 - **Doğu Mahallesi tapusu** (Sv.50): 12 arsanın hepsinde bina bitince +500 XP, kiralar +%10.
 - Mahalle memnuniyeti ve altyapı (Sv.40) kullanıcı kararıyla ertelendi.
+
+## S5 siyaset (kullanıcı kararları)
+
+- Takvim: 1 oyun ayı = 2 gün, 1 yıl = 24 gün. Sv.51'den sonra 2 yılda bir belediye başkanlığı seçimi. Sol üstteki 🗳️ düğmesinde seçime kalan süre ve popülerlik yazar; tıklayınca siyaset paneli açılır.
+- **Nüfuz (popülerlik):** bağış (geçici), spor kulübü sponsorluğu (günlük, geçici), miting (seçime 6 ay kala, günde bir), kamu binası bağışı (park, kütüphane, spor salonu — kalıcı), okul/sağlık ocağı (kalıcı), 100+ çalışan (kalıcı, +8…+20). Geçici nüfuz günde %3 azalır.
+- **Seçim:** 3–5 rakip; ana rakip her zaman en az %25, diğerleri en fazla %8. Oyun oranın = popülerlik × 0,8 (±2). Ana rakipten fazla alırsan kazanırsın.
+- Seçime 6 ay kala rakip adaylar "OY VER" pankartlarıyla caddede gezer, ara sıra miting yapar.
+- **Başkanlık:** belediye cezası yok; vergi oranı (%0–30, %5 üstü memnuniyeti düşürür), imar izni (doğu mahallesinde 4 yeni arsa), şehir projeleri ihalesi (otogar: günlük gelir + %5 müşteri; stadyum: günlük gelir + haftalık maç günü %40 müşteri).
+- **Otokrasi:** üst üste 4 seçim kazanınca geçilebilir; seçim yapılmaz, kral olursun. Halk memnuniyeti 2 yıl (48 gün) üst üste %50'nin altında kalırsa otokrasi biter, 6 ay sonra seçim yapılır.
+- Halk memnuniyeti = market puanı + kamu binaları + okul/sağlık + projeler + istihdam − yüksek vergi.
 
 ## Bitirme ve derece
 

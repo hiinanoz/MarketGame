@@ -169,7 +169,7 @@ export class World {
       if (x > -46 && x < 46 && z < -34) continue;
       if (x > 31 && x < 54 && z > 0 && z < 13) continue; // rakip marketler / şubeler
       if (x > 54 && z > -34 && z < 14) continue; // doğu mahallesi arsaları
-      if (x < -50 && z > 0 && z < 14) continue; // şehir merkezi (medya) // tedarik vadisi arsaları
+      if (x < -50 && z > -40 && z < 14) continue; // şehir merkezi (medya, kamu binaları) // tedarik vadisi arsaları
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
       this.addTree(x, z, 0.8 + rng() * 0.7, rng);
     }
