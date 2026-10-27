@@ -594,3 +594,51 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 /* Ana menü ve karakter editörü açıkken oyun arayüzü gizli */
 body.in-home #hud, body.in-home .side-btns, body.in-home .pill, body.in-home #hint, body.in-home #joystick { visibility: hidden; }
 body.in-home #toast { top: 38%; }
+
+/* ---- Küçük ekran düzeltmeleri (telefon, Claude uygulaması içi görünüm) ---- */
+button { color: var(--ink); font-family: inherit; -webkit-tap-highlight-color: transparent; }
+.toast { font-size: clamp(15px, 4.6vw, 22px); max-width: 84vw; padding: 8px 18px; }
+.toast.levelup { font-size: clamp(17px, 5vw, 26px); }
+.home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.panel .home-grid button { font-size: clamp(9.5px, 2.9vw, 11.5px); line-height: 1.15; word-break: break-word; hyphens: auto; }
+.home-grid .ic { font-size: clamp(19px, 6vw, 24px); }
+.home-brand { font-size: clamp(24px, 8.5vw, 34px); }
+.home-crown { font-size: clamp(32px, 11vw, 44px); }
+.lvlup-badge { width: 92px; height: 92px; margin-top: 0; }
+.lvlup-badge span { font-size: 40px; }
+.overlay > .panel.lvl-card { overflow-y: auto; }
+.panel .row { gap: 8px; }
+.panel .row > span:first-child { min-width: 0; }
+.seg { flex-wrap: nowrap; flex-shrink: 0; }
+@media (max-width: 380px) {
+  .panel { padding: 16px; gap: 9px; }
+  .panel h2 { font-size: 22px; }
+  .panel .row { font-size: 15px; }
+  .panel button { font-size: 16px; padding: 10px; }
+  .panel .seg button { padding: 5px 7px; font-size: 12.5px; }
+  .home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .panel .home-grid button { min-height: 56px; padding: 6px 1px; }
+  .panel.intro p { font-size: 13.5px; line-height: 1.35; }
+  .intro-art { font-size: 34px; }
+  .sheet-panel { width: 94vw; height: min(86dvh, 640px); }
+}
+@media (max-height: 640px) {
+  .home-panel .big { min-height: 48px; font-size: 18px; }
+  .home-top .home-meta { font-size: 13px; }
+  .panel.intro { gap: 8px; }
+  .intro-art { font-size: 30px; }
+}
+
+/* Karakter editörü: tek satırlık, yana kaydırılan seçenekler; karakter üstte görünür */
+.avatar-panel { max-height: 50dvh; padding: 12px 14px 14px; gap: 6px; }
+.avatar-panel h3 { font-size: 17px; }
+.av-row { flex-direction: row; align-items: center; gap: 8px; }
+.av-row > span { flex: 0 0 64px; font-size: 12px; }
+.av-opts { flex-wrap: nowrap; overflow-x: auto; touch-action: pan-x; padding: 3px 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.av-opts::-webkit-scrollbar { display: none; }
+.panel .av-opts button { flex: 0 0 auto; padding: 5px 9px; font-size: 12.5px; white-space: nowrap; }
+.panel .av-opts button.sw { width: 28px; height: 28px; flex: 0 0 28px; }
+.avatar-btns button { padding: 10px; font-size: 16px; }
+.panel .home-grid button { word-break: keep-all; overflow-wrap: normal; hyphens: none; letter-spacing: -0.2px; }
+@media (max-width: 340px) { .panel .home-grid button span:last-child { font-size: 9.5px; } }
+.avatar-ov ~ #toast, body.in-home #toast { top: 12%; }

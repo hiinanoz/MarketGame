@@ -1060,6 +1060,10 @@ export class Game {
     const p = this.player.position;
     // Ana menü: kamera marketin üstünde yavaşça döner; karakter editörü: oyuncuya yakın
     if (this.viewMode === 'home') {
+      if (this.viewOffsetOn) {
+        this.viewOffsetOn = false;
+        this.camera.clearViewOffset();
+      }
       this.orbitT = (this.orbitT ?? 0) + dt * 0.12;
       const c = new THREE.Vector3(2, 0, -4);
       this.cameraTarget.lerp(c, Math.min(1, dt * 2));
@@ -1069,10 +1073,19 @@ export class Game {
       return;
     }
     if (this.viewMode === 'avatar') {
-      // Karakter ekranın üst yarısında görünsün (alt yarıda seçenekler var)
-      this.cameraTarget.lerp(new THREE.Vector3(p.x, -0.9, p.z), Math.min(1, dt * 5));
-      this.camera.position.set(p.x, 2.6, p.z + 5.6);
+      // Karakter, alttaki seçenek panelinin üstünde kalan alanın ortasında ve tamamen görünsün:
+      // görüntü panelin yarısı kadar yukarı kaydırılır (setViewOffset), uzaklık boş alana göre
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const panel = document.querySelector('.avatar-panel')?.getBoundingClientRect().height ?? H * 0.5;
+      const free = Math.max(0.25, (H - panel - 10) / H);
+      const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+      const dist = Math.max(2.6, 2.7 / (2 * t * free), 1.6 / (2 * t * this.camera.aspect));
+      this.camera.setViewOffset(W, H, 0, Math.round(panel / 2 + 5), W, H);
+      this.cameraTarget.set(p.x, 1.05, p.z);
+      this.camera.position.set(p.x, 1.55, p.z + dist);
       this.camera.lookAt(this.cameraTarget);
+      this.viewOffsetOn = true;
       this.guide.visible = false;
       this.pointer.visible = false;
       this.playerRing.visible = false;
@@ -1084,6 +1097,10 @@ export class Game {
     if (this.avatarHid) {
       this.avatarHid = false;
       this.playerRing.visible = true;
+    }
+    if (this.viewOffsetOn) {
+      this.viewOffsetOn = false;
+      this.camera.clearViewOffset();
     }
     this.cameraTarget.lerp(p, Math.min(1, dt * 6));
     // Zum: yumuşak geçiş; uzaklaşınca sis ve gölge alanı da büyür

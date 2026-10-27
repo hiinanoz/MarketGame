@@ -330,7 +330,7 @@ export class Menus {
     nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('intro-start').click(); });
     document.getElementById('intro-start').addEventListener('click', () => {
       intro.classList.add('hidden');
-      g.setMarketName(nameInput.value);
+      g.setMarketName(nameInput.value, true); // tabela değişir; bildirim karakterin önünü kapatmasın
       this.showAvatar(true);
     });
   }
