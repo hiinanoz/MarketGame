@@ -23,6 +23,12 @@ const ACCESSORIES = [
 ];
 const CAP_COLORS = { red: '#e03a2f', yellow: '#ffc928', blue: '#2f7be0', green: '#3faa55', black: '#262626', pink: '#e06aa8' };
 const MODEL_NAMES = { Barbarian: 'Kaptan', Knight: 'Şövalye', Mage: 'Büyücü', Rogue: 'Gezgin', Rogue_Hooded: 'Kapüşonlu' };
+// Cinsiyete göre karakter tipleri ve varsayılan saç modeli
+const GENDER_MODELS = {
+  f: [['Rogue', 'Gezgin', 'short'], ['Knight', 'Şövalye', 'long'], ['Mage', 'Büyücü', 'long'], ['Rogue_Hooded', 'Kapüşonlu', 'short']],
+  m: [['Barbarian', 'Kaptan', 'short'], ['Knight', 'Şövalye', 'short'], ['Mage', 'Büyücü', 'short'], ['Rogue_Hooded', 'Kapüşonlu', 'short']],
+};
+const HAIR_STYLES = [['short', 'Kısa'], ['long', 'Uzun'], ['ponytail', 'At kuyruğu'], ['bun', 'Topuz'], ['braids', 'Örgü']];
 
 export class Menus {
   constructor(game) {
@@ -116,7 +122,11 @@ export class Menus {
     on('avatar-random', () => {
       const r = (n) => Math.floor(Math.random() * n);
       const accs = ACCESSORIES.map((a) => a[0]);
-      this.av = { model: AVATAR_MODELS[r(AVATAR_MODELS.length)], hair: r(HAIR_CSS.length), outfit: r(OUTFIT_CSS.length), pants: r(PANTS_CSS.length), acc: accs[r(accs.length)], accColor: Object.keys(CAP_COLORS)[r(6)] };
+      const gender = this.av?.gender ?? 'm';
+      const opts = GENDER_MODELS[gender];
+      const [model, , style] = opts[r(opts.length)];
+      const styles = HAIR_STYLES.map((h) => h[0]);
+      this.av = { gender, model, hair: r(HAIR_CSS.length), outfit: r(OUTFIT_CSS.length), pants: r(PANTS_CSS.length), acc: accs[r(accs.length)], accColor: Object.keys(CAP_COLORS)[r(6)], hairStyle: gender === 'f' && Math.random() < 0.7 ? styles[r(styles.length)] : style };
       this.applyAvatar();
     });
     on('avatar-done', () => this.closeAvatar());
@@ -253,7 +263,7 @@ export class Menus {
   showAvatar(isNew = false) {
     const g = this.game;
     this.avatarNew = isNew;
-    this.av = { model: 'Barbarian', hair: 0, outfit: 0, pants: 0, acc: 'none', accColor: 'red', ...(g.avatar ?? {}) };
+    this.av = { gender: 'm', model: 'Barbarian', hair: 0, outfit: 0, pants: 0, acc: 'none', accColor: 'red', hairStyle: 'short', ...(g.avatar ?? {}) };
     this.home.classList.add('hidden');
     g.paused = true;
     g.viewMode = 'avatar';
@@ -266,7 +276,9 @@ export class Menus {
     const a = this.av;
     const sw = (key, list) => list.map((c, i) => `<button class="sw ${a[key] === i ? 'on' : ''}" data-${key}="${i}" style="background:${c}" aria-label="${key} ${i + 1}"></button>`).join('');
     document.getElementById('avatar-body').innerHTML = `
-      <div class="av-row"><span>Karakter</span><div class="av-opts">${AVATAR_MODELS.map((m) => `<button data-model="${m}" class="${a.model === m ? 'on' : ''}">${MODEL_NAMES[m]}</button>`).join('')}</div></div>
+      <div class="av-row"><span>Cinsiyet</span><div class="av-opts"><button data-gender="f" class="${a.gender === 'f' ? 'on' : ''}">👩 Kadın</button><button data-gender="m" class="${a.gender !== 'f' ? 'on' : ''}">👨 Erkek</button></div></div>
+      <div class="av-row"><span>Karakter</span><div class="av-opts">${GENDER_MODELS[a.gender === 'f' ? 'f' : 'm'].map(([m, n, st]) => `<button data-model="${m}" data-style="${st}" class="${a.model === m ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+      <div class="av-row"><span>Saç modeli</span><div class="av-opts">${HAIR_STYLES.map(([k, n]) => `<button data-hstyle="${k}" class="${(a.hairStyle ?? 'short') === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
       <div class="av-row"><span>Saç rengi</span><div class="av-opts">${sw('hair', HAIR_CSS)}</div></div>
       <div class="av-row"><span>Kıyafet</span><div class="av-opts">${sw('outfit', OUTFIT_CSS)}</div></div>
       <div class="av-row"><span>Pantolon</span><div class="av-opts">${sw('pants', PANTS_CSS)}</div></div>
@@ -284,7 +296,15 @@ export class Menus {
     const b = e.target.closest('button');
     if (!b || !b.dataset) return;
     const d = b.dataset;
-    if (d.model) this.av.model = d.model;
+    if (d.gender) {
+      this.av.gender = d.gender;
+      const [model, , style] = GENDER_MODELS[d.gender][0];
+      this.av.model = model;
+      this.av.hairStyle = style;
+    } else if (d.model) {
+      this.av.model = d.model;
+      this.av.hairStyle = d.style ?? this.av.hairStyle;
+    } else if (d.hstyle) this.av.hairStyle = d.hstyle;
     else if (d.hair !== undefined) this.av.hair = Number(d.hair);
     else if (d.outfit !== undefined) this.av.outfit = Number(d.outfit);
     else if (d.pants !== undefined) this.av.pants = Number(d.pants);

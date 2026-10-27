@@ -34,7 +34,7 @@ import { Achievements } from './achievements.js';
 import { platform, LEADERBOARDS } from './platform.js';
 import { Depot } from './depot.js';
 import { DayCycle } from './daycycle.js';
-import { CHARACTER_NAMES } from './assets.js';
+import { CHARACTER_NAMES, HAIR_CSS } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
   DAY, DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
@@ -1250,7 +1250,7 @@ export class Game {
   /** Oyuncu görünümü: { model, hair, outfit, pants, acc, accColor }. */
   setAvatar(av, silent = false) {
     this.avatar = { ...av };
-    this.player.rebuildModel(av.model ?? 'Barbarian', { hair: av.hair ?? 0, outfit: av.outfit ?? 0, pants: av.pants ?? 0, acc: av.acc ?? 'none', accColor: av.accColor ?? 'red' });
+    this.player.rebuildModel(av.model ?? 'Barbarian', { hair: av.hair ?? 0, outfit: av.outfit ?? 0, pants: av.pants ?? 0, acc: av.acc ?? 'none', accColor: av.accColor ?? 'red', hairStyle: av.hairStyle ?? 'short', hairCss: HAIR_CSS[av.hair ?? 0] });
     if (!silent) this.save();
   }
 

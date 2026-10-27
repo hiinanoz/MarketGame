@@ -3,6 +3,7 @@ import { character, animationClips, prop } from './assets.js';
 import { PRODUCTS } from './config.js';
 
 let capParts = null;
+const TOWN_HAIR = ['#7a4a26', '#2b2522', '#e3b33c', '#b4442a', '#5a3a22'];
 const CAP_Y = 0.95; // baş kemiği uzayında şapka yüksekliği
 const CRATE_SCALE = 0.42;          // 2x2 birimlik kasa → ~0.84 birim
 export const CRATE_HEIGHT = 0.36;  // yığında bir katın yüksekliği
@@ -56,7 +57,15 @@ export class Character {
       if (o.isBone) this.bones[o.name] = o;
     });
     if (look === 'uniform') this.addCap(cap);
-    if (look && typeof look === 'object') this.addAccessory(look.acc, look.accColor);
+    // Kasabada kadınlar da olsun: müşteri ve çalışanların bir kısmına uzun saç / at kuyruğu / topuz
+    if ((typeof look === 'number' || look === 'uniform') && (modelName === 'Knight' || modelName === 'Mage') && Math.random() < 0.4) {
+      const styles = ['long', 'ponytail', 'bun', 'braids'];
+      this.addHair(styles[Math.floor(Math.random() * styles.length)], TOWN_HAIR[Math.floor(Math.random() * TOWN_HAIR.length)]);
+    }
+    if (look && typeof look === 'object') {
+      this.addHair(look.hairStyle, look.hairCss);
+      this.addAccessory(look.acc, look.accColor);
+    }
 
     // Yığın, karakterin önünde (yerel +z) durur.
     this.stackAnchor = new THREE.Group();
@@ -87,7 +96,58 @@ export class Character {
     this.bones = {};
     this.model.traverse((o) => { if (o.isBone) this.bones[o.name] = o; });
     this.cap = null;
-    if (look && typeof look === 'object') this.addAccessory(look.acc, look.accColor);
+    if (look && typeof look === 'object') {
+      this.addHair(look.hairStyle, look.hairCss);
+      this.addAccessory(look.acc, look.accColor);
+    }
+  }
+
+  /**
+   * Saç modeli (baş kemiğine bağlı, low-poly): uzun, at kuyruğu, topuz, örgü.
+   * 'short' = modelin kendi saçı. Renk, seçilen saç rengiyle aynı.
+   */
+  addHair(style, css = '#7a4a26') {
+    const head = this.bones.head;
+    if (!head || !style || style === 'short') return;
+    const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(css), roughness: 0.75, flatShading: true });
+    const g = new THREE.Group();
+    const cap = (r, len, x, y, z, rx = 0, rz = 0) => {
+      const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 3, 8), mat);
+      m.position.set(x, y, z);
+      m.rotation.set(rx, 0, rz);
+      g.add(m);
+      return m;
+    };
+    const ball = (r, x, y, z, sx = 1, sy = 1, sz = 1) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mat);
+      m.position.set(x, y, z);
+      m.scale.set(sx, sy, sz);
+      g.add(m);
+      return m;
+    };
+    // Başın üstünü ve arkasını saran örtü: modelin kendi saçını seçilen renkle kaplar
+    ball(0.5, 0, 0.62, -0.12, 1.04, 0.95, 0.95);
+    ball(0.54, 0, 0.87, -0.02, 1.02, 0.56, 1.0);
+    if (style === 'long') {
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.0, 0.28), mat);
+      back.position.set(0, 0.12, -0.36);
+      g.add(back);
+      cap(0.13, 0.55, -0.43, 0.2, -0.02);
+      cap(0.13, 0.55, 0.43, 0.2, -0.02);
+    } else if (style === 'ponytail') {
+      ball(0.2, 0, 0.78, -0.52);
+      cap(0.15, 0.5, 0, 0.35, -0.64, 0.35);
+    } else if (style === 'bun') {
+      ball(0.26, 0, 1.08, -0.28);
+    } else if (style === 'braids') {
+      cap(0.11, 0.6, -0.42, 0.05, -0.12, 0, 0.12);
+      cap(0.11, 0.6, 0.42, 0.05, -0.12, 0, -0.12);
+      ball(0.09, -0.46, -0.32, -0.12);
+      ball(0.09, 0.46, -0.32, -0.12);
+    }
+    g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    head.add(g);
+    this.hair = g;
   }
 
   /** Oyuncu aksesuarı: şapka (renkli), taç, gözlük ya da modelin kendi başlığı. */
