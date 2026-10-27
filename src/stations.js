@@ -154,6 +154,7 @@ export class Shelf {
     if (this.space <= 0) return false;
     const e = char.take(this.product);
     if (!e) return false;
+    if (char === this.game.player) this.game.goals?.event('stock');
     this.incoming++;
     const index = this.stock.length + this.incoming - 1;
     this.game.fx.fly(e.mesh, this.top, this.slot(index), {
@@ -398,6 +399,7 @@ export class CashPile {
 
   collect(player) {
     if (this.value <= 0) return;
+    if (player === this.game.player) this.game.goals?.event('cash');
     const amount = this.value;
     this.value = 0;
     const bills = this.bills.splice(0);

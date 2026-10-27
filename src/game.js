@@ -22,6 +22,9 @@ import { Rent } from './rent.js';
 import { Housing } from './housing.js';
 import { Ads } from './ads.js';
 import { Online } from './online.js';
+import { Goals } from './goals.js';
+import { Decor } from './decor.js';
+import { Celebration } from './celebrate.js';
 import { Politics } from './politics.js';
 import { Finance } from './finance.js';
 import { Music } from './music.js';
@@ -125,6 +128,10 @@ export class Game {
     this.city = new City(this);
     this.life = new Life(this);
     this.achievements = new Achievements(this);
+    this.goals = new Goals(this);
+    this.decor = new Decor(this);
+    this.party = new Celebration(this);
+    this.platform = platform;
     this.isMayor = false; // Sv.60: belediye başkanı (ceza kesilmez)
     this.marketName = 'Kasaba';
 
@@ -141,6 +148,9 @@ export class Game {
     this.addCheckout('checkout1');
 
     this.loadSave();
+    this.goals.rollQuests();
+    this.hud.setGems?.(this.goals.gems);
+    this.hud.syncQuests?.();
     this.refreshPads();
     this.hud.setMoney(this.money);
     this.hud.displayed = this.money - 1;
@@ -391,6 +401,7 @@ export class Game {
       this.workers[i].role = STAFF_ROLE[def.type];
     }
     if (!silent) {
+      this.goals.event('buy');
       platform.haptic('LIGHT');
       const l = this.padLabel(def);
       this.hud.toast(`${l.emoji} ${l.title} açıldı!`);
@@ -411,6 +422,7 @@ export class Game {
 
   earn(amount, pos) {
     this.money += amount;
+    this.goals.event('revenue', amount);
     this.day.today.revenue += amount;
     this.hud.setMoney(this.money);
     this.hud.bump();
@@ -469,6 +481,11 @@ export class Game {
       this.audio.enabled = sound;
       el.classList.add('hidden');
       this.updateCamera(1);
+      const pp = this.goals.pendingParty;
+      if (pp) {
+        this.goals.pendingParty = null;
+        this.party.start(`🎉 ${pp[0].toLocaleString('tr-TR')}. müşteri!`, `Herkes kutluyor · 💎 +${pp[1]}`, 8);
+      }
       // Simülasyonda seviye atladıysa kutlama özetten sonra
       const lv = this.hud.pendingLevel;
       if (lv) {
@@ -678,6 +695,8 @@ export class Game {
     this.day.today.customers++;
     this.stats.customers = (this.stats.customers ?? 0) + 1;
     this.gainXp(1);
+    this.goals.event('customers');
+    this.goals.checkMilestone();
   }
 
   /** XP ekle (müşteri, işletme kârı, satın alım). Seviye atlarsa yeni alanları göster. */
@@ -779,7 +798,20 @@ export class Game {
 
   update(dt) {
     this.input.update();
+    // Büyük kutlama: birkaç saniye herkes sevinir, oyun saati durur
+    if (this.party.update(dt)) {
+      this.fx.update(dt);
+      this.hud.update(dt);
+      this.updateCamera(dt);
+      return;
+    }
     this.updatePlayer(dt);
+    this.decor.update();
+    this.timers.goals = (this.timers.goals ?? 0) - dt;
+    if (this.timers.goals <= 0) {
+      this.timers.goals = 1;
+      this.goals.update();
+    }
 
     this.day.update(dt);
     this.hud.setClock(this.day.day, this.day.clockText, this.day.phase);
@@ -787,7 +819,7 @@ export class Game {
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
-    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor;
+    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor * this.decor.customerFactor;
     const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
     const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
     this.spawnTimer -= dt;
@@ -1026,6 +1058,33 @@ export class Game {
 
   updateCamera(dt) {
     const p = this.player.position;
+    // Ana menü: kamera marketin üstünde yavaşça döner; karakter editörü: oyuncuya yakın
+    if (this.viewMode === 'home') {
+      this.orbitT = (this.orbitT ?? 0) + dt * 0.12;
+      const c = new THREE.Vector3(2, 0, -4);
+      this.cameraTarget.lerp(c, Math.min(1, dt * 2));
+      const r = this.camDistance * 1.25;
+      this.camera.position.set(this.cameraTarget.x + Math.sin(this.orbitT) * r * 0.6, r * 0.75, this.cameraTarget.z + Math.cos(this.orbitT) * r * 0.6);
+      this.camera.lookAt(this.cameraTarget);
+      return;
+    }
+    if (this.viewMode === 'avatar') {
+      // Karakter ekranın üst yarısında görünsün (alt yarıda seçenekler var)
+      this.cameraTarget.lerp(new THREE.Vector3(p.x, -0.9, p.z), Math.min(1, dt * 5));
+      this.camera.position.set(p.x, 2.6, p.z + 5.6);
+      this.camera.lookAt(this.cameraTarget);
+      this.guide.visible = false;
+      this.pointer.visible = false;
+      this.playerRing.visible = false;
+      this.avatarHid = true;
+      this.player.heading = 0;
+      this.player.update(dt);
+      return;
+    }
+    if (this.avatarHid) {
+      this.avatarHid = false;
+      this.playerRing.visible = true;
+    }
     this.cameraTarget.lerp(p, Math.min(1, dt * 6));
     // Zum: yumuşak geçiş; uzaklaşınca sis ve gölge alanı da büyür
     const zt = this.zoomTarget ?? 1;
@@ -1086,6 +1145,9 @@ export class Game {
       city: this.city.serialize(),
       life: this.life.serialize(),
       achievements: this.achievements.serialize(),
+      goals: this.goals.serialize(),
+      decor: this.decor.serialize(),
+      avatar: this.avatar ?? null,
       savedAt: Date.now(),
       levelCache: this.level,
       stats: this.stats,
@@ -1155,12 +1217,24 @@ export class Game {
     this.life.restore(data.life);
     this.achievements.restore(data.achievements);
     if (data.stats) Object.assign(this.stats, data.stats);
+    this.goals.restore(data.goals);
+    this.decor.restore(data.decor);
+    this.lastSavedAt = data.savedAt ?? 0;
+    if (data.avatar) this.setAvatar(data.avatar, true);
     if (data.marketName) this.setMarketName(data.marketName, true);
+    this.decor.afterLoad();
     if (data.depot) this.depot.restore(data.depot);
     else {
       // v1'den geçiş: her ürüne biraz stok
       for (const pal of this.depot.pallets.values()) { pal.stock = 10; pal.syncVisual(); }
     }
+  }
+
+  /** Oyuncu görünümü: { model, hair, outfit, pants, acc, accColor }. */
+  setAvatar(av, silent = false) {
+    this.avatar = { ...av };
+    this.player.rebuildModel(av.model ?? 'Barbarian', { hair: av.hair ?? 0, outfit: av.outfit ?? 0, pants: av.pants ?? 0, acc: av.acc ?? 'none', accColor: av.accColor ?? 'red' });
+    if (!silent) this.save();
   }
 
   async reset() {

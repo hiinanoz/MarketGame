@@ -101,6 +101,20 @@ export class Hud {
     }
   }
 
+  setGems(n) {
+    const el = document.getElementById('gems-count');
+    if (el) el.textContent = n;
+  }
+
+  /** Görev düğmesindeki rozet: kalan görev sayısı. */
+  syncQuests() {
+    const left = (this.game.goals?.quests ?? []).filter((q) => !q.done).length;
+    const b = document.getElementById('quest-badge');
+    if (!b) return;
+    b.textContent = left;
+    b.classList.toggle('hidden', !left);
+  }
+
   setCrisis(text) {
     const el = document.getElementById('crisis');
     el.textContent = text ?? '';

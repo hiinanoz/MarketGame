@@ -26,6 +26,7 @@
       <button id="zoom-btn" class="round" aria-label="Yakınlaş / uzaklaş">🔍</button>
       <button id="holding-btn" class="round hidden" aria-label="Holding">💼</button>
       <button id="speed-btn" class="round speed" aria-label="Oyun hızı">1×</button>
+      <button id="quest-btn" class="round" aria-label="Görevler">🎯<i id="quest-badge" class="badge hidden"></i></button>
     </div>
     <div id="holding" class="overlay hidden">
       <div class="panel holding">
@@ -42,6 +43,7 @@
       </div>
     </div>
     <div id="rating" class="pill rating" title="Memnuniyet"><span class="stars"><span id="rating-fill"></span></span><b id="rating-value">4.0</b></div>
+    <div id="gems-pill" class="pill gems" title="Elmas">💎 <b id="gems-count">0</b></div>
     <div id="staff-pill" class="pill staff hidden" title="Toplam çalışan">👥 <b id="staff-count">0</b></div>
     <button id="election-pill" class="pill election hidden">🗳️</button>
     <div id="crisis" class="pill crisis hidden"></div>
@@ -116,6 +118,7 @@
         <label class="name-field">Marketin adı
           <span class="name-row"><input id="menu-name" maxlength="20" autocomplete="off" /><button id="menu-name-save">Kaydet</button></span>
         </label>
+        <button id="to-home">🏠 Ana menü</button>
         <button id="finish-day">⏭️ Günü tamamla</button>
         <button id="reset-btn" class="danger">Oyunu sıfırla</button>
         <button id="close-menu" class="primary">Devam et</button>
@@ -131,19 +134,45 @@
     </div>
 
     <div id="home" class="overlay home hidden">
-      <div class="panel home-panel">
-        <div class="home-logo">🛒</div>
-        <h2 id="home-title">Market Krallığı</h2>
+      <div class="home-top">
+        <div class="home-crown">👑</div>
+        <h1 class="home-brand">Market Krallığı</h1>
         <p id="home-meta" class="home-meta"></p>
-        <button id="home-continue" class="primary">▶️ Devam et</button>
-        <button id="home-gc" class="hidden">🎮 Game Center</button>
-        <button id="home-ach">🏆 Başarımlar</button>
-        <button id="home-settings">⚙️ Ayarlar</button>
-        <button id="home-help">❓ Nasıl oynanır</button>
+        <div class="home-gems">💎 <b id="home-gems">0</b></div>
+      </div>
+      <div class="panel home-panel">
+        <button id="home-continue" class="primary big">▶️ Devam et</button>
+        <div class="home-grid">
+          <button id="home-daily"><span class="ic">📅</span><span>Günlük ödül</span><i id="home-daily-dot" class="dot hidden"></i></button>
+          <button id="home-quests"><span class="ic">🎯</span><span>Görevler</span></button>
+          <button id="home-avatar"><span class="ic">🧑</span><span>Karakterim</span></button>
+          <button id="home-decor"><span class="ic">🎨</span><span>Dekorasyon</span></button>
+          <button id="home-ach"><span class="ic">🏆</span><span>Başarımlar</span></button>
+          <button id="home-settings"><span class="ic">⚙️</span><span>Ayarlar</span></button>
+          <button id="home-help"><span class="ic">❓</span><span>Nasıl oynanır</span></button>
+          <button id="home-gc" class="hidden"><span class="ic">🎮</span><span>Game Center</span></button>
+        </div>
         <button id="home-new" class="ghost">Yeni oyun</button>
-        <div id="home-sub" class="home-sub hidden"></div>
       </div>
     </div>
+
+    <div id="sheet" class="overlay sheet-ov hidden">
+      <div class="panel sheet-panel">
+        <div class="sub-head"><button data-close class="sub-back" aria-label="Geri">‹</button><h3 id="sheet-title"></h3></div>
+        <div id="sheet-body" class="sub-body"></div>
+        <button data-close id="sheet-close" class="primary sub-close">Tamam</button>
+      </div>
+    </div>
+
+    <div id="avatar" class="overlay avatar-ov hidden">
+      <div class="panel avatar-panel">
+        <h3>Karakterini oluştur</h3>
+        <div id="avatar-body"></div>
+        <div class="avatar-btns"><button id="avatar-random">🎲 Rastgele</button><button id="avatar-done" class="primary">Tamam</button></div>
+      </div>
+    </div>
+
+    <div id="party" class="party hidden"></div>
 
     <div id="final" class="overlay hidden">
       <div class="panel final">
@@ -163,7 +192,7 @@
           <input id="intro-name" maxlength="20" placeholder="Örn. Güneş" autocomplete="off" />
           <small id="intro-preview">Tabelada: <b>Kasaba Market</b></small>
         </label>
-        <button id="intro-start" class="primary">Marketi aç</button>
+        <button id="intro-start" class="primary">Devam: karakterini seç →</button>
       </div>
     </div>
 

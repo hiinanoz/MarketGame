@@ -59,6 +59,7 @@ export class Campaign {
     if (this.game.money < total) return false;
     this.game.spend(total);
     this.scheduled.push({ product, qty, paid: total, by, extra: extra ?? this.rollExtra(), staff });
+    if (by === 'player') this.game.goals?.event('campaign');
     const who = by === 'accountant' ? '🧾 Muhasebeci: ' : '';
     this.game.hud.toast(`${who}📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası!`);
     this.game.audio.play('unlock');
@@ -313,6 +314,7 @@ export class Campaign {
   }
 
   onSold(product) {
+    this.game.goals?.event('sell', 1, product);
     const a = this.active.find((x) => x.product === product);
     if (a) a.sold++;
   }

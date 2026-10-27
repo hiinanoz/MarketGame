@@ -258,6 +258,53 @@ export const PRODUCERS = {
 export const WHOLESALER_DISCOUNT = 0.7;
 export const CRISIS = { fromLevel: 16, chance: 0.4, priceMult: 1.8, shortageLimit: 10 };
 
+// ---- Hedefler, ödüller, dekorasyon -------------------------------------------------------------
+export const GOALS = {
+  allQuestsGems: 5,
+  // Giriş takvimi (gerçek gün): 7. gün büyük ödül
+  login: [
+    { money: 150, gems: 2 }, { money: 250, gems: 3 }, { money: 0, gems: 5 }, { money: 450, gems: 4 },
+    { money: 0, gems: 8 }, { money: 800, gems: 6 }, { money: 1500, gems: 20 },
+  ],
+  // [müşteri sayısı, elmas]
+  milestones: [[100, 5], [500, 10], [1000, 15], [2500, 20], [5000, 30], [10000, 40], [25000, 60], [50000, 80], [100000, 120]],
+  partySeconds: 8,
+  offlineMinMinutes: 3,
+  offlineHours: 8,
+  offlineRate: 0.12,   // çevrimdışı: günlük ortalama gelirin bu oranı (oyun günü başına)
+};
+export const DECOR = {
+  floors: [
+    { id: 'classic', name: 'Klasik', colors: ['#f4efe4', '#e9e2d3'], gems: 0 },
+    { id: 'mint', name: 'Nane', colors: ['#e3f4ea', '#cfe9da'], gems: 10 },
+    { id: 'sky', name: 'Gökyüzü', colors: ['#e6eefb', '#d2e0f5'], gems: 12 },
+    { id: 'peach', name: 'Şeftali', colors: ['#fbe7da', '#f3d3bf'], gems: 15 },
+    { id: 'checker', name: 'Dama', colors: ['#f5f5f5', '#4a4a4a'], gems: 25 },
+    { id: 'wood', name: 'Ahşap', colors: ['#d9b48a', '#c79c6c'], gems: 30 },
+  ],
+  signs: [
+    { id: 'green', name: 'Yeşil', color: '#2b8a35', gems: 0 },
+    { id: 'blue', name: 'Mavi', color: '#2a62c9', gems: 6 },
+    { id: 'red', name: 'Kırmızı', color: '#c9302a', gems: 6 },
+    { id: 'purple', name: 'Mor', color: '#7a3cc2', gems: 8 },
+    { id: 'gold', name: 'Altın', color: '#c99a12', gems: 15 },
+    { id: 'black', name: 'Gece', color: '#1e1e28', gems: 12 },
+  ],
+  // Mağaza önüne konan süsler: her biri +%1 müşteri (en fazla +%10)
+  items: [
+    { id: 'plant', name: 'Saksı kaktüs', emoji: '🌵', model: 'cactus_medium_A', scale: 2.4, gems: 3 },
+    { id: 'bush', name: 'Çalı', emoji: '🌳', model: 'bush', scale: 2.6, gems: 3 },
+    { id: 'barrel', name: 'Çiçekli fıçı', emoji: '🛢️', model: 'barrel', scale: 2.4, gems: 4 },
+    { id: 'bench', name: 'Bank', emoji: '🪑', model: 'bench', scale: 2.6, gems: 5 },
+    { id: 'lamp', name: 'Sokak lambası', emoji: '💡', model: 'streetlight', scale: 2.2, gems: 6 },
+    { id: 'tree', name: 'Ağaç', emoji: '🌲', model: 'trees_B_medium', scale: 1.4, gems: 8 },
+  ],
+  slots: [[-10.4, 5.1], [-3.6, 5.1], [3.6, 5.1], [10.4, 5.1], [-7, 5.1], [7, 5.1], [13.8, 5.1], [16.8, 5.1], [23.2, 5.1], [26.4, 5.1]],
+  lights: { name: 'Işık zinciri', emoji: '✨', gems: 20 },
+  bonusPerItem: 0.01,
+  bonusMax: 0.1,
+};
+
 // ---- Online sipariş (Sv.25+) ------------------------------------------------------------------
 // Salon 2'nin arkasındaki boş alan: müdür yardımcısının ofisi, toplayıcılar depodan ürün getirir,
 // kuryeler arka kapıdan arabayla dağıtır. Personel arttıkça online ciro market cirosuna yaklaşır.

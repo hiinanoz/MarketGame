@@ -24,3 +24,5 @@
 - İşletmelerde muhasebeci yok: müdür tam hız + fazla satış + bağımsız büyüme yapar (`Business.accountant` getter eski kayıtlar için).
 - Fiyat her zaman `game.priceOf(product)` ile (indirim günü `SALE_DAY`, kampanya ek promosyonu `CAMPAIGN_PROMO`).
 - Ayarlar: `options.speed` (1/1.5/2), `options.cam` (steep/normal/low → `CAM_ANGLES`). Menü "Günü tamamla" → `game.finishDay()` (`game.simulating` sırasında alan ödemesi yok). Seviye atlama: `hud.showLevelPop` (oyunu durdurur).
+- Ana menü ve sayfalar: `src/menus.js` (her açılışta ana menü; yeni oyunda isim → karakter editörü; `game.viewMode` 'home' kamerayı döndürür, 'avatar' oyuncuya yaklaşır). Hedefler `src/goals.js` (💎 elmas, günlük görevler `goals.event(type)`, giriş takvimi, müşteri kilometre taşları, çevrimdışı kazanç), ayarlar `GOALS`. Dekorasyon `src/decor.js` (`DECOR`, müşteri +%1/süs). Kutlama `src/celebrate.js` (`game.party`, disko ışıkları; sırasında simülasyon durur).
+- Oyuncu görünümü `game.avatar` (`setAvatar`, `Character.rebuildModel`, renkler `assets.js` → `HAIR_COLORS/OUTFIT_COLORS/PANTS_COLORS`).

@@ -48,10 +48,10 @@ export class World {
     this.door2Path.visible = false;
 
     // Zeminler
-    this.addFloor(ROOM1, s, ['#f4efe4', '#e9e2d3']);
-    this.addFloor(ROOM2, this.room2, ['#f4efe4', '#e9e2d3']);
+    // Market salonlarının zeminleri (dekorasyonla değişebilir)
+    this.shopFloors = [this.addFloor(ROOM1, s, ['#f4efe4', '#e9e2d3']), this.addFloor(ROOM2, this.room2, ['#f4efe4', '#e9e2d3'])];
     this.addFloor(DEPOT, s, ['#c9ccd1', '#bfc3c9']);
-    this.addFloor(ROOM3, this.room3, ['#eef3ea', '#e1e9dc']);
+    this.shopFloors.push(this.addFloor(ROOM3, this.room3, ['#eef3ea', '#e1e9dc']));
     // Üretimhane bahçesi (toprak zemin)
     const yard = new THREE.Mesh(
       new THREE.PlaneGeometry(YARD.maxX - YARD.minX, YARD.maxZ - YARD.minZ),
@@ -196,9 +196,10 @@ export class World {
   }
 
   /** Tabela ve reklam panosuna marketin adını yaz. */
-  setMarketTitle(title) {
+  setMarketTitle(title, signColor = this.signColor) {
+    this.signColor = signColor;
     this.shopSign.material.map?.dispose();
-    this.shopSign.material.map = shopSignTexture(title);
+    this.shopSign.material.map = shopSignTexture(title, signColor);
     this.shopSign.material.needsUpdate = true;
     this.shopSign.scale.set(8.8, 2.2, 1);
     for (const b of this.billboards ?? []) {
@@ -309,6 +310,20 @@ export class World {
     m.position.set((room.minX + room.maxX) / 2, 0, (room.minZ + room.maxZ) / 2);
     m.receiveShadow = true;
     parent.add(m);
+    m.userData.room = room;
+    return m;
+  }
+
+  /** Dekorasyon: market salonlarının zemin deseni. */
+  setFloorTheme(colors) {
+    for (const m of this.shopFloors) {
+      const r = m.userData.room;
+      const tex = floorTexture(colors).clone();
+      tex.needsUpdate = true;
+      tex.repeat.set((r.maxX - r.minX) / 2, (r.maxZ - r.minZ) / 2);
+      m.material.map = tex;
+      m.material.needsUpdate = true;
+    }
   }
 
   addPath(x, parent) {
@@ -524,12 +539,12 @@ function drawBillboard(ctx, title) {
   ctx.fillText('Her gün taze! 🍅🥕🧀', 256, 180);
 }
 
-function shopSignTexture(title) {
+function shopSignTexture(title, color = '#2b8a35') {
   const c = document.createElement('canvas');
   c.width = 1024;
   c.height = 256;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#2b8a35';
+  ctx.fillStyle = color ?? '#2b8a35';
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 12;
   ctx.beginPath();

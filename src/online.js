@@ -203,6 +203,7 @@ export class Online {
     if (!value) return;
     g.money += value;
     this.today.orders++;
+    g.goals?.event('online');
     this.today.crates += products.length;
     this.today.revenue += value;
     g.day.today.online = { ...this.today };

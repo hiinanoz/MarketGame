@@ -123,6 +123,8 @@ export class DayCycle {
     this.game.supply.rollCrisis();
     this.game.ads.startDay();         // reklamlar, belediye denetimi
     this.game.campaign.startDay();
+    this.game.goals.rollQuests();      // günün görevleri
+    this.game.hud.syncQuests?.();
     this.game.save();
   }
 

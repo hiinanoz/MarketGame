@@ -102,7 +102,8 @@ export function character(name, look = null) {
   if (!tpl) throw new Error(`Karakter bulunamadı: ${name}`);
   const model = SkeletonUtils.clone(tpl);
   // Çalışanlar şapka/miğfer yerine market şapkası takar; şövalye müşterilerin yarısı miğfersiz
-  const hideHat = look === 'uniform' || (name === 'Knight' && typeof look === 'number' && look % 2 === 1);
+  const isAvatar = look && typeof look === 'object';
+  const hideHat = look === 'uniform' || (name === 'Knight' && typeof look === 'number' && look % 2 === 1) || (isAvatar && look.acc !== 'own');
   if (hideHat) model.traverse((o) => { if (o.isMesh && /Hat|Helmet/.test(o.name)) o.visible = false; });
   if (look !== null && look !== undefined) {
     model.traverse((o) => {
@@ -119,8 +120,17 @@ export function character(name, look = null) {
 const variantCache = new Map();
 export const CUSTOMER_LOOKS = 6;
 
+// Oyuncu karakteri renkleri: [ton, doygunluk, parlaklık çarpanı] — swatch için css rengi ayrıca
+export const HAIR_COLORS = [[0.07, 0.55, 1], [0.1, 0.25, 0.45], [0.12, 0.75, 1.6], [0.03, 0.75, 1.15], [0, 0, 1.9], [0.75, 0.55, 1.2], [0.55, 0.6, 1.2], [0.92, 0.55, 1.4]];
+export const HAIR_CSS = ['#7a4a26', '#2b2522', '#e3b33c', '#b4442a', '#e8e8e8', '#8e4fc9', '#3a9ad9', '#e06aa8'];
+export const OUTFIT_COLORS = [[0.36, 0.55, 1], [0.6, 0.6, 1], [0.0, 0.65, 1], [0.13, 0.85, 1.1], [0.8, 0.5, 1], [0.08, 0.8, 1], [0.48, 0.55, 1], [0, 0, 1.25]];
+export const OUTFIT_CSS = ['#3faa55', '#3d6fd6', '#d9443a', '#f2c230', '#a25ad1', '#ef8a2a', '#2ab5a8', '#e9e9e9'];
+export const PANTS_COLORS = [[0.6, 0.45, 1], [0, 0, 0.7], [0.08, 0.45, 1.1], [0.36, 0.4, 1], [0.0, 0.5, 1], [0.6, 0.15, 1.5]];
+export const PANTS_CSS = ['#24345e', '#222', '#6b4a2e', '#2f5a35', '#6b2222', '#7d8796'];
+export const AVATAR_MODELS = ['Barbarian', 'Knight', 'Mage', 'Rogue', 'Rogue_Hooded'];
+
 function variantMaterial(name, base, look) {
-  const key = `${name}|${base.uuid}|${look}`;
+  const key = `${name}|${base.uuid}|${typeof look === 'object' ? `${look.hair}-${look.outfit}-${look.pants}` : look}`;
   if (variantCache.has(key)) return variantCache.get(key);
   const img = base.map.image;
   const c = document.createElement('canvas');
@@ -138,7 +148,22 @@ function variantMaterial(name, base, look) {
     const hueDeg = hsl.h * 360;
     const skin = hueDeg > 8 && hueDeg < 40 && hsl.s > 0.25 && hsl.l > 0.55;
     if (skin) continue;
-    if (look === 'uniform') {
+    if (typeof look === 'object') {
+      // Oyuncu karakteri: saç (kahverengi tonlar), kıyafet (açık tonlar), pantolon (koyu tonlar)
+      if (hsl.s < 0.12 && (hsl.l > 0.85 || hsl.l < 0.15)) continue;
+      const hairy = hueDeg > 5 && hueDeg < 50 && hsl.s > 0.2;
+      if (hairy) {
+        const h = HAIR_COLORS[look.hair] ?? HAIR_COLORS[0];
+        col.setHSL(h[0], h[1], THREE.MathUtils.clamp(hsl.l * h[2], 0.06, 0.92));
+      } else if (hsl.s < 0.12) continue;
+      else if (hsl.l < 0.32) {
+        const p = PANTS_COLORS[look.pants] ?? PANTS_COLORS[0];
+        col.setHSL(p[0], p[1], Math.max(0.12, hsl.l * p[2]));
+      } else {
+        const o = OUTFIT_COLORS[look.outfit] ?? OUTFIT_COLORS[0];
+        col.setHSL(o[0], o[1], THREE.MathUtils.clamp(hsl.l * o[2], 0.25, 0.85));
+      }
+    } else if (look === 'uniform') {
       if (hsl.s < 0.12 && (hsl.l > 0.85 || hsl.l < 0.15)) continue; // beyaz/siyah ayrıntılar
       if (hueDeg > 5 && hueDeg < 50 && hsl.s > 0.2) continue;        // saç ve deri tonları
       // Koyu tonlar lacivert pantolon, açık tonlar yeşil üniforma

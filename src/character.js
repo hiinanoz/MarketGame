@@ -56,6 +56,7 @@ export class Character {
       if (o.isBone) this.bones[o.name] = o;
     });
     if (look === 'uniform') this.addCap(cap);
+    if (look && typeof look === 'object') this.addAccessory(look.acc, look.accColor);
 
     // Yığın, karakterin önünde (yerel +z) durur.
     this.stackAnchor = new THREE.Group();
@@ -66,6 +67,75 @@ export class Character {
 
     this.path = null;
     this.onArrive = null;
+  }
+
+  /**
+   * Oyuncu karakterini yeniden kur (görünüm değişti): model, animasyonlar, aksesuar.
+   * Yığın, konum ve yön korunur.
+   */
+  rebuildModel(modelName, look) {
+    this.root.remove(this.model);
+    this.mixer.stopAllAction();
+    this.model = character(modelName, look);
+    this.model.scale.setScalar(0.62);
+    this.root.add(this.model);
+    this.mixer = new THREE.AnimationMixer(this.model);
+    this.actions = {};
+    for (const clip of animationClips()) this.actions[clip.name] = this.mixer.clipAction(clip);
+    this.current = null;
+    this.play('Idle');
+    this.bones = {};
+    this.model.traverse((o) => { if (o.isBone) this.bones[o.name] = o; });
+    this.cap = null;
+    if (look && typeof look === 'object') this.addAccessory(look.acc, look.accColor);
+  }
+
+  /** Oyuncu aksesuarı: şapka (renkli), taç, gözlük ya da modelin kendi başlığı. */
+  addAccessory(acc, color = 'red') {
+    const head = this.bones.head;
+    if (!head || !acc || acc === 'none' || acc === 'own') return;
+    if (acc === 'cap') return this.addCap(color);
+    const g = new THREE.Group();
+    if (acc === 'crown') {
+      const gold = new THREE.MeshStandardMaterial({ color: 0xf5c518, metalness: 0.7, roughness: 0.3 });
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 0.2, 10, 1, true), gold);
+      band.material.side = THREE.DoubleSide;
+      g.add(band);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 4), gold);
+        spike.position.set(Math.sin(a) * 0.38, 0.2, Math.cos(a) * 0.38);
+        g.add(spike);
+        const gem = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), new THREE.MeshStandardMaterial({ color: [0xe53935, 0x1e88e5, 0x43a047][i % 3] }));
+        gem.position.set(Math.sin(a) * 0.41, 0, Math.cos(a) * 0.41);
+        g.add(gem);
+      }
+      g.position.set(0, CAP_Y + 0.05, 0);
+    } else if (acc === 'glasses') {
+      const dark = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.3 });
+      for (const x of [-0.17, 0.17]) {
+        const lens = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.15, 0.04), dark);
+        lens.position.set(x, 0, 0);
+        g.add(lens);
+      }
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.03), dark);
+      g.add(bridge);
+      g.position.set(0, 0.42, 0.44);
+    } else if (acc === 'headphones') {
+      const mat = new THREE.MeshStandardMaterial({ color: 0x2f7be0, roughness: 0.5 });
+      const arc = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.05, 6, 16, Math.PI), mat);
+      arc.position.y = 0.5;
+      g.add(arc);
+      for (const x of [-0.48, 0.48]) {
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 12), mat);
+        cup.rotation.z = Math.PI / 2;
+        cup.position.set(x, 0.45, 0);
+        g.add(cup);
+      }
+    }
+    g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    head.add(g);
+    this.cap = g;
   }
 
   /** Market üniformasının şapkası (baş kemiğine bağlı). */
@@ -79,6 +149,9 @@ export class Character {
           yellow: new THREE.MeshStandardMaterial({ color: 0xffc928, roughness: 0.6 }),
           red: new THREE.MeshStandardMaterial({ color: 0xe03a2f, roughness: 0.6 }),
           blue: new THREE.MeshStandardMaterial({ color: 0x2f7be0, roughness: 0.6 }),
+          green: new THREE.MeshStandardMaterial({ color: 0x3faa55, roughness: 0.6 }),
+          black: new THREE.MeshStandardMaterial({ color: 0x262626, roughness: 0.6 }),
+          pink: new THREE.MeshStandardMaterial({ color: 0xe06aa8, roughness: 0.6 }),
         },
         dome: new THREE.CylinderGeometry(0.42, 0.46, 0.22, 16),
         brim: new THREE.BoxGeometry(0.5, 0.05, 0.36),

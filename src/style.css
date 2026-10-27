@@ -280,7 +280,7 @@ html, body {
 #rating-fill::before { content: '★★★★★'; }
 .pill.staff {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 96px);
+  top: calc(env(safe-area-inset-top, 0px) + 124px);
   left: 12px;
   min-width: 0;
   font-size: 13px;
@@ -405,7 +405,7 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 /* Siyaset */
 .pill.election {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 128px);
+  top: calc(env(safe-area-inset-top, 0px) + 154px);
   left: 12px;
   min-width: 0;
   font-size: 13px;
@@ -516,3 +516,81 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .sub-set select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 10px; border: 2px solid #e0d8c6; background: #fff; max-width: 60%; }
 .online-bar { height: 10px; border-radius: 5px; background: #e5dccb; overflow: hidden; }
 .online-bar i { display: block; height: 100%; background: #2a7fd4; }
+
+.pill.gems { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 94px); left: 12px; min-width: 0; font-size: 13px; padding: 3px 10px; gap: 4px; z-index: 5; pointer-events: none; }
+.round .badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #e03131; color: #fff; font-size: 11px; font-style: normal; font-weight: 900; display: grid; place-items: center; padding: 0 4px; }
+.side-btns .round { position: relative; }
+
+/* ---- Ana menü ---- */
+.overlay.home { background: linear-gradient(180deg, rgba(20, 60, 30, 0.55) 0%, rgba(20, 60, 30, 0) 30%, rgba(20, 60, 30, 0) 45%, rgba(15, 45, 25, 0.75) 100%); flex-direction: column; justify-content: space-between; padding: calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px); }
+.home-top { text-align: center; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, 0.25); }
+.home-crown { font-size: 44px; line-height: 1; animation: crown-bob 2.4s ease-in-out infinite; }
+@keyframes crown-bob { 50% { transform: translateY(-6px) rotate(-4deg); } }
+.home-brand { margin: 2px 0 0; font-size: 34px; font-weight: 900; letter-spacing: 0.5px; }
+.home-top .home-meta { color: #fff; opacity: 0.95; margin: 2px 0 8px; font-weight: 800; }
+.home-gems { display: inline-flex; gap: 6px; align-items: center; background: rgba(0, 0, 0, 0.35); border-radius: 20px; padding: 4px 14px; font-weight: 800; }
+.home-panel { width: min(92vw, 420px); min-height: 0; gap: 10px; }
+.home-panel .big { min-height: 56px; font-size: 20px; }
+.home-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.panel .home-grid button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; font-size: 11.5px; font-weight: 800; background: #f1ebdc; min-height: 64px; }
+.home-grid .ic { font-size: 24px; }
+.home-grid .dot { position: absolute; top: 6px; right: 10px; width: 11px; height: 11px; border-radius: 50%; background: #e03131; }
+.panel button.ghost { background: transparent; color: var(--ink); opacity: 0.6; font-size: 15px; padding: 6px; }
+
+/* Genel alt sayfa */
+.overlay.sheet-ov { z-index: 60; }
+.sheet-panel { width: min(92vw, 440px); height: min(82dvh, 640px); padding: 14px 16px 16px; gap: 10px; display: flex; flex-direction: column; overflow: hidden; }
+.sheet-panel .sub-head h3 { margin: 0; flex: 1; text-align: center; padding-right: 40px; font-size: 20px; }
+
+/* Görevler, takvim */
+.quest { display: flex; gap: 10px; align-items: center; background: #f3eee2; border-radius: 14px; padding: 10px 12px; }
+.quest.done { background: #e3f2dc; }
+.quest .qe { font-size: 26px; }
+.quest .qt { flex: 1; font-weight: 800; font-size: 14px; }
+.quest .qt small { display: block; font-weight: 700; opacity: 0.65; }
+.qbar { height: 7px; background: #e0d8c6; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+.qbar i { display: block; height: 100%; background: #3fae49; }
+.cal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cal div { background: #f3eee2; border-radius: 14px; padding: 10px 4px; text-align: center; font-weight: 800; font-size: 12px; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+.cal div b { font-size: 22px; }
+.cal div.got { background: #e3f2dc; opacity: 0.75; }
+.cal div.today { background: #ffe38a; outline: 3px solid #f2b705; }
+.cal div.big { grid-column: span 2; }
+.big-reward { text-align: center; font-size: 15px; font-weight: 700; }
+.big-reward b { display: block; font-size: 30px; margin: 6px 0; }
+
+/* Dekorasyon */
+.decor-sec h4 { margin: 4px 0 6px; }
+.decor-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.panel .decor-row button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; font-size: 12px; background: #f3eee2; border: 3px solid transparent; }
+.panel .decor-row button.on { border-color: #3fae49; background: #e3f2dc; }
+.swatch { width: 40px; height: 26px; border-radius: 8px; border: 2px solid rgba(0, 0, 0, 0.15); }
+.decor-row .ic { font-size: 26px; }
+.decor-placed { display: flex; flex-wrap: wrap; gap: 6px; }
+.decor-placed span { background: #f3eee2; border-radius: 10px; padding: 4px 8px; font-weight: 800; font-size: 13px; }
+
+/* Karakter editörü: üstte karakter görünür, altta seçenekler */
+.overlay.avatar-ov { align-items: flex-end; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.25)); }
+.avatar-panel { width: min(96vw, 460px); max-height: 58dvh; overflow-y: auto; gap: 8px; margin-bottom: env(safe-area-inset-bottom, 0px); touch-action: pan-y; }
+.avatar-panel h3 { margin: 0; text-align: center; }
+.av-row { display: flex; flex-direction: column; gap: 4px; }
+.av-row > span { font-weight: 800; font-size: 13px; opacity: 0.7; }
+.av-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.panel .av-opts button { padding: 6px 10px; font-size: 13px; background: #f3eee2; border: 3px solid transparent; }
+.panel .av-opts button.on { border-color: #3fae49; background: #e3f2dc; }
+.panel .av-opts button.sw { width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15); }
+.panel .av-opts button.sw.on { box-shadow: 0 0 0 3px #3fae49; }
+.avatar-btns { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+
+/* Büyük kutlama */
+.party { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
+.party i, .confetti.burst i { position: absolute; top: -20px; width: 10px; height: 15px; border-radius: 2px; animation: confetti-fall linear both; }
+.party-banner { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); text-align: center; background: linear-gradient(90deg, #ff3b6b, #b36bff, #3bc8ff); color: #fff; padding: 14px 26px; border-radius: 22px; box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25); animation: party-pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both, party-hue 1.2s linear infinite; white-space: nowrap; }
+.party-banner b { display: block; font-size: 28px; font-weight: 900; }
+.party-banner small { font-weight: 800; font-size: 14px; opacity: 0.95; }
+@keyframes party-pop { from { transform: translateX(-50%) scale(0.3); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+@keyframes party-hue { to { filter: hue-rotate(360deg); } }
+.confetti.burst { position: fixed; inset: 0; pointer-events: none; z-index: 65; overflow: hidden; }
+/* Ana menü ve karakter editörü açıkken oyun arayüzü gizli */
+body.in-home #hud, body.in-home .side-btns, body.in-home .pill, body.in-home #hint, body.in-home #joystick { visibility: hidden; }
+body.in-home #toast { top: 38%; }
