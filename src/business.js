@@ -17,7 +17,6 @@ export class Business {
     this.modules = 0;          // satın alınınca 1
     this.workers = 0;
     this.manager = false;
-    this.accountant = false;
     this.storage = {};         // ürün → kasa
     this.timer = 0;
     this.turn = 0;
@@ -25,7 +24,7 @@ export class Business {
     this.today = blank();
     this.yesterday = null;
     this.staffChars = [];
-    this.autoGrow = true;      // müdür + muhasebeci varken işletme kendini büyütür
+    this.autoGrow = true;      // müdür varken işletme kendini büyütür
     this.manualT = 0;
     this.pickT = 0;
     this.indepT = 3;
@@ -110,9 +109,14 @@ export class Business {
     return [this.x + Math.min(this.w / 2 - 2, 5.5), this.frontZ + 1.6];
   }
 
-  /** Bağımsız: müdür + muhasebeci varsa işletme kendi kendini yönetir. */
+  /** Bağımsız: müdür varsa işletme kendi kendini yönetir (işçi alır, isterse büyür). */
   get independent() {
-    return this.manager && this.accountant;
+    return this.manager;
+  }
+
+  /** Eski kayıtlardaki muhasebecinin işini artık müdür yapar (fazla satış, şebeke satışı). */
+  get accountant() {
+    return this.manager;
   }
 
   /** İşletmenin toplam değeri (kredi limiti için). */
@@ -141,7 +145,7 @@ export class Business {
 
   get dailyWages() {
     const w = STAFF.wage;
-    return this.workers * w.worker + (this.manager ? w.manager : 0) + (this.accountant ? w.accountant : 0);
+    return this.workers * w.worker + (this.manager ? w.manager : 0);
   }
 
   // ---- İşlemler ----
@@ -159,7 +163,7 @@ export class Business {
     if (this.isLogistics) g.depot.refreshFleet?.();
     g.gainXp(Math.floor(this.def.price / XP_PER_PURCHASE));
     g.hud.toast(this.leased ? `🔑 ${this.def.emoji} ${this.name} kiralandı (haftalık $${this.weeklyRent})` : `🤝 ${this.def.emoji} ${this.name} artık senin!`);
-    if (this.isBuilding && !this.workers) g.later.push({ t: 1.8, fn: () => g.hud.toast('👥 Şimdi müdür, muhasebeci ve çalışan ata (💼 tablet)') });
+    if (this.isBuilding && !this.workers) g.later.push({ t: 1.8, fn: () => g.hud.toast('👥 Şimdi müdür ve çalışan ata (💼 tablet)') });
     g.audio.play('unlock');
     g.save();
     return true;
@@ -172,7 +176,6 @@ export class Business {
     this.seizedPrice = price;
     this.workers = 0;
     this.manager = false;
-    this.accountant = false;
     this.storage = {};
     this.rebuild();
     this.rebuildStaff();
@@ -195,7 +198,7 @@ export class Business {
     return true;
   }
 
-  /** Bordro listesi (pahalıdan ucuza değil, kıdem sırasıyla: müdür, muhasebeci, işçiler). */
+  /** Bordro listesi (pahalıdan ucuza değil, kıdem sırasıyla: müdür, işçiler). */
   payrollEntries() {
     if (!this.owned) return [];
     const W = STAFF.wage;
@@ -204,7 +207,6 @@ export class Business {
     const lbl = `${this.def.emoji} ${this.name}`;
     const wn = this.def.workerName ?? 'işçi';
     if (this.manager) out.push({ wage: W.manager, label: `${lbl} müdürü`, biz: this, fire() { self.manager = false; self.rebuildStaff(); } });
-    if (this.accountant) out.push({ wage: W.accountant, label: `${lbl} muhasebecisi`, biz: this, fire() { self.accountant = false; self.rebuildStaff(); } });
     for (let i = 0; i < this.workers; i++) out.push({ wage: W.worker, label: `${lbl} ${wn}`, biz: this, fire() { self.workers = Math.max(0, self.workers - 1); self.rebuildStaff(); } });
     return out;
   }
@@ -415,7 +417,7 @@ export class Business {
     }
   }
 
-  /** Müdür + muhasebeci: eksik işçiyi alır, para yetince yeni modül ekler. */
+  /** Müdür: eksik işçiyi alır, para yetince yeni modül ekler. */
   updateIndependent(dt) {
     if (!this.independent) return;
     this.indepT -= dt;
@@ -560,7 +562,7 @@ export class Business {
     const count = Math.max(1, this.modules);
     for (let i = 0; i < count; i++) {
       const z = this.frontZ - 6 - i * MODULE_DEPTH - MODULE_DEPTH / 2;
-      this.moduleGroup.add(moduleMesh(this.def.kind, this.w - 2, MODULE_DEPTH - 1.2, this.x, z, this.owned ? 1 : 0.55, i));
+      this.moduleGroup.add(moduleMesh(this.def.kind, this.w - 2, MODULE_DEPTH - 1.2, this.x, z, this.owned ? 1 : 0.55, i, this.def.moduleModel));
     }
     // Batarya deposu (güneş tarlasının önünde, sağda)
     if (this.battery) {
@@ -598,10 +600,9 @@ export class Business {
     this.staffChars = [];
     if (!this.owned) return;
     if (this.isBuilding) {
-      // Çalışanlar içeride; müdür ve muhasebeci kapının önünde
-      const dz = this.def.building.facing === -1 ? -0.6 : 0.6;
-      if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 1.6, this.frontZ + dz));
-      if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 1.6, this.frontZ + dz));
+      // Çalışanlar içeride; müdür binanın önünde gidip gelir (kapı, vitrin, müşteri)
+      const dz = this.def.building.facing === -1 ? -0.9 : 0.9;
+      if (this.manager) this.staffChars.push(new BizManager(this.game, this, [[this.x - 2.5, this.frontZ + dz], [this.x + 2.5, this.frontZ + dz], [this.x, this.frontZ + dz * 1.6]]));
       return;
     }
     const shown = Math.min(this.workers, 6);
@@ -610,14 +611,21 @@ export class Business {
       const z = this.frontZ - 6 - mod * MODULE_DEPTH - 2 - (i % 3) * 2.5;
       this.staffChars.push(new FieldWorker(this.game, this.x - this.w / 2 + 2 + ((i * 3.1) % (this.w - 4)), z, this));
     }
-    if (this.manager) this.staffChars.push(new Standing(this.game, 'Knight', 'red', this.x - 2.6, this.frontZ + 1.2));
-    if (this.accountant) this.staffChars.push(new Standing(this.game, 'Mage', 'blue', this.x + 2.6, this.frontZ + 1.2));
+    // Müdür modüller arasında dolaşır, işçilerin yanında durup kontrol eder
+    if (this.manager) {
+      const stops = [[this.x - 2.6, this.frontZ + 1.2]];
+      for (let m = 0; m < Math.max(1, this.modules); m++) {
+        const z = this.frontZ - 6 - m * MODULE_DEPTH - 2;
+        stops.push([this.x - this.w / 4, z], [this.x + this.w / 4, z - 2]);
+      }
+      this.staffChars.push(new BizManager(this.game, this, stops));
+    }
   }
 
   serialize() {
     return {
       owned: this.owned, modules: this.modules, workers: this.workers, manager: this.manager,
-      accountant: this.accountant, storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
+      storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
       seized: this.seized, seizedPrice: this.seizedPrice, customName: this.customName, battery: this.battery,
       energyToday: this.energyToday, leased: this.leased,
     };
@@ -626,8 +634,8 @@ export class Business {
   restore(d) {
     if (!d) return;
     Object.assign(this, {
-      owned: !!d.owned, modules: d.modules ?? 0, workers: d.workers ?? 0, manager: !!d.manager,
-      accountant: !!d.accountant, storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
+      owned: !!d.owned, modules: d.modules ?? 0, workers: d.workers ?? 0, manager: !!d.manager || !!d.accountant,
+      storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
       autoGrow: d.autoGrow ?? true, seized: !!d.seized, seizedPrice: d.seizedPrice ?? 0,
       customName: d.customName ?? '', battery: !!d.battery, energyToday: d.energyToday ?? 0,
       leased: !!d.leased,
@@ -645,7 +653,7 @@ function blank() {
 const cropColors = [0x4fa34a, 0x6cc25f, 0x8bc34a, 0x3e8e41];
 let cropGeo;
 
-function moduleMesh(kind, w, d, x, z, alpha, index) {
+function moduleMesh(kind, w, d, x, z, alpha, index, model = null) {
   const g = new THREE.Group();
   g.position.set(x, 0, z);
   if (kind === 'field') {
@@ -676,10 +684,45 @@ function moduleMesh(kind, w, d, x, z, alpha, index) {
     pen.rotation.x = -Math.PI / 2;
     pen.position.y = 0.01;
     g.add(pen);
-    const shed = new THREE.Mesh(new THREE.BoxGeometry(w * 0.45, 2.2, d * 0.6), new THREE.MeshStandardMaterial({ color: 0xa1887f, transparent: alpha < 1, opacity: alpha }));
-    shed.position.set(-w * 0.22, 1.1, 0);
+    // Ahır: kırmızı gövde, beşik çatı, beyaz kapı
+    const sw = w * 0.42;
+    const sd = d * 0.6;
+    const shed = new THREE.Mesh(new THREE.BoxGeometry(sw, 2.4, sd), new THREE.MeshStandardMaterial({ color: 0xb3412f, transparent: alpha < 1, opacity: alpha }));
+    shed.position.set(-w * 0.24, 1.2, 0);
     shed.castShadow = true;
     g.add(shed);
+    // Beşik çatı: üçgen kesit, ahır boyunca uzar
+    const tri = new THREE.Shape();
+    tri.moveTo(-sd / 2 - 0.3, 0);
+    tri.lineTo(sd / 2 + 0.3, 0);
+    tri.lineTo(0, 1.6);
+    tri.closePath();
+    const roofGeo = new THREE.ExtrudeGeometry(tri, { depth: sw + 0.4, bevelEnabled: false });
+    roofGeo.translate(0, 0, -(sw + 0.4) / 2);
+    const roof = new THREE.Mesh(roofGeo, new THREE.MeshStandardMaterial({ color: 0x5d4037, flatShading: true, transparent: alpha < 1, opacity: alpha }));
+    roof.rotation.y = Math.PI / 2;
+    roof.position.set(-w * 0.24, 2.4, 0);
+    roof.castShadow = true;
+    g.add(roof);
+    if (alpha >= 1) {
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.8), new THREE.MeshStandardMaterial({ color: 0xf5f5f5 }));
+      door.position.set(-w * 0.24, 0.9, sd / 2 + 0.01);
+      g.add(door);
+      // Çit (KayKit Medieval, CC0) ve saman balyaları
+      const fz = [-d / 2 + 0.3, d / 2 - 0.3];
+      for (const z of fz) {
+        for (let x = 0; x < w / 2 - 0.5; x += 2.2) {
+          const f = prop('fence_wood_straight');
+          f.scale.setScalar(2.2);
+          f.position.set(x + 1.1, 0, z);
+          g.add(f);
+        }
+      }
+      const hay = prop('building_grain');
+      hay.scale.setScalar(1.6);
+      hay.position.set(w * 0.42, 0, -d * 0.3);
+      g.add(hay);
+    }
     // İnekler (basit)
     const cowMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const spotMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
@@ -724,9 +767,11 @@ function moduleMesh(kind, w, d, x, z, alpha, index) {
     wall.castShadow = true;
     g.add(wall);
     if (alpha >= 1) {
-      const house = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.8, 1.6), new THREE.MeshStandardMaterial({ color: 0xeceff1 }));
-      house.position.set(w / 4, 0.9, d * 0.38);
-      house.castShadow = true;
+      // Türbin binası: su değirmeni (KayKit Medieval, CC0)
+      const house = prop('building_watermill_green');
+      house.scale.setScalar(3.2);
+      house.position.set(w / 4, 0, d * 0.36);
+      house.traverse((o) => { if (o.isMesh) o.castShadow = true; });
       g.add(house);
     }
   } else if (kind === 'wind') {
@@ -773,16 +818,32 @@ function moduleMesh(kind, w, d, x, z, alpha, index) {
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0.01;
     g.add(floor);
-    const hall = new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, 3, d * 0.85), new THREE.MeshStandardMaterial({ color: 0xe0d6c2, transparent: alpha < 1, opacity: alpha }));
-    hall.position.y = 1.5;
-    hall.castShadow = true;
-    g.add(hall);
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(w * 0.92, 0.3, d * 0.87), new THREE.MeshStandardMaterial({ color: 0x607d8b }));
-    roof.position.y = 3.1;
-    g.add(roof);
-    const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 2), new THREE.MeshStandardMaterial({ color: 0x8d6e63 }));
-    chimney.position.set(w * 0.3, 4, 0);
-    g.add(chimney);
+    if (alpha >= 1 && model) {
+      // Atölye binası (KayKit City Builder, CC0) + çöp konteyneri ve koliler
+      const b = prop(index % 2 && model.alt ? model.alt : model.main);
+      const sc = Math.min(w * 0.38, d * 0.55);
+      b.scale.setScalar(sc);
+      b.position.set(-w * 0.12, 0, 0);
+      b.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      g.add(b);
+      const dump = prop('dumpster');
+      dump.scale.setScalar(3);
+      dump.position.set(w * 0.36, 0, -d * 0.2);
+      dump.rotation.y = -Math.PI / 2;
+      g.add(dump);
+      for (let i = 0; i < 3; i++) {
+        const box = prop('box_A');
+        box.scale.setScalar(2.6);
+        box.position.set(w * 0.33 + (i % 2) * 0.7, (i === 2 ? 0.55 : 0), d * 0.22 + (i % 2) * 0.3);
+        box.rotation.y = i * 0.5;
+        g.add(box);
+      }
+    } else {
+      const hall = new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, 3, d * 0.85), new THREE.MeshStandardMaterial({ color: 0xe0d6c2, transparent: alpha < 1, opacity: alpha }));
+      hall.position.y = 1.5;
+      hall.castShadow = true;
+      g.add(hall);
+    }
   }
   return g;
 }
@@ -817,6 +878,62 @@ class FieldWorker extends Character {
   }
 }
 
+/** İşletme müdürü: sırayla duraklara yürür, durakta işçileri kontrol eder (pano animasyonu). */
+class BizManager extends Character {
+  constructor(game, biz, stops) {
+    super(game, 'Knight', { speed: 2.4, look: 'uniform', cap: 'red' });
+    this.stops = stops;
+    this.i = 0;
+    this.position.set(stops[0][0], 0, stops[0][1]);
+    this.t = 1 + Math.random() * 2;
+    this.root.add(managerTag());
+    game.scene.add(this.root);
+  }
+
+  update(dt) {
+    if (!this.path) {
+      this.t -= dt;
+      if (this.t <= 0) {
+        this.i = (this.i + 1) % this.stops.length;
+        const [x, z] = this.stops[this.i];
+        this.path = [[x + (Math.random() - 0.5), z + (Math.random() - 0.5)]];
+        this.busyAnim = false;
+        this.t = 3 + Math.random() * 3;
+        this.onArrive = () => {
+          this.busyAnim = true;
+          this.play('Interact');
+        };
+      }
+    }
+    this.followPath(dt);
+    super.update(dt);
+  }
+}
+
+/** Müdür rozeti (kırmızı daire, beyaz pano) — emoji yazı tipine bağlı değil. */
+function managerTag() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#e03131';
+  ctx.beginPath();
+  ctx.arc(32, 32, 29, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(20, 16, 24, 32);
+  ctx.fillStyle = '#e03131';
+  ctx.fillRect(25, 24, 14, 3);
+  ctx.fillRect(25, 31, 14, 3);
+  ctx.fillRect(25, 38, 10, 3);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  s.renderOrder = 5;
+  s.scale.setScalar(0.5);
+  s.position.y = 2.1;
+  return s;
+}
+
 class Standing extends Character {
   constructor(game, model, cap, x, z) {
     super(game, model, { speed: 2, look: 'uniform', cap });
@@ -841,11 +958,18 @@ function proceduralBuilding(type, [w, d]) {
   if (type === 'port') {
     // Rıhtım, iki vinç, konteyner yığınları
     g.add(pbox(w, 0.6, d, 0x9e9e9e, 0, 0.3, 0));
-    const colors = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0xfb8c00];
-    for (let i = 0; i < 10; i++) {
-      const c = pbox(2.4, 1.1, 1.1, colors[i % colors.length], -w / 2 + 2.5 + (i % 5) * 2.7, 1.15 + Math.floor(i / 5) * 1.1, 1.5);
+    // Konteyner yığınları (KayKit Space Base, CC0)
+    for (let i = 0; i < 5; i++) {
+      const c = prop(i % 2 ? 'cargo_A_stacked' : 'containers_B');
+      c.scale.setScalar(i % 2 ? 3.4 : 3.8);
+      c.position.set(-w / 2 + 2.8 + i * 5, 0.6, 1.8);
+      c.rotation.y = (i % 3) * Math.PI / 2;
       g.add(c);
     }
+    const stack = prop('cargo_A_stacked');
+    stack.scale.setScalar(2.6);
+    stack.position.set(w / 2 - 2.5, 0.6, -1);
+    g.add(stack);
     for (const x of [-w / 4, w / 4]) {
       for (const dx of [-1, 1]) for (const dz of [0, 2.4]) g.add(pbox(0.35, 9, 0.35, 0xf9a825, x + dx, 4.8, -d / 2 + 1 + dz));
       g.add(pbox(0.9, 0.6, 13, 0xf9a825, x, 9.5, -d / 2 + 4)); // kol denize uzanır
@@ -858,6 +982,25 @@ function proceduralBuilding(type, [w, d]) {
       const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 6, 10), new THREE.MeshStandardMaterial({ color: 0x8d6e63 }));
       ch.position.set(x, 6.5, -d / 4);
       g.add(ch);
+      // Kırmızı-beyaz baca bandı
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.5, 10), new THREE.MeshStandardMaterial({ color: 0xe53935 }));
+      band.position.set(x, 8.8, -d / 4);
+      g.add(band);
+    }
+    // Çatıda su kulesi, yanda kule ve kolilenmiş ürünler (KayKit City/Space, CC0)
+    const tower = prop('watertower');
+    tower.scale.setScalar(3);
+    tower.position.set(0, 5.7, d / 6);
+    g.add(tower);
+    const silo = prop('structure_tall');
+    silo.scale.setScalar(2.6);
+    silo.position.set(w / 2 + 1.6, 0, -d / 6);
+    g.add(silo);
+    for (let i = 0; i < 3; i++) {
+      const c = prop('cargo_A_stacked');
+      c.scale.setScalar(2);
+      c.position.set(-w / 2 + 2 + i * 2.6, 0, d / 2 + 1.2);
+      g.add(c);
     }
   } else if (type === 'airport') {
     // Pist + terminal + kule

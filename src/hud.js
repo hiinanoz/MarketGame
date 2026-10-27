@@ -38,18 +38,44 @@ export class Hud {
     };
     bind('opt-sound', 'sound', (on) => { game.audio.enabled = on; });
     bind('opt-music', 'music', (on) => game.music.setEnabled(on));
-    bind('opt-speed', 'fast', () => this.syncSpeed());
     bind('opt-bg', 'background');
+    // Çoklu seçim düğmeleri (hız, görüş açısı)
+    const seg = (id, key, parse = (v) => v, apply) => {
+      const el = document.getElementById(id);
+      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', parse(b.dataset.v) === opts[key]));
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        opts[key] = parse(b.dataset.v);
+        game.saveOptions();
+        sync();
+        apply?.();
+      });
+      sync();
+      return sync;
+    };
+    this.syncSpeedSeg = seg('opt-speed', 'speed', Number, () => this.syncSpeed());
+    seg('opt-cam', 'cam');
     this.speedBtn = document.getElementById('speed-btn');
     this.speedBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
     this.speedBtn.addEventListener('click', () => {
-      opts.fast = !opts.fast;
-      document.getElementById('opt-speed').checked = opts.fast;
+      const steps = [1, 1.5, 2];
+      opts.speed = steps[(steps.indexOf(opts.speed) + 1) % steps.length];
       game.saveOptions();
       this.syncSpeed();
-      this.toast(opts.fast ? '⏩ Zaman 2 kat hızlı' : '▶️ Normal hız');
+      this.syncSpeedSeg();
     });
     this.syncSpeed();
+    // Günü tamamla: kalan gün hızlıca simüle edilir, gün sonu özeti gelir
+    document.getElementById('finish-day').addEventListener('click', () => {
+      this.menu.classList.add('hidden');
+      game.menuOpen = false;
+      game.finishDay();
+    });
+    // Seviye kutlaması
+    this.lvlPop = document.getElementById('lvl-pop');
+    this.lvlPop.addEventListener('pointerdown', (e) => e.stopPropagation());
+    document.getElementById('lvl-ok').addEventListener('click', () => this.closeLevelPop());
     // Seviye, saat, gün sonu
     this.levelValue = document.getElementById('level-value');
     this.levelFill = document.getElementById('level-fill');
@@ -82,9 +108,10 @@ export class Hud {
   }
 
   syncSpeed() {
-    this.speedBtn.classList.toggle('on', !!this.game.options.fast);
-    this.speedBtn.textContent = this.game.options.fast ? '⏩' : '▶️';
-    this.speedBtn.title = this.game.options.fast ? 'Zaman 2× — normale dön' : 'Zamanı 2× hızlandır';
+    const sp = this.game.options.speed ?? 1;
+    this.speedBtn.classList.toggle('on', sp > 1);
+    this.speedBtn.textContent = `${sp}×`;
+    this.speedBtn.title = `Oyun hızı ${sp}× (dokun: değiştir)`;
   }
 
   syncPaused() {
@@ -135,6 +162,7 @@ export class Hud {
     if (st.interestUnpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen faiz borca eklendi (${st.missed}/3)</span><b>$${formatMoney(st.interestUnpaid)}</b></div>`);
     if (st.seized) extra.push(`<div class="bad"><span>🏦 Banka el koydu: ${st.seized.emoji} ${st.seized.name} (borç kapanınca 💼 tabletten geri al)</span><b>−$${formatMoney(st.seized.price)} borç</b></div>`);
     if (st.seizeNone) extra.push(`<div class="bad"><span>⚠️ Faiz 3 gündür ödenmiyor — borcunu azalt!</span><b></b></div>`);
+    if (st.online) extra.push(`<div><span>🌐 Online: ${st.online.orders} sipariş · ${st.online.crates} kasa</span><b>+$${formatMoney(st.online.revenue)}</b></div>`);
     if (st.fine) extra.push(`<div class="bad"><span>🏛️ Belediye cezası: ${st.fine.reason}</span><b>−$${formatMoney(st.fine.amount)}</b></div>`);
     if (st.rent) {
       if (st.rent.market) extra.push(`<div class="bad"><span>🔑 Market kirası (haftalık)</span><b>−$${formatMoney(st.rent.market)}</b></div>`);
@@ -196,8 +224,55 @@ export class Hud {
     this.summaryOpen = false;
   }
 
+  /** Seviye atlama: kutlama kartı (oyun durur). Gün sonu özeti açıksa kapanınca gösterilir. */
   levelUp(level, features) {
     platform.haptic('MEDIUM');
+    if (this.game.simulating) {
+      this.pendingLevel = { level, features: [...new Set([...(this.pendingLevel?.features ?? []), ...features])] };
+      return;
+    }
+    this.showLevelPop(level, features);
+  }
+
+  showLevelPop(level, features) {
+    const pop = this.lvlPop;
+    document.getElementById('lvl-num').textContent = level;
+    document.getElementById('lvl-sub').textContent = level >= 99 ? 'Kasabanın en güçlü ismi oldun!' : `Seviye ${level}'e ulaştın`;
+    document.getElementById('lvl-list').innerHTML = features.length
+      ? `<b>Yeni açılanlar</b>${features.slice(0, 8).map((f) => `<span>✨ ${f}</span>`).join('')}`
+      : '';
+    pop.classList.remove('hidden');
+    this.game.audio.play('levelup', 1.2);
+    if (!pop.dataset.paused) {
+      pop.dataset.paused = this.game.paused ? 'was' : 'yes';
+      this.game.paused = true;
+    }
+    // Konfeti: hafif DOM parçacıkları (CSS animasyonu)
+    const box = document.getElementById('confetti');
+    box.innerHTML = '';
+    const colors = ['#ffd23f', '#3fae49', '#ff6b6b', '#4dabf7', '#f783ac', '#ffffff'];
+    for (let i = 0; i < 70; i++) {
+      const c = document.createElement('i');
+      c.style.left = `${Math.random() * 100}%`;
+      c.style.background = colors[i % colors.length];
+      c.style.animationDelay = `${Math.random() * 0.6}s`;
+      c.style.animationDuration = `${1.8 + Math.random() * 1.6}s`;
+      c.style.setProperty('--dx', `${(Math.random() - 0.5) * 160}px`);
+      c.style.setProperty('--rot', `${Math.random() * 720 - 360}deg`);
+      box.appendChild(c);
+    }
+  }
+
+  closeLevelPop() {
+    const pop = this.lvlPop;
+    pop.classList.add('hidden');
+    if (pop.dataset.paused === 'yes' && !this.summaryOpen) this.game.paused = false;
+    delete pop.dataset.paused;
+    document.getElementById('confetti').innerHTML = '';
+  }
+
+  /** Eski küçük bildirim (artık kullanılmıyor ama başka yerler çağırabilir). */
+  levelToast(level, features) {
     this.levelupEl.innerHTML = `⭐ Seviye ${level}!${features.length ? `<small>Yeni: ${features.join(', ')}</small>` : ''}`;
     this.levelupEl.classList.remove('hidden');
     this.levelupEl.style.animation = 'none';

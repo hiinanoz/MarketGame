@@ -65,8 +65,12 @@ async function start() {
   const loop = (now) => {
     const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
     last = now;
-    // 2× hız: aynı karede simülasyonu iki kez ilerlet (adım küçük kalsın)
-    if (game.running) for (let i = 0; i < (game.options.fast ? 2 : 1); i++) game.update(dt);
+    // Hız 1× / 1.5× / 2×: adım küçük kalsın diye kare başına en fazla iki alt adım
+    if (game.running && !game.simulating) {
+      const sp = game.options.speed ?? 1;
+      const n = Math.ceil(sp);
+      for (let i = 0; i < n; i++) game.update((dt * sp) / n);
+    }
     game.render();
     requestAnimationFrame(loop);
   };

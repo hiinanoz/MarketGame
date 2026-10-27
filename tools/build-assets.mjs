@@ -93,12 +93,16 @@ const PROPS = {
     'car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_police', 'streetlight', 'bench', 'bush',
     // Sv.66+ liman bölgesi: otel, restoran, AVM, banka genel merkezi
     'building_B_withoutBase', 'building_E_withoutBase', 'building_G_withoutBase', 'building_H_withoutBase',
+    // İşletme modülleri: fırın/kasap atölyesi, fabrika su kulesi, çöp konteyneri, koliler
+    'building_C_withoutBase', 'building_F_withoutBase', 'watertower', 'dumpster', 'box_A',
   ],
   // Enerji (güneş, rüzgâr) ve lojistik konteynerleri — KayKit Space Base Bits (CC0)
-  [SPACE]: ['solarpanel', 'windturbine_tall', 'windturbine_low'],
+  [SPACE]: ['solarpanel', 'windturbine_tall', 'windturbine_low',
+    // Liman ve fabrika: konteyner yığınları, kule
+    'containers_A', 'containers_B', 'cargo_A_stacked', 'structure_tall'],
   // Çiftlik ve kasaba — KayKit Medieval Hexagon (CC0)
-  [path.join(MED, 'buildings/green')]: ['building_windmill_green'],
-  [path.join(MED, 'buildings/neutral')]: ['building_grain'],
+  [path.join(MED, 'buildings/green')]: ['building_windmill_green', 'building_watermill_green'],
+  [path.join(MED, 'buildings/neutral')]: ['building_grain', 'fence_wood_straight'],
   [path.join(MED, 'decoration/nature')]: ['trees_A_large', 'trees_B_medium'],
   [path.join(MED, 'decoration/props')]: ['sack', 'wheelbarrow', 'barrel'],
   // Kamyonlar ve kasaba binaları — Kenney Starter Kits (MIT)

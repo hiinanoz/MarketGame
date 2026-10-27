@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Character } from './character.js';
 import { CUSTOMER_LOOKS } from './assets.js';
 import { bubbleTexture } from './fx.js';
-import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT, CAMPAIGN } from './config.js';
+import { PRODUCTS, CUSTOMER_SPEED, WORKER_SPEED, WORKER_CAPACITY, STREET_Z, RATING, THEFT, CAMPAIGN, MANAGER, zoneOf } from './config.js';
 
 /** İşçilerin başının üstündeki küçük rozet (müşterilerden ayırt etmek için). */
 export function workerBadge(emoji) {
@@ -310,7 +310,7 @@ export class Customer extends Character {
     const g = this.game;
     let total = 0;
     for (const e of this.stack.splice(0)) {
-      total += PRODUCTS[e.product].price;
+      total += g.priceOf(e.product);
       e.mesh.removeFromParent();
       g.stats.sold++;
       g.campaign.onSold(e.product);
@@ -586,33 +586,71 @@ export class Manager extends Character {
     this.position.set(x, 0, z);
     this.home = [x, z];
     this.root.add(workerBadge('💼'));
+    // Ayağının altında hafif kırmızı halka: "bu bölümü yönetiyor"
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.75, 0.95, 32),
+      new THREE.MeshBasicMaterial({ color: 0xe03131, transparent: true, opacity: 0.45, depthWrite: false }),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.05;
+    this.root.add(ring);
     game.scene.add(this.root);
     this.state = 'idle';
     this.timer = 0;
+    this.stay = 0;
+    this.zone = zoneOf(x, z);
+    this.lastZones = [];
+  }
+
+  /** Gezilecek bölümler (açık olanlar) ve içlerindeki duruş noktaları. */
+  stops() {
+    const g = this.game;
+    const out = [{ zone: 'room1', pos: [0, -3.8] }, { zone: 'depot', pos: [-2, -18.5] }];
+    if (g.unlocked.has('expansion')) out.push({ zone: 'room2', pos: [19, -3.8] });
+    if (g.unlocked.has('room3')) out.push({ zone: 'room3', pos: [-19, -3.8] });
+    if (g.online?.built) out.push({ zone: 'online', pos: [20, -20.5] });
+    return out;
   }
 
   update(dt) {
     this.timer += dt;
-    if (this.state === 'idle' && this.timer > 1) {
+    this.zone = zoneOf(this.position.x, this.position.z);
+    if (this.state === 'idle' && this.timer > 0.6) {
       this.timer = 0;
-      const piles = this.game.checkouts.map((c) => c.cash).filter((c) => c.value >= 15);
+      // Önce kasadaki para (büyük yığın ya da aynı bölümdeki yığın)
+      const piles = this.game.checkouts.map((c) => c.cash).filter((c) => c.value >= MANAGER.cashMin);
       piles.sort((a, b) => b.value - a.value);
-      const pile = piles[0];
+      const pile = piles.find((p) => p.value >= 60 || zoneOf(p.x, p.z) === this.zone);
       if (pile) {
         this.state = 'going';
         this.goTo(pile.x + 1.1, pile.z + 0.4, () => {
           pile.collect(this);
           this.state = 'idle';
         });
+      } else if (this.stay > 0) {
+        this.stay -= 0.6; // bölümde bekle, çalışanları izle
       } else {
-        const d = Math.hypot(this.position.x - this.home[0], this.position.z - this.home[1]);
-        if (d > 0.5 && !this.path) this.goTo(this.home[0], this.home[1]);
+        // En çok çalışanın olduğu, yakında uğranmamış bölüme git
+        const count = (z) => this.game.workers.filter((w) => w !== this && zoneOf(w.position.x, w.position.z) === z).length;
+        const stops = this.stops().filter((s) => !this.lastZones.includes(s.zone) || this.stops().length <= 1);
+        stops.sort((a, b) => count(b.zone) - count(a.zone) + (Math.random() - 0.5));
+        const next = stops[0] ?? this.stops()[0];
+        this.lastZones = [next.zone, ...this.lastZones].slice(0, Math.max(1, this.stops().length - 2));
+        this.state = 'going';
+        const jx = next.pos[0] + (Math.random() - 0.5) * 4;
+        const jz = next.pos[1] + (Math.random() - 0.5) * 1.5;
+        this.goTo(jx, jz, () => {
+          this.state = 'idle';
+          this.stay = MANAGER.stay;
+          this.play('Interact');
+        });
       }
     }
     this.followPath(dt);
     super.update(dt);
   }
 }
+
 
 // ---- Güvenlik görevlisi: kapıdan kaçan hırsızı yakalar --------------------------------------
 

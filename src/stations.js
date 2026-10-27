@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
 import { makeCrate, CRATE_HEIGHT } from './character.js';
-import { PRODUCTS, SHELF_STAGES } from './config.js';
+import { PRODUCTS, SHELF_STAGES, MANAGER, zoneOf } from './config.js';
 import { makeBill, textTexture } from './fx.js';
 
 // ---- Zemin işaretleri --------------------------------------------------------
@@ -496,14 +496,15 @@ export class Checkout {
     }
     this.timer += dt;
     // Kasiyer başına 0.45 sn; iki kasiyer iki kat hızlı, oyuncu da yardım ederse daha da hızlı
-    let rate = this.cashiers.length / 0.45 + (playerHere ? 1 / 0.3 : 0);
+    const boost = this.game.managerZones?.has(zoneOf(this.x, this.z)) ? MANAGER.boost : 1;
+    let rate = (this.cashiers.length / 0.45) * boost + (playerHere ? 1 / 0.3 : 0);
     const interval = 1 / rate;
     if (this.timer < interval) return;
     this.timer = 0;
     // Müşterinin kasalarını tek tek tezgaha al
     const e = front.take();
     if (e) {
-      const price = PRODUCTS[e.product].price;
+      const price = this.game.priceOf(e.product);
       this.game.fx.fly(e.mesh, this.counterTop, new THREE.Vector3(0, 0, 0), {
         duration: 0.2,
         arc: 0.6,

@@ -1,6 +1,6 @@
 import { Character } from './character.js';
 import { workerBadge } from './actors.js';
-import { PRODUCTS, SPECIALS, STAFF_ROLE, WAGES, ACCOUNTANT_TIERS, CAMPAIGN } from './config.js';
+import { PRODUCTS, SPECIALS, STAFF_ROLE, WAGES, ACCOUNTANT_TIERS, CAMPAIGN, AD_TYPES, CAMPAIGN_PROMO } from './config.js';
 
 // Market muhasebecisi (mavi şapka): marketin işlerini takip eder. Her yetki muhasebe odasındaki
 // 🧑‍💼 sekmesinden açılıp kapatılır:
@@ -15,7 +15,8 @@ const INVEST_TYPES = new Set(['shelf', 'shelfStage', 'stockerCap', 'checkout', '
 /** Bu alan bir çalışan mı işe alıyor? */
 function isStaffPad(def) {
   if (def.type === 'ads') return def.target === 'advertiser';
-  return def.type in STAFF_ROLE && def.type !== 'accountant';
+  // Online bölümünün personeli ayrı yetkiyle (online) alınır
+  return def.type in STAFF_ROLE && def.type !== 'accountant' && !def.type.startsWith('online');
 }
 
 export class MarketAccountant extends Character {
@@ -25,7 +26,7 @@ export class MarketAccountant extends Character {
     this.heading = Math.PI; // masaya bak
     this.root.rotation.y = this.heading;
     game.scene.add(this.root);
-    this.settings = { order: true, campaign: true, invest: true, hire: false, credit: true };
+    this.settings = { order: true, campaign: true, invest: true, hire: false, credit: true, ads: false, adChannel: 'auto', online: false };
     this.tier = 'junior';
     this.log = [];
     this.timer = 2;
@@ -93,6 +94,9 @@ export class MarketAccountant extends Character {
       this.timer = 4;
       if (this.settings.order) this.manageOrders();
       if (this.settings.campaign) this.manageCampaign();
+      if (this.settings.campaign) this.managePromo();
+      if (this.settings.ads) this.manageAds();
+      if (this.settings.online) this.manageOnline();
       if (this.settings.invest) this.manageInvestments();
       if (this.settings.hire) this.manageHiring();
     }
@@ -123,6 +127,68 @@ export class MarketAccountant extends Character {
       count += qty;
     }
     if (count && depot.order(items)) this.note(`🚚 ${count} kasa sipariş ($${total})`);
+  }
+
+  // ---- Reklam: akşam yarın için, seçilen kanaldan bütçe yettikçe ----
+
+  manageAds() {
+    const g = this.game;
+    const a = g.ads;
+    if (g.day.hour < 19 || this.adsDay === g.day.day) return;
+    this.adsDay = g.day.day;
+    const spare = g.money - this.reserve;
+    const open = Object.keys(AD_TYPES).filter((k) => g.level >= AD_TYPES[k].level && !a.has(k));
+    let pick = null;
+    if (this.settings.adChannel === 'auto') {
+      // Bütçenin dörtte birine sığan en güçlü kanal
+      pick = open.filter((k) => a.cost(k) <= spare * 0.25).sort((x, y) => a.cost(y) - a.cost(x))[0];
+    } else if (open.includes(this.settings.adChannel) && a.cost(this.settings.adChannel) <= spare * 0.5) {
+      pick = this.settings.adChannel;
+    }
+    if (!pick) {
+      this.note(`📣 Reklam verilmedi: bütçe yetmedi (yedek $${this.reserve})`);
+      return;
+    }
+    if (a.buy(pick)) this.note(`📣 Yarın için ${AD_TYPES[pick].emoji} ${AD_TYPES[pick].name} ($${a.cost(pick)})`);
+  }
+
+  // ---- Online sipariş: bölümü açar, bütçe yettikçe personel alır ----
+
+  manageOnline() {
+    const g = this.game;
+    const spare = g.money - this.reserve * 1.5;
+    if (spare <= 0) return;
+    const open = g.pads.get('online');
+    if (open && !open.locked) {
+      if (open.remaining <= spare * 0.6) this.buyPad(open, '🌐');
+      return;
+    }
+    if (!g.online.built) return;
+    // Önce çalışması için gereken üç kişi, sonra sıradaki toplayıcı/kurye
+    const order = ['onlineDeputy', 'onlinePicker', 'onlineCourier'];
+    const pads = [...g.pads.values()].filter((p) => !p.locked && p.def.type.startsWith('online') && p.def.type !== 'online' && p.remaining <= spare * 0.5);
+    pads.sort((a, b) => order.indexOf(a.def.type) - order.indexOf(b.def.type) || a.def.level - b.def.level);
+    const pad = pads[0];
+    if (!pad) return;
+    const wage = WAGES[STAFF_ROLE[pad.def.type]] ?? 50;
+    // Tecrübeli: online çalışıyorsa yeni maaşı kazanç karşılamıyorsa almaz
+    if (this.expert && g.online.operating && this.avgIncome < (g.dailyPayroll + wage) * 1.5) return;
+    this.buyPad(pad, '🌐');
+  }
+
+  // ---- Kampanya ek promosyonu: öğleden sonra satış yavaşsa %25 indirim ----
+
+  managePromo() {
+    const g = this.game;
+    const c = g.campaign;
+    if (!c.active.length || g.day.hour < CAMPAIGN_PROMO.autoHour) return;
+    for (const a of c.active) {
+      // Tecrübeli daha erken ve isabetli karar verir; stajyer ancak çok yavaşsa
+      const limit = this.expert ? 0.2 : 0.35;
+      if (c.canPromo(a) && c.projectedLeft(a) > a.qty * limit && c.startPromo(a.product, 'accountant')) {
+        this.note(`🏷️ ${PRODUCTS[a.product].emoji} kampanyası yavaştı: %25 ek indirim (${c.leftOf(a)} kasa kalmıştı)`);
+      }
+    }
   }
 
   // ---- Kampanya: akşam yarının kampanyalarına karar ver ----

@@ -100,6 +100,7 @@ export class DayCycle {
     // Game Center liderlik tabloları
     platform.score(LEADERBOARDS.companyValue, g.finance.companyValue);
     platform.score(LEADERBOARDS.customers, g.stats.customers ?? 0);
+    g.online.endOfDay(this.today);        // online: market satışı referans alınır
     g.holding.endOfDay(this.today);
     g.accountant?.endOfDay();
     g.bank.endOfDay(this.today);

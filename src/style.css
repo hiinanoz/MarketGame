@@ -479,3 +479,40 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .ach-list div { display: flex; gap: 8px; align-items: center; background: #ece6d8; border-radius: 10px; padding: 6px 10px; font-weight: 700; opacity: 0.55; font-size: 14px; }
 .ach-list div.on { opacity: 1; background: #e3f2dc; }
 .panel button.danger { background: #c0392b; color: #fff; }
+
+/* Ayarlar: çoklu seçim düğmeleri */
+.seg { display: inline-flex; background: #ece6d8; border-radius: 12px; padding: 3px; gap: 2px; }
+.panel .seg button { padding: 6px 10px; font-size: 14px; border-radius: 9px; background: transparent; color: var(--ink); }
+.panel .seg button.on { background: #3fae49; color: #fff; }
+#speed-btn.speed { font-size: 15px; font-weight: 900; color: #fff; }
+#sim-bar { height: 100%; width: 0; background: #3fae49; border-radius: inherit; transition: width 0.1s; }
+
+/* Seviye kutlaması */
+.overlay.lvl-pop { background: radial-gradient(circle at 50% 40%, rgba(255, 220, 90, 0.55), rgba(20, 60, 30, 0.75)); overflow: hidden; }
+.lvl-card { align-items: center; text-align: center; animation: lvl-in 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; position: relative; z-index: 2; }
+.lvlup-badge { width: 110px; height: 110px; margin-top: -70px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe680, #f5b400 60%, #d48a00); border: 6px solid #fff; box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2), 0 0 0 10px rgba(255, 224, 102, 0.35); display: grid; place-items: center; animation: lvl-spin 0.9s ease-out both; }
+.lvlup-badge span { font-size: 46px; font-weight: 900; color: #fff; text-shadow: 0 3px 0 rgba(150, 90, 0, 0.6); }
+.lvl-card h2 { font-size: 30px; color: #2d6b35; }
+.lvl-sub { margin: -6px 0 2px; font-weight: 700; opacity: 0.7; }
+.lvl-list { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; }
+.lvl-list b { font-size: 14px; opacity: 0.6; }
+.lvl-list span { background: #e3f2dc; border-radius: 10px; padding: 6px 10px; font-weight: 700; font-size: 15px; }
+.lvl-card button { width: 100%; }
+.confetti { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: confetti-fall linear both; }
+@keyframes confetti-fall { to { transform: translate(var(--dx), 110vh) rotate(var(--rot)); } }
+@keyframes lvl-in { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes lvl-spin { from { transform: scale(0) rotate(-200deg); } 70% { transform: scale(1.15) rotate(10deg); } to { transform: scale(1) rotate(0); } }
+.promo-on { font-weight: 800; color: #c0392b; white-space: nowrap; }
+.camp-plan .muted { opacity: 0.55; font-size: 13px; white-space: nowrap; }
+.camp-plan button.warn { background: #ffb020; color: #3a2400; }
+.sale-row small { display: block; font-weight: 600; opacity: 0.75; }
+.neg { color: #c0392b; }
+.camp-plan { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #f3eee2; border-radius: 12px; padding: 8px 10px; font-size: 14px; }
+.camp-plan > span { flex: 1; min-width: 0; }
+.camp-plan button { padding: 8px 10px; font-size: 14px; flex: 0 0 auto; }
+.sub-set { padding-left: 18px; }
+.sub-set.off { opacity: 0.45; }
+.sub-set select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 10px; border: 2px solid #e0d8c6; background: #fff; max-width: 60%; }
+.online-bar { height: 10px; border-radius: 5px; background: #e5dccb; overflow: hidden; }
+.online-bar i { display: block; height: 100%; background: #2a7fd4; }

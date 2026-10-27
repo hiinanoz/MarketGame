@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
-import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS } from './config.js';
+import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Muhasebe odası: mağazanın arka sağ köşesi. İçeri girince Sipariş / Banka / Kampanya paneli açılır.
@@ -116,7 +116,11 @@ class OfficePanel {
     });
     document.getElementById('acc-sec').addEventListener('change', (e) => {
       const k = e.target.dataset.set;
-      if (k && this.game.accountant) this.game.accountant.settings[k] = e.target.checked;
+      if (k && this.game.accountant) {
+        this.game.accountant.settings[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+        this.game.save();
+        if (k === 'ads') this.renderAccountant();
+      }
     });
   }
 
@@ -183,7 +187,13 @@ class OfficePanel {
       </div>
       <p class="note"><b>Yetkiler</b> — kapattığın işi sen yaparsın.</p>
       ${t('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
-      ${t('campaign', '📢 Kampanya seçimi', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar')}
+      ${t('campaign', '📢 Kampanya seçimi', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar')}
+      ${t('online', '🌐 Online sipariş', `Sv.${25}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır`)}
+      ${t('ads', '📣 Reklam', 'Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)')}
+      <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>Reklam kanalı</span><select data-set="adChannel">
+        <option value="auto" ${a.settings.adChannel === 'auto' ? 'selected' : ''}>Otomatik (bütçeye göre)</option>
+        ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (Sv.${ad.level})` : ` · $${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
+      </select></label>
       ${t('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
       ${t('hire', '👥 Personel alımı', 'Kasiyer, taşıyıcı, temizlikçi, güvenlik… işe alır')}
       ${t('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
@@ -273,7 +283,20 @@ class OfficePanel {
       return;
     }
     if (c.active.length) {
-      parts.push(`<p class="note">Bugün: ${c.active.map((a) => `${PRODUCTS[a.product].emoji} ${a.sold}/${a.qty}`).join(' · ')} satıldı.</p>`);
+      // Bugünkü kampanyalar: satış durumu ve 12:00 sonrası ek promosyon
+      const pct = Math.round((1 - CAMPAIGN_PROMO.price) * 100);
+      const rows = c.active.map((a) => {
+        const p = PRODUCTS[a.product];
+        const left = c.leftOf(a);
+        const slow = c.projectedLeft(a) > a.qty * 0.2;
+        let action;
+        if (a.promo) action = `<span class="promo-on">🏷️ −%${pct} indirimde</span>`;
+        else if (a.ended || left <= 0) action = '<span>bitti ✅</span>';
+        else if (this.game.day.hour < CAMPAIGN_PROMO.fromHour) action = `<span class="muted">🏷️ ek promosyon 12:00'de</span>`;
+        else action = `<button data-promo="${a.product}" class="${slow ? 'warn' : ''}">🏷️ −%${pct} ek indirim</button>`;
+        return `<div class="camp-plan"><span>${p.emoji} <b>${a.sold}/${a.qty}</b> satıldı · ${left} kaldı${slow && !a.promo ? ' · <b class="neg">yavaş</b>' : ''}</span>${action}</div>`;
+      }).join('');
+      parts.push(`<p class="note"><b>Bugünkü kampanyalar</b> — satılmayan ürüne 12:00'den sonra %${pct} ek indirim yapılabilir; kalan stok kadar ek müşteri gelir.</p>${rows}`);
     }
     // Yarın için planlananlar
     for (const sch of c.scheduled) {
@@ -322,13 +345,20 @@ class OfficePanel {
       return `<button data-ad="${k}" ${done || g.money < a.cost(k) ? 'disabled' : ''}>${t.emoji} ${t.name}<br><small>${done ? 'verildi' : `$${formatMoney(a.cost(k))} · +%${Math.round(t.boost * 100)}`}</small></button>`;
     }).join('');
     const today = a.todayList;
+    const S = SALE_DAY;
+    const sale = g.level < S.level ? ''
+      : `<div class="camp-plan sale-row"><span>🏷️ <b>İndirim günü</b><small>Yarın tüm fiyatlar −%${Math.round((1 - S.price) * 100)}, müşteri +%${Math.round(S.boost * 100)}${a.saleToday ? ' · <b>bugün indirim günü</b>' : ''}</small></span>
+        ${a.saleAnnounced ? '<span class="promo-on">yarın ✅</span>' : '<button data-sale>İlan et</button>'}</div>`;
     return `<p class="note">📣 <b>Reklam ver</b> (${tomorrow ? 'yarın için' : 'bugün için'})${a.mediaOwned ? ' · 📰 medya senin: reklamlar %60 ucuz, müşteri +%15' : ''}${today.length ? ` · bugün yayında: ${today.map((t) => t.emoji).join(' ')}` : ''}</p>
-      <div class="ad-btns">${btns}</div>`;
+      <div class="ad-btns">${btns}</div>${sale}`;
   }
 
   onCampaign(e) {
     const ad = e.target.closest('[data-ad]');
     if (ad && !ad.disabled) this.game.ads.buy(ad.dataset.ad);
+    if (e.target.closest('[data-sale]')) this.game.ads.announceSale();
+    const promo = e.target.closest('[data-promo]');
+    if (promo) this.game.campaign.startPromo(promo.dataset.promo);
     const pick = e.target.closest('[data-pick]');
     if (pick) this.campaignPick = pick.dataset.pick;
     const q = e.target.closest('[data-q]');

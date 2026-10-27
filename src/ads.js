@@ -1,4 +1,4 @@
-import { AD_TYPES, MEDIA, MUNICIPALITY } from './config.js';
+import { AD_TYPES, MEDIA, MUNICIPALITY, SALE_DAY } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Reklam: istediğin gün ücretini ödeyip reklam verirsin (o gün açıksa hemen, kapalıysa ertesi gün).
@@ -9,6 +9,30 @@ export class Ads {
   constructor(game) {
     this.game = game;
     this.bought = []; // { type, day }
+    this.saleDays = []; // indirim günü ilan edilen günler
+  }
+
+  /** Bugün indirim günü mü? */
+  get saleToday() {
+    return this.saleDays.includes(this.game.day.day);
+  }
+
+  /** İndirim günü her zaman ertesi gün için ilan edilir. */
+  get saleTarget() {
+    return this.game.day.day + 1;
+  }
+
+  get saleAnnounced() {
+    return this.saleDays.includes(this.saleTarget);
+  }
+
+  announceSale() {
+    const g = this.game;
+    if (g.level < SALE_DAY.level || this.saleAnnounced) return false;
+    this.saleDays.push(this.saleTarget);
+    g.hud.toast(`🏷️ İndirim günü ilan edildi: yarın fiyatlar −%${Math.round((1 - SALE_DAY.price) * 100)}, müşteri +%${Math.round(SALE_DAY.boost * 100)}`);
+    g.save();
+    return true;
   }
 
   get mediaOwned() {
@@ -47,6 +71,7 @@ export class Ads {
     const day = this.game.day.day;
     let f = 1;
     for (const b of this.bought) if (b.day === day) f += AD_TYPES[b.type].boost;
+    if (this.saleToday) f += SALE_DAY.boost;
     if (this.mediaOwned) f *= MEDIA.salesBoost;
     return f;
   }
@@ -60,6 +85,8 @@ export class Ads {
   startDay() {
     const g = this.game;
     this.bought = this.bought.filter((b) => b.day >= g.day.day);
+    this.saleDays = this.saleDays.filter((d) => d >= g.day.day);
+    if (this.saleToday) g.hud.toast(`🏷️ Bugün indirim günü! Fiyatlar −%${Math.round((1 - SALE_DAY.price) * 100)}, müşteri +%${Math.round(SALE_DAY.boost * 100)}`);
     const count = g.holding.owned.length;
     if (g.isMayor || count < MUNICIPALITY.minBusinesses) return;
     if (Math.random() >= MUNICIPALITY.chance) return;
@@ -75,10 +102,11 @@ export class Ads {
   }
 
   serialize() {
-    return { bought: this.bought };
+    return { bought: this.bought, saleDays: this.saleDays };
   }
 
   restore(d) {
     this.bought = d?.bought ?? [];
+    this.saleDays = d?.saleDays ?? [];
   }
 }

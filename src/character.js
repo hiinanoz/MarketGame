@@ -177,6 +177,38 @@ export class Character {
     this.onArrive = null;
   }
 
+  /** Müdür bonusu: başının üstünde küçük ⚡ (çalışanlar). */
+  setBoost(on) {
+    if (on === !!this.boostOn) return;
+    this.boostOn = on;
+    if (on && !this.boostSprite) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 64;
+      const ctx = c.getContext('2d');
+      // Turuncu daire + beyaz şimşek (emoji yazı tipine bağlı kalmasın)
+      ctx.fillStyle = '#ff8a00';
+      ctx.beginPath();
+      ctx.arc(32, 32, 29, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      [[36, 10], [18, 36], [30, 36], [26, 54], [46, 26], [34, 26]].forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath();
+      ctx.fill();
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      this.boostSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+      this.boostSprite.scale.setScalar(0.46);
+      this.boostSprite.position.set(0.4, 2.45, 0);
+      this.boostSprite.renderOrder = 6;
+      this.root.add(this.boostSprite);
+    }
+    if (this.boostSprite) this.boostSprite.visible = on;
+  }
+
   /** Yol takibi; her karede çağrılır. */
   followPath(dt) {
     if (!this.path || this.path.length === 0) {

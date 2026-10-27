@@ -25,7 +25,7 @@
       <button id="map-btn" class="round" aria-label="Harita">🗺️</button>
       <button id="zoom-btn" class="round" aria-label="Yakınlaş / uzaklaş">🔍</button>
       <button id="holding-btn" class="round hidden" aria-label="Holding">💼</button>
-      <button id="speed-btn" class="round" aria-label="Zamanı hızlandır">⏩</button>
+      <button id="speed-btn" class="round speed" aria-label="Oyun hızı">1×</button>
     </div>
     <div id="holding" class="overlay hidden">
       <div class="panel holding">
@@ -92,6 +92,17 @@
     </div>
     <button id="skip-night" class="skip hidden">Sabahı bekleme ☀️</button>
     <div id="levelup" class="toast levelup hidden"></div>
+    <div id="lvl-pop" class="overlay lvl-pop hidden">
+      <div class="confetti" id="confetti"></div>
+      <div class="panel lvl-card">
+        <div class="lvlup-badge"><span id="lvl-num">2</span></div>
+        <h2>Tebrikler!</h2>
+        <p id="lvl-sub" class="lvl-sub"></p>
+        <div id="lvl-list" class="lvl-list"></div>
+        <button id="lvl-ok" class="primary">Harika! 🎉</button>
+      </div>
+    </div>
+    <div id="sim-day" class="overlay hidden"><div class="panel"><h2>⏭️ Gün tamamlanıyor</h2><div class="bar"><div id="sim-bar"></div></div><p class="note" id="sim-note">Çalışanların gün boyu çalışıyor…</p></div></div>
 
     <div id="menu" class="overlay hidden">
       <div class="panel">
@@ -99,11 +110,13 @@
         <p class="menu-paused" id="menu-paused">⏸️ Oyun duraklatıldı</p>
         <label class="row"><span>Ses efektleri</span><input id="opt-sound" type="checkbox" checked /></label>
         <label class="row"><span>Müzik</span><input id="opt-music" type="checkbox" checked /></label>
-        <label class="row"><span>Günü hızlandır (2×)</span><input id="opt-speed" type="checkbox" /></label>
+        <div class="row"><span>Oyun hızı</span><span class="seg" id="opt-speed"><button data-v="1">1×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button></span></div>
+        <div class="row"><span>Görüş açısı</span><span class="seg" id="opt-cam"><button data-v="steep">Dik</button><button data-v="normal">Normal</button><button data-v="low">Yatay</button></span></div>
         <label class="row"><span>Menü açıkken arka planda devam et</span><input id="opt-bg" type="checkbox" /></label>
         <label class="name-field">Marketin adı
           <span class="name-row"><input id="menu-name" maxlength="20" autocomplete="off" /><button id="menu-name-save">Kaydet</button></span>
         </label>
+        <button id="finish-day">⏭️ Günü tamamla</button>
         <button id="reset-btn" class="danger">Oyunu sıfırla</button>
         <button id="close-menu" class="primary">Devam et</button>
         <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0), Kenney (MIT)</p>

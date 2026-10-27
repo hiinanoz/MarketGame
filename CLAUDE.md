@@ -19,3 +19,8 @@
 - Final: `src/city.js` (şehir mülkleri, pazarlık, bitiş, final ekranı, derece; `CITY`). Sv.100 sadece `city.checkFinish()` ile; `gainXp` Sv.99'da durur. Yaşayan şehir: `src/life.js` (kasabalılar kaldırım şeritlerinde yürür, büyüme süsleri; `LIFE`).
 - Ayarlar `game.options` (localStorage `marketgame-options`): ses, müzik (`src/music.js`), 2× hız (`main.js` döngüsü), menüde arka planda devam (`game.running`). Muhasebeci tecrübesi `ACCOUNTANT_TIERS`, kampanyanın ek müşterisi hazırlıkta belirlenir (`campaign.rollExtra`).
 - Şapka renkleri: işçi `cap: 'yellow'`, müdür `'red'`, muhasebeci `'blue'`.
+- Online sipariş (Sv.25+): `src/online.js`, ayarlar `ONLINE` (alan x 12..28, z −28..−16; depo kapısı `dr-22`, salon 2 geçişi `wb2_26`, `world.openWallAt`). Roller `deputy`/`picker`/`courier`; 10 kişide online ciro ≈ market (`share`). Muhasebeci yetkisi `settings.online`.
+- Market müdürü bölümleri gezer (`zoneOf`, `MANAGER.boost`): aynı bölümdeki çalışanlar `dt × boost` ile güncellenir, kasiyer hızı da artar; ⚡ rozeti `Character.setBoost`.
+- İşletmelerde muhasebeci yok: müdür tam hız + fazla satış + bağımsız büyüme yapar (`Business.accountant` getter eski kayıtlar için).
+- Fiyat her zaman `game.priceOf(product)` ile (indirim günü `SALE_DAY`, kampanya ek promosyonu `CAMPAIGN_PROMO`).
+- Ayarlar: `options.speed` (1/1.5/2), `options.cam` (steep/normal/low → `CAM_ANGLES`). Menü "Günü tamamla" → `game.finishDay()` (`game.simulating` sırasında alan ödemesi yok). Seviye atlama: `hud.showLevelPop` (oyunu durdurur).

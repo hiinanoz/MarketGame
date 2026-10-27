@@ -323,6 +323,19 @@ export class World {
     return m;
   }
 
+  /** Bir duvar parçasını kaldır (kapı aç): görünmez olur, yol bulmada engel olmaktan çıkar. */
+  openWallAt(x, z, navId) {
+    this.openedWalls ??= new Set();
+    this.openedWalls.add(navId);
+    for (const parent of [this.game.scene, this.room2, this.room3]) {
+      for (const o of parent.children) {
+        if (Math.abs(o.position.x - x) < 0.05 && Math.abs(o.position.z - z) < 0.05 && o.position.y === 0 && o !== this.room2 && o !== this.room3) o.visible = false;
+      }
+    }
+    this.game.nav.boxes.delete(navId);
+    this.game.nav.rebuild();
+  }
+
   addWall(name, x, z, rotY, parent, navId, yScale = 1) {
     const w = prop(name);
     w.position.set(x, 0, z);
@@ -389,6 +402,7 @@ export class World {
     }
     for (const w of this.room2Walls) {
       if (this.door2Open && this.door2Walls.some((d) => d.id === w.id)) continue;
+      if (this.openedWalls?.has(w.id)) continue;
       nav.boxes.set(w.id, w.box);
     }
     nav.rebuild();

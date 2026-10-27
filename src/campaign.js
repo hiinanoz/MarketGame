@@ -3,7 +3,7 @@ import { Shelf, QUEUE_COLS, QUEUE_ROWS, QUEUE_DX, QUEUE_DZ } from './stations.js
 import { Customer, workerBadge } from './actors.js';
 import { Character } from './character.js';
 import { CHARACTER_NAMES } from './assets.js';
-import { PRODUCTS, CAMPAIGN, DOOR_X } from './config.js';
+import { PRODUCTS, CAMPAIGN, DOOR_X, DAY, CAMPAIGN_PROMO } from './config.js';
 
 // Kampanyalar: bir gün önceden hazırlanır (ürün + stok seçilir, ücret ödenir). Aynı anda en fazla 3.
 // Kampanya günü: her kampanyanın mağaza önünde kendi standı ve yanında stok paleti olur,
@@ -272,6 +272,44 @@ export class Campaign {
       r.staff = a.staff;
     }
     this.active = [];
+  }
+
+  /** Bu ürünün kampanyasında ek promosyon (%25 indirim) var mı? */
+  promoActive(product) {
+    return this.active.some((a) => a.product === product && a.promo);
+  }
+
+  /** Kalan kampanya stoğu (palet + stand). */
+  leftOf(a) {
+    return (a.pallet?.stock ?? 0) + a.stand.count;
+  }
+
+  /** Satış hızı: gün sonuna kadar bu tempoyla kaç kasa kalır? */
+  projectedLeft(a) {
+    const d = this.game.day;
+    const frac = Math.max(0.05, d.t / DAY.length);
+    const pace = a.sold / frac; // tüm günde satılacak tahmini kasa
+    return Math.max(0, a.qty - pace);
+  }
+
+  canPromo(a) {
+    return !!a && !a.promo && !a.ended && this.game.day.isOpen && this.game.day.hour >= CAMPAIGN_PROMO.fromHour && this.leftOf(a) > 0;
+  }
+
+  /** 12:00 sonrası: satılmayan kampanya ürününe %25 ek indirim; kalan stok kadar ek müşteri gelir. */
+  startPromo(product, by = 'player') {
+    const a = this.active.find((x) => x.product === product);
+    if (!this.canPromo(a)) return false;
+    a.promo = true;
+    const left = this.leftOf(a);
+    // Gelmesi beklenen müşteriler (~2 kasa/kişi) stoğu eritmiyorsa fark kadar ek müşteri
+    const pending = Math.max(0, a.extra - a.spawned) * 2;
+    a.extra += Math.max(0, Math.ceil((left - pending) / 2));
+    a.timer = 0;
+    a.stand.setPromo?.(true);
+    const p = PRODUCTS[product];
+    this.game.hud.toast(`🏷️ ${by === 'accountant' ? 'Muhasebeci: ' : ''}${p.emoji} ${p.name} %${Math.round((1 - CAMPAIGN_PROMO.price) * 100)} ek indirimde — ${left} kasa kaldı`);
+    return true;
   }
 
   onSold(product) {

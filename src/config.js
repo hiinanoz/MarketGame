@@ -258,6 +258,48 @@ export const PRODUCERS = {
 export const WHOLESALER_DISCOUNT = 0.7;
 export const CRISIS = { fromLevel: 16, chance: 0.4, priceMult: 1.8, shortageLimit: 10 };
 
+// ---- Online sipariş (Sv.25+) ------------------------------------------------------------------
+// Salon 2'nin arkasındaki boş alan: müdür yardımcısının ofisi, toplayıcılar depodan ürün getirir,
+// kuryeler arka kapıdan arabayla dağıtır. Personel arttıkça online ciro market cirosuna yaklaşır.
+export const ONLINE = {
+  level: 25,
+  cost: 6000,
+  area: { minX: 12, maxX: 28, minZ: -28, maxZ: -16 },
+  desk: [14.5, -18.9],
+  deputySpot: [14.5, -17.5],
+  panel: [14.5, -21.2],          // müdür yardımcısının masası önü: online ayarları
+  rack: [20.5, -24],
+  pickerSpot: [18.9, -24],
+  courierSpot: [22.1, -24],
+  gateX: 26,                      // arka duvardaki kapı (kuryeler buradan çıkar)
+  carZ: -30.1,
+  carXs: [24.5, 19.5, 14.5, 29.5, 9.5],
+  padSpots: [[18.2, -18.6], [21.2, -18.6], [24.2, -18.6]],
+  rackCap: 60,
+  away: 13,                       // kuryenin teslimatta geçirdiği süre (sn)
+  fullStaff: 10,                  // bu kadar personelle online ciro ≈ market cirosu
+  minStaff: 3,
+  guards: [0.1, 0.25, 0.5],       // mağaza için palette bırakılan en az stok oranı
+  extras: ['onlinePicker', 'onlineCourier', 'onlinePicker', 'onlineCourier', 'onlinePicker', 'onlineCourier', 'onlineCourier'],
+};
+UNLOCKS.push(
+  { id: 'online', type: 'online', cost: ONLINE.cost, pos: [25.4, -13.4], level: ONLINE.level, requires: ['expansion'] },
+  { id: 'onlineDeputy', type: 'onlineDeputy', cost: 400, pos: ONLINE.padSpots[0], level: ONLINE.level, requires: ['online'] },
+  { id: 'onlinePicker1', type: 'onlinePicker', cost: 250, pos: ONLINE.padSpots[1], level: ONLINE.level, requires: ['online'] },
+  { id: 'onlineCourier1', type: 'onlineCourier', cost: 300, pos: ONLINE.padSpots[2], level: ONLINE.level, requires: ['online'] },
+);
+// Sv.26'dan itibaren her seviyede bir yeni online personel alanı (sırayla açılır)
+{
+  const n = { onlinePicker: 1, onlineCourier: 1 };
+  let prev = 'onlineCourier1';
+  ONLINE.extras.forEach((type, i) => {
+    n[type]++;
+    const id = `${type}${n[type]}`;
+    UNLOCKS.push({ id, type, cost: 0, pos: ONLINE.padSpots[i % 3], level: ONLINE.level + 1 + i, requires: [prev, 'onlineDeputy', 'onlinePicker1'] });
+    prev = id;
+  });
+}
+
 // Reyon kapasite yükseltmeleri her reyon için otomatik eklenir (2. aşama Sv.2, 3. aşama Sv.5).
 SHELVES.forEach((s, i) => {
   const shelfUnlock = i === 0 ? [] : [UNLOCKS.find((u) => u.type === 'shelf' && u.target === s.id).id];
@@ -290,6 +332,7 @@ export const BUSINESSES = {
   },
   bakery: {
     name: 'Altın Başak Fırını', emoji: '🥖', owner: 'Mehmet Usta', kind: 'hall',
+    moduleModel: { main: 'building_C_withoutBase', alt: 'building_C_withoutBase' },
     plot: { x: 23, w: 14 }, price: 8000, level: 26,
     lease: { weekly: 600, perModule: 250, buyLevel: 38, buyPrice: 30000 }, // kiralık: price = devir bedeli
     products: ['bun'],
@@ -298,6 +341,7 @@ export const BUSINESSES = {
   },
   meat: {
     name: 'Kasaba Et Tesisi', emoji: '🥩', owner: 'Kemal Bey', kind: 'hall',
+    moduleModel: { main: 'building_F_withoutBase', alt: 'building_F_withoutBase' },
     plot: { x: -34, w: 14 }, price: 10000, level: 28,
     lease: { weekly: 800, perModule: 300, buyLevel: 42, buyPrice: 40000 },
     products: ['ham', 'steak'],
@@ -322,7 +366,7 @@ export const BUSINESSES = {
     modules: [{ level: 33 }, { level: 34, cost: 30000 }, { level: 35, cost: 40000 }, { level: 40, cost: 55000 }, { level: 46, cost: 80000 }],
   },
   // ---- Market şubeleri (Sv.50+): rakip marketi satın al ya da kiralık dükkân tut ----
-  // Satın alınınca boş gelir: müdür, muhasebeci ve çalışanları sen atarsın.
+  // Satın alınınca boş gelir: müdürü ve çalışanları sen atarsın.
   branch1: {
     name: 'Köşe Bakkal', emoji: '🏪', owner: 'Bakkal Cemil', kind: 'shop', workerName: 'çalışan',
     plot: { x: 43.5, w: 6 }, building: { model: 'building-small-c', z: 7.5, scale: 6, labelY: 10.2 },
@@ -415,9 +459,9 @@ export const LOGISTICS = {
 };
 export const STAFF = {
   workersPerModule: 2,
-  wage: { worker: 50, manager: 65, accountant: 70 },  // günlük maaş (gün sonunda)
-  hire: { worker: 50, manager: 150, accountant: 150 }, // işe alım ücreti (ucuz)
-  levels: { manager: 25, accountant: 25 },               // tedarikçilere müdür/muhasebeci
+  wage: { worker: 50, manager: 95 },  // günlük maaş (gün sonunda); müdür eski muhasebecinin işini de yapar
+  hire: { worker: 50, manager: 200 }, // işe alım ücreti (ucuz)
+  levels: { manager: 25 },               // tedarikçilere müdür
   noManagerRate: 0.4,  // müdür yok ve oyuncu da orada değilken üretim hızı
   storage: 60,         // işletme deposu (kasa)
   surplusPrice: 0.9,   // fazlanın satış fiyatı (alış fiyatına oranla)
@@ -450,6 +494,17 @@ export const START_MONEY = 20;
 export const START_CAPACITY = 4;      // oyuncunun aynı anda taşıyabildiği kasa sayısı
 export const WORKER_CAPACITY = 4;
 
+// Market müdürü: bulunduğu bölümdeki (salon/depo) çalışanlar bu kadar hızlı çalışır
+export const MANAGER = { boost: 1.22, stay: 7, cashMin: 15 };
+/** Haritadaki bölüm: market salonları ve depo (müdür hız bonusu için). */
+export function zoneOf(x, z) {
+  if (z < -16) return x > 12 ? 'online' : 'depot';
+  if (x > 12) return 'room2';
+  if (x < -12) return 'room3';
+  return 'room1';
+}
+
+
 export const PLAYER_SPEED = 7.5;
 export const WORKER_SPEED = 5;
 export const CUSTOMER_SPEED = 3.6;
@@ -460,13 +515,15 @@ export const CUSTOMER_SPEED = 3.6;
 export const ROLE_NAMES = {
   cashier: '💳 Kasiyer', stocker: '📦 Taşıyıcı', cleaner: '🧹 Temizlikçi', manager: '🟥 Müdür', accountant: '🟦 Muhasebeci',
   guard: '🛡️ Güvenlik', advertiser: '📣 Reklamcı', valet: '🅿️ Otopark görevlisi',
+  deputy: '🧑‍💻 Müdür yardımcısı', picker: '🧺 Online toplayıcı', courier: '🛵 Kurye',
 };
 export const WAGES = {
   cashier: 50, stocker: 50, cleaner: 45, manager: 65, accountant: 70,
-  guard: 50, advertiser: 50, valet: 50, worker: 50,
+  guard: 50, advertiser: 50, valet: 50, worker: 50, deputy: 90, picker: 50, courier: 55,
 };
 export const HIRE_COST = {
   cashier: 60, stocker: 80, cleaner: 60, manager: 150, accountant: 150, valet: 100, security: 100, advertiser: 100,
+  onlineDeputy: 400, onlinePicker: 250, onlineCourier: 300,
 };
 for (const u of UNLOCKS) {
   if (u.type in HIRE_COST) u.cost = HIRE_COST[u.type];
@@ -476,10 +533,11 @@ for (const u of UNLOCKS) {
 export const STAFF_ROLE = {
   cashier: 'cashier', stocker: 'stocker', cleaner: 'cleaner', manager: 'manager', accountant: 'accountant',
   valet: 'valet', security: 'guard', ads: 'advertiser',
+  onlineDeputy: 'deputy', onlinePicker: 'picker', onlineCourier: 'courier',
 };
 // ---- Elektrik (Sv.30+) -----------------------------------------------------------------------
 // Günlük tüketim birim cinsinden (1 birim = şebeke fiyatıyla $1). Kendi santrallerin üretirse
-// fatura düşer; fazla üretim, santralde muhasebeci varsa şebekeye satılır.
+// fatura düşer; fazla üretim, santralde müdür varsa şebekeye satılır.
 export const ELECTRICITY = {
   fromLevel: 30,
   market: 60,        // market (1. salon + depo)
@@ -537,6 +595,10 @@ export const AD_TYPES = {
   radio: { name: 'Radyo reklamı', emoji: '📻', cost: 500, boost: 0.45, level: 12 },
   tv: { name: 'TV reklamı', emoji: '📺', cost: 1500, boost: 0.8, level: 25 },
 };
+// İndirim günü: ilan edilince ertesi gün fiyatlar %10 düşer, müşteri %30 artar
+export const SALE_DAY = { price: 0.9, boost: 0.3, level: 2 };
+// Kampanya ek promosyonu: 12:00'den sonra satılmayan kampanya ürününe %25 indirim
+export const CAMPAIGN_PROMO = { fromHour: 12, price: 0.75, autoHour: 14 };
 export const MEDIA = { adDiscount: 0.6, salesBoost: 1.15 }; // medya sende: reklam %60 ucuz, müşteri +%15
 
 // ---- Siyaset (Sv.51+) ------------------------------------------------------------------------

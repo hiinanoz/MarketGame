@@ -8,6 +8,7 @@ import { World } from './world.js';
 import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker, Cleaner, Manager, Guard, Advertiser, Valet } from './actors.js';
+import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
 import { Rating, DirtSystem } from './upkeep.js';
 import { Traffic } from './traffic.js';
 import { Supply, Producer } from './production.js';
@@ -20,6 +21,7 @@ import { Energy } from './energy.js';
 import { Rent } from './rent.js';
 import { Housing } from './housing.js';
 import { Ads } from './ads.js';
+import { Online } from './online.js';
 import { Politics } from './politics.js';
 import { Finance } from './finance.js';
 import { Music } from './music.js';
@@ -32,11 +34,14 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
+  DAY, DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
 const OLD_SAVE_KEY = 'marketgame-save-v1';
+
+// Kamera eğimi (yatayla açı, radyan). Normal ≈ 53°.
+const CAM_ANGLES = { steep: THREE.MathUtils.degToRad(66), normal: Math.atan2(0.8, 0.6), low: THREE.MathUtils.degToRad(40) };
 
 export class Game {
   constructor(container) {
@@ -69,8 +74,10 @@ export class Game {
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
     // Ayarlar (cihazda saklanır): ses, müzik, 2× hız, menüde arka planda devam
-    this.options = { sound: true, music: true, fast: false, background: false };
+    this.options = { sound: true, music: true, speed: 1, cam: 'normal', background: false };
     try { Object.assign(this.options, JSON.parse(localStorage.getItem('marketgame-options') || '{}')); } catch { /* yok */ }
+    if (this.options.fast) this.options.speed = 2; // eski ayar (aç/kapa 2×)
+    delete this.options.fast;
     this.audio.enabled = this.options.sound;
     this.music = new Music(this.audio);
     this.music.enabled = this.options.music;
@@ -104,6 +111,7 @@ export class Game {
     this.later = []; // oyun zamanıyla gecikmeli çağrılar
     this.depot = new Depot(this);
     this.office = new Office(this);
+    this.online = new Online(this);
     this.bank = new Bank(this);
     this.campaign = new Campaign(this);
     this.traffic = new Traffic(this);
@@ -177,9 +185,12 @@ export class Game {
         return this.shelves.find((s) => s.id === def.target).stagePadPos;
       case 'cashier': {
         const co = CHECKOUTS.find((c) => c.id === def.target);
-        return def.value === 2
+        const [x, z] = def.value === 2
           ? [co.cashierSpot[0] + 0.4, co.cashierSpot[1] + 3.0]   // 2. kasiyer alanı
           : [co.cashierSpot[0] + 0.3, co.cashierSpot[1] + 5.4];
+        // Kasa duvara yakınsa (sağ salon) alan duvarın altında kalmasın: salonun içine çek
+        const room = [ROOM3, ROOM2].find((r) => x > r.minX && x < r.maxX) ?? { minX: -12, maxX: 12 };
+        return [THREE.MathUtils.clamp(x, room.minX + 1.6, room.maxX - 1.6), z];
       }
       case 'checkout':
         return CHECKOUTS.find((c) => c.id === def.target).pos;
@@ -210,6 +221,10 @@ export class Game {
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
       case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
       case 'valet': return { title: 'Otopark görevlisi', emoji: '🦺' };
+      case 'online': return { title: 'Online sipariş', emoji: '🌐', size: 3.0 };
+      case 'onlineDeputy': return { title: 'Müdür yardımcısı', emoji: '🧑‍💻' };
+      case 'onlinePicker': return { title: 'Online toplayıcı', emoji: '🧺' };
+      case 'onlineCourier': return { title: 'Kurye', emoji: '🛵' };
       case 'accountant': return { title: 'Muhasebeci', emoji: '🧑‍💼' };
       case 'cashier': return { title: def.value === 2 ? '2. kasiyer' : 'Kasiyer', emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
       case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
@@ -306,6 +321,18 @@ export class Game {
         if (this.savedAccountant) this.accountant.restore(this.savedAccountant);
         if (!silent) this.hud.toast('🧑‍💼 Muhasebeci işe başladı — muhasebe odasından ayarla');
         break;
+      case 'online':
+        this.online.build(silent);
+        break;
+      case 'onlineDeputy':
+        this.workers.push(this.online.addDeputy());
+        break;
+      case 'onlinePicker':
+        this.workers.push(this.online.addPicker());
+        break;
+      case 'onlineCourier':
+        this.workers.push(this.online.addCourier());
+        break;
       case 'valet':
         this.traffic.lot.valet = true;
         this.workers.push(new Valet(this, VALET_SPOT[0], VALET_SPOT[1]));
@@ -374,6 +401,14 @@ export class Game {
 
   // ---- Ekonomi ---------------------------------------------------------------
 
+  /** Satış fiyatı: indirim günü ve kampanya ek promosyonu düşülür. */
+  priceOf(product) {
+    let f = this.ads.saleToday ? SALE_DAY.price : 1;
+    if (this.campaign.promoActive(product)) f *= CAMPAIGN_PROMO.price;
+    const base = PRODUCTS[product].price;
+    return f === 1 ? base : Math.max(1, Math.round(base * f));
+  }
+
   earn(amount, pos) {
     this.money += amount;
     this.day.today.revenue += amount;
@@ -403,6 +438,46 @@ export class Game {
   }
 
   // ---- Müşteriler ------------------------------------------------------------
+
+  /**
+   * Günü tamamla: günün kalanı arka arkaya simüle edilir (çalışanlar çalışır, sen beklersin),
+   * kapanış ve gün sonu özeti normal akıştaki gibi gelir. Ekran donmasın diye kare başına parça parça.
+   */
+  finishDay() {
+    if (this.simulating || this.day.phase === 'night') return;
+    const el = document.getElementById('sim-day');
+    const bar = document.getElementById('sim-bar');
+    const hasCashier = this.workers.some((w) => w.role === 'cashier');
+    document.getElementById('sim-note').textContent = hasCashier
+      ? 'Çalışanların gün boyu çalışıyor…'
+      : 'Kasiyerin yok: sen kasada olmadığın için bazı müşteriler ödeme yapamadan çıkabilir.';
+    el.classList.remove('hidden');
+    el.addEventListener('pointerdown', (e) => e.stopPropagation(), { once: true });
+    this.simulating = true;
+    const sound = this.audio.enabled;
+    this.audio.enabled = false;
+    const startT = this.day.t;
+    const step = 0.05;
+    const tick = () => {
+      const t0 = performance.now();
+      // Kare başına ~25 ms hesap: telefonda da akıcı kalsın
+      while (performance.now() - t0 < 25 && this.day.phase !== 'night') this.update(step);
+      const frac = this.day.phase === 'open' ? (this.day.t - startT) / Math.max(1, DAY.length - startT) : 1;
+      bar.style.width = `${Math.round(Math.min(1, frac) * 100)}%`;
+      if (this.day.phase !== 'night') return requestAnimationFrame(tick);
+      this.simulating = false;
+      this.audio.enabled = sound;
+      el.classList.add('hidden');
+      this.updateCamera(1);
+      // Simülasyonda seviye atladıysa kutlama özetten sonra
+      const lv = this.hud.pendingLevel;
+      if (lv) {
+        this.hud.pendingLevel = null;
+        this.hud.showLevelPop(lv.level, lv.features);
+      }
+    };
+    requestAnimationFrame(tick);
+  }
 
   saveOptions() {
     try { localStorage.setItem('marketgame-options', JSON.stringify(this.options)); } catch { /* gizli mod */ }
@@ -475,7 +550,7 @@ export class Game {
   /** Toplam çalışan: market + işletmeler + emlakçılar. */
   get totalStaff() {
     let n = this.workers.filter((w) => w.role).length;
-    for (const b of this.holding.owned) n += b.workers + (b.manager ? 1 : 0) + (b.accountant ? 1 : 0);
+    for (const b of this.holding.owned) n += b.workers + (b.manager ? 1 : 0);
     return n + this.housing.agents + (this.housing.accountant ? 1 : 0);
   }
 
@@ -555,6 +630,11 @@ export class Game {
         break;
       case 'advertiser':
         this.adBoost -= ADS.advertiser;
+        break;
+      case 'deputy':
+      case 'picker':
+      case 'courier':
+        this.online.remove(w);
         break;
     }
   }
@@ -718,13 +798,20 @@ export class Game {
     this.spawnTimer = Math.min(this.spawnTimer, interval * 1.3);
 
     for (const c of [...this.customers]) c.update(dt);
-    for (const w of this.workers) w.update(dt);
+    // Müdürün olduğu bölümdeki çalışanlar daha hızlı çalışır (hareket + iş süreleri)
+    this.managerZones = new Set(this.workers.filter((w) => w instanceof Manager && w.state !== 'going').map((w) => w.zone));
+    for (const w of this.workers) {
+      const boosted = !(w instanceof Manager) && this.managerZones.size > 0 && this.managerZones.has(zoneOf(w.position.x, w.position.z));
+      w.setBoost?.(boosted);
+      w.update(boosted ? dt * MANAGER.boost : dt);
+    }
     for (const co of this.checkouts) co.update(dt);
     this.depot.update(dt);
     this.office.update();
     this.campaign.update(dt);
     this.traffic.update(dt);
     this.holding.update(dt);
+    this.online.update(dt);
     this.housing.update(dt);
     this.politics.update(dt);
     this.city.update(dt);
@@ -755,8 +842,8 @@ export class Game {
       }
     }
 
-    // Satın alma alanları
-    for (const [id, pad] of this.pads) {
+    // Satın alma alanları (gün simülasyonunda oyuncu bir şey satın almaz)
+    if (!this.simulating) for (const [id, pad] of this.pads) {
       if (pad.update(dt, this.player)) {
         pad.dispose();
         this.pads.delete(id);
@@ -955,7 +1042,10 @@ export class Game {
       sc.left = -e; sc.right = e; sc.top = e; sc.bottom = -e; sc.far = 70 * Math.max(1, zm);
       sc.updateProjectionMatrix();
     }
-    const off = new THREE.Vector3(0, 0.8, 0.6).multiplyScalar(this.camDistance * zm);
+    // Görüş açısı ayarı: dik (yukarıdan) / normal / yatay (karakterlerin arkasından daha çok)
+    const ang = CAM_ANGLES[this.options.cam] ?? CAM_ANGLES.normal;
+    this.camPitch = (this.camPitch ?? ang) + (ang - (this.camPitch ?? ang)) * Math.min(1, dt * 5);
+    const off = new THREE.Vector3(0, Math.sin(this.camPitch), Math.cos(this.camPitch)).multiplyScalar(this.camDistance * zm);
     this.camera.position.copy(this.cameraTarget).add(off);
     this.camera.lookAt(this.cameraTarget.x, 0, this.cameraTarget.z - 1);
     this.sun.position.set(p.x + 9, 24 * Math.max(1, zm), p.z + 12);
@@ -986,6 +1076,7 @@ export class Game {
       campaign: this.campaign.serialize(),
       accountant: this.accountant?.serialize() ?? null,
       holding: this.holding.serialize(),
+      online: this.online.serialize(),
       energy: this.energy.serialize(),
       rent: this.rent.serialize(),
       housing: this.housing.serialize(),
@@ -1041,9 +1132,11 @@ export class Game {
     this.savedAccountant = data.accountant ?? null;
     // Bağımlılık sırasıyla uygula
     const ids = new Set(data.unlocked ?? []);
+    this.online.restore(data.online);
     for (const def of UNLOCKS) {
       if (ids.has(def.id)) this.applyUnlock(def, true);
     }
+    this.online.afterLoad();
     for (const s of this.shelves) s.fillStock(data.shelves?.[s.id] ?? 0);
     this.day.restore(data.day);
     this.supply.restore(data.supply);
