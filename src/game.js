@@ -215,35 +215,37 @@ export class Game {
   }
 
   padLabel(def) {
+    // İkinci reyonun ürün çeşidi adı
+    const SECOND_SHELF = { tomato: 'ithal', cheese: 'Gurme', lettuce: 'Yerli', bun: 'Ekşi Maya' };
     switch (def.type) {
       case 'shelf': {
         const sh = SHELVES.find((x) => x.id === def.target);
         const info = PRODUCTS[sh.product];
-        return { title: sh.id === sh.product ? info.name : `${info.name} 2`, emoji: info.emoji };
+        return { title: sh.id === sh.product ? info.name : `${info.name} (${SECOND_SHELF[sh.product] ?? '2'})`, emoji: info.emoji };
       }
       // Alan rafın arkasında kalıyor: üstünde yüzen tabela ile görünür olsun
       case 'shelfStage': return { title: `Raf ${[8, 16, 24][def.value]}`, emoji: '📶', size: 2.0, marker: `📶 Raf ${[8, 16, 24][def.value]}` };
-      case 'stockerCap': return { title: `Taşıyıcı ${def.value}`, emoji: '🛒' };
+      case 'stockerCap': return { title: `Reyon Görevlisi - ${def.value}`, emoji: '🛒' };
       case 'door': return { title: '2. kapı', emoji: '🚪' };
-      case 'depot': return { title: 'Depo 40', emoji: '🏭' };
-      case 'cleaner': return { title: 'Temizlikçi', emoji: '🧹' };
+      case 'depot': return { title: 'Depo Rafı Büyüt', emoji: '🏭' };
+      case 'cleaner': return { title: 'Temizlik Görevlisi', emoji: '🧹' };
       case 'manager': return { title: 'Müdür', emoji: '💼' };
-      case 'ads': return def.target === 'billboard' ? { title: 'Reklam panosu', emoji: '🪧' } : { title: 'Reklamcı', emoji: '📣' };
-      case 'security': return { title: 'Güvenlik', emoji: '👮' };
+      case 'ads': return def.target === 'billboard' ? { title: 'Reklam panosu', emoji: '🪧' } : { title: 'Reklam Personeli', emoji: '📣' };
+      case 'security': return { title: 'Güvenlik Görevlisi', emoji: '👮' };
       case 'roadboard': return { title: 'Reklam panosu +%5', emoji: '🪧' };
-      case 'wholesaler': return { title: 'Toptancıyı al', emoji: '🏢' };
+      case 'wholesaler': return { title: 'Toptancıyla Sözleşme Yap', emoji: '🏢' };
       case 'room3': return { title: '3. salon', emoji: '🏗️' };
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
       case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
-      case 'valet': return { title: 'Otopark görevlisi', emoji: '🦺' };
+      case 'valet': return { title: 'Otopark Görevlisi', emoji: '🦺' };
       case 'online': return { title: 'Online sipariş', emoji: '🌐', size: 3.0 };
       case 'onlineDeputy': return { title: 'Müdür yardımcısı', emoji: '🧑‍💻' };
-      case 'onlinePicker': return { title: 'Online toplayıcı', emoji: '🧺' };
+      case 'onlinePicker': return { title: 'Paket Hazırlama Görevlisi', emoji: '🧺' };
       case 'onlineCourier': return { title: 'Kurye', emoji: '🛵' };
       case 'accountant': return { title: 'Muhasebeci', emoji: '🧑‍💼' };
       case 'cashier': return { title: def.value === 2 ? '2. kasiyer' : 'Kasiyer', emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
-      case 'stocker': return { title: 'Taşıyıcı', emoji: '📦' };
-      case 'capacity': return { title: `Taşıma ${def.value}`, emoji: '💪' };
+      case 'stocker': return { title: def.id === 'stocker1' ? `Reyon Görevlisi - ${WORKER_CAPACITY}` : 'Reyon Görevlisi', emoji: '📦' };
+      case 'capacity': return { title: `Taşıma Kapasitesi ${def.value}`, emoji: '💪' };
       case 'expansion': return { title: 'Genişlet', emoji: '🏗️' };
       case 'checkout': return { title: 'Yeni kasa', emoji: '🛒' };
       default: return { title: def.id, emoji: '⭐' };

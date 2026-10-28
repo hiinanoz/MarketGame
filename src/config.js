@@ -283,7 +283,16 @@ export const GOALS = {
     { money: 0, gems: 8 }, { money: 800, gems: 6 }, { money: 1500, gems: 20 },
   ],
   // [müşteri sayısı, elmas]
-  milestones: [[100, 5], [500, 10], [1000, 15], [2500, 20], [5000, 30], [10000, 40], [25000, 60], [50000, 80], [100000, 120]],
+  // Müşteri kutlamaları: ilk eşikler sabit, sonra 10.000–50.000 arası her 5.000'de,
+  // 50.000–100.000 arası her 10.000'de, 100.000'den sonra her 25.000'de (sonsuz; goals.js → milestoneAt)
+  milestones: [[100, 5], [500, 10], [1000, 15], [2500, 20], [5000, 30], [10000, 40]],
+  milestoneBands: [
+    { upTo: 50000, step: 5000, gems: 5 },     // 15.000 → 💎45 … 50.000 → 💎80
+    { upTo: 100000, step: 10000, gems: 8 },   // 60.000 → 💎88 … 100.000 → 💎120
+    { upTo: Infinity, step: 25000, gems: 10 }, // 125.000 → 💎130 …
+  ],
+  // 7. günden sonra seri sürdükçe her gün +$100 ve +💎1 (10. gün: $1.800 + 💎23)
+  loginAfter: { money: 100, gems: 1 },
   partySeconds: 8,
   offlineMinMinutes: 3,
   offlineDaysPerRealDay: 5, // uygulama kapalıyken: 1 gerçek gün = en fazla 5 oyun günü (yavaş akar)
@@ -414,7 +423,7 @@ export const BUSINESSES = {
   },
   // ---- Enerji tepeleri (Sv.31+) ----
   solar: {
-    name: 'Güneşli Tepe Güneş Tarlası', emoji: '☀️', owner: 'Elif Hanım', kind: 'solar', workerName: 'teknisyen',
+    name: 'SANİ Güneş Tarlası', emoji: '☀️', owner: 'Sunay Hanım', kind: 'solar', workerName: 'teknisyen',
     plot: { x: -12, w: 22 }, frontZ: -100, price: 45000, level: 31,
     products: [], energy: 'solar', energyPerModule: 200, workersPerModule: 1,
     staffLevels: { manager: 32, accountant: 35 },
@@ -422,7 +431,7 @@ export const BUSINESSES = {
     modules: [{ level: 31 }, { level: 32, cost: 20000 }, { level: 33, cost: 28000 }, { level: 35, cost: 36000 }, { level: 48, cost: 60000 }],
   },
   wind: {
-    name: 'Rüzgârlı Sırt Rüzgâr Santrali', emoji: '🌬️', owner: 'Kaptan Nuri', kind: 'wind', workerName: 'teknisyen',
+    name: 'Üfürük Rüzgâr Santrali', emoji: '🌬️', owner: 'Hacı Nuri', kind: 'wind', workerName: 'teknisyen',
     plot: { x: 18, w: 22 }, frontZ: -100, price: 20000, level: 33,
     lease: { weekly: 1500, perModule: 500, buyLevel: 46, buyPrice: 70000 },
     products: [], energy: 'wind', energyPerModule: 320, workersPerModule: 1,
@@ -432,27 +441,27 @@ export const BUSINESSES = {
   // ---- Market şubeleri (Sv.50+): rakip marketi satın al ya da kiralık dükkân tut ----
   // Satın alınınca boş gelir: müdürü ve çalışanları sen atarsın.
   branch1: {
-    name: 'Köşe Bakkal', emoji: '🏪', owner: 'Bakkal Cemil', kind: 'shop', workerName: 'çalışan',
+    name: 'Köşe Bakkal', emoji: '🏪', owner: 'Cemil Efendi', kind: 'shop', workerName: 'çalışan',
     plot: { x: 43.5, w: 6 }, building: { model: 'kc-building-c', z: 7.5, scale: 6.4, labelY: 8.4 },
     price: 50000, level: 50, products: [], revenuePerModule: 900, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 50 }, { level: 52, cost: 25000 }, { level: 56, cost: 40000 }],
   },
   branch2: {
-    name: 'Kiralık Dükkân', emoji: '🔑', owner: 'Emlak ofisi', kind: 'shop', workerName: 'çalışan',
+    name: 'Kiralık Dükkân', emoji: '🔑', owner: 'Dümen Emlak', kind: 'shop', workerName: 'çalışan',
     plot: { x: 50, w: 6 }, building: { model: 'kc-building-f', z: 7.5, scale: 6.4, labelY: 13 },
     price: 15000, level: 52, products: [], revenuePerModule: 1000, workersPerModule: 3, startWorkers: 0,
     lease: { weekly: 1500, perModule: 600, buyLevel: 60, buyPrice: 70000 },
     modules: [{ level: 52 }, { level: 54, cost: 25000 }, { level: 58, cost: 40000 }],
   },
   branch3: {
-    name: 'Ucuz Market', emoji: '🛍️', owner: 'Ucuzcu A.Ş.', kind: 'shop', workerName: 'çalışan',
+    name: 'Ucuzcu Kardeşler Market', emoji: '🛍️', owner: 'Ucuzcu A.Ş.', kind: 'shop', workerName: 'çalışan',
     plot: { x: 36.5, w: 6 }, building: { model: 'kc-building-c', z: 7.5, scale: 6.4, labelY: 8.4 },
     price: 110000, level: 56, products: [], revenuePerModule: 1400, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 56 }, { level: 58, cost: 45000 }, { level: 62, cost: 70000 }],
   },
   // ---- Medya (Sv.52): reklam harcaması düşer, ciro artar ----
   media: {
-    name: 'Kasaba Gazetesi & Radyo', emoji: '📰', owner: 'Basın A.Ş.', kind: 'media', workerName: 'muhabir',
+    name: 'Kasaba Gazetesi & Radyo', emoji: '📰', owner: 'Yandaş Basın A.Ş.', kind: 'media', workerName: 'muhabir',
     plot: { x: -58, w: 6 }, building: { model: 'kc-building-skyscraper-a', z: 7.5, scale: 4.2, labelY: 14.5 },
     price: 80000, level: 52, products: [], revenuePerModule: 700, workersPerModule: 2,
     modules: [{ level: 52 }, { level: 55, cost: 30000 }, { level: 60, cost: 50000 }],
@@ -466,38 +475,38 @@ export const BUSINESSES = {
   },
   // ---- Liman ve sanayi bölgesi (Sv.68+, ön caddenin güneyi) ----
   hotel: {
-    name: 'Anadolu Otel', emoji: '🏨', owner: 'Anadolu Otelcilik', kind: 'hotel', workerName: 'personel',
+    name: 'Grand Anadolu Otel', emoji: '🏨', owner: 'Anadolu Otelcilik', kind: 'hotel', workerName: 'personel',
     plot: { x: -34, w: 10 }, building: { model: 'building_H_withoutBase', z: 31, scale: 5, facing: -1, labelY: 17 },
     price: 120000, level: 68, products: [], revenuePerModule: 2500, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 68 }, { level: 70, cost: 60000 }, { level: 74, cost: 90000 }],
   },
   restaurant: {
-    name: 'Lezzet Restoran Zinciri', emoji: '🍽️', owner: 'Lezzet A.Ş.', kind: 'restaurant', workerName: 'garson',
+    name: 'Tombik Restoran', emoji: '🍽️', owner: 'Lezzet A.Ş.', kind: 'restaurant', workerName: 'garson',
     plot: { x: -20, w: 10 }, building: { model: 'building_B_withoutBase', z: 31, scale: 5, facing: -1, labelY: 11 },
     price: 70000, level: 68, products: [], revenuePerModule: 1600, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 68 }, { level: 71, cost: 35000 }, { level: 75, cost: 55000 }],
   },
   port: {
-    name: 'Kasaba Limanı', emoji: '⚓', owner: 'Liman İşletmesi', kind: 'port', workerName: 'liman işçisi',
+    name: 'Kasaba Limanı', emoji: '⚓', owner: 'Liman İşletmesi İştiraki', kind: 'port', workerName: 'liman işçisi',
     plot: { x: 26, w: 26 }, building: { procedural: 'port', z: 48, size: [26, 10], facing: -1, labelY: 9 },
     price: 200000, level: 69, products: [], revenuePerModule: 3000, workersPerModule: 4, startWorkers: 0,
     importDiscount: 0.08, // modül başı mal alımında indirim (ithalat)
     modules: [{ level: 69 }, { level: 72, cost: 100000 }, { level: 78, cost: 150000 }],
   },
   factory: {
-    name: 'Sanayi Fabrikası', emoji: '🏭', owner: 'Sanayi Bölgesi', kind: 'factory', workerName: 'işçi',
+    name: 'Sanayi Üretim Fabrikası', emoji: '🏭', owner: 'Sanayi Bölgesi Yatırım Grubu', kind: 'factory', workerName: 'işçi',
     plot: { x: -30, w: 16 }, building: { procedural: 'factory', z: 46, size: [16, 9], facing: -1, labelY: 9 },
     price: 150000, level: 73, products: [], revenuePerModule: 3500, workersPerModule: 5, startWorkers: 0,
     modules: [{ level: 73 }, { level: 75, cost: 80000 }, { level: 79, cost: 120000 }],
   },
   mall: {
-    name: 'Kasaba AVM', emoji: '🏬', owner: 'AVM Yatırım', kind: 'mall', workerName: 'çalışan',
+    name: 'Kasaba Forum AVM', emoji: '🏬', owner: 'AVM Yatırım Grubu', kind: 'mall', workerName: 'çalışan',
     plot: { x: -2, w: 12 }, building: { model: 'building_E_withoutBase', z: 31, scale: 6, facing: -1, labelY: 16 },
     price: 300000, level: 75, products: [], revenuePerModule: 6000, workersPerModule: 6, startWorkers: 0, customers: 1.05,
     modules: [{ level: 75 }, { level: 78, cost: 150000 }, { level: 82, cost: 220000 }],
   },
   airport: {
-    name: 'Kasaba Havalimanı', emoji: '✈️', owner: 'Ulaştırma Bakanlığı (ihale)', kind: 'airport', workerName: 'personel',
+    name: 'Kasaba Ata Havalimanı', emoji: '✈️', owner: 'Ulaştırma Bakanlığı (ihale)', kind: 'airport', workerName: 'personel',
     plot: { x: -78, w: 26 }, building: { procedural: 'airport', z: 40, size: [26, 18], facing: -1, labelY: 9 },
     price: 500000, level: 76, products: [], revenuePerModule: 9000, workersPerModule: 8, startWorkers: 0, customers: 1.1,
     modules: [{ level: 76 }, { level: 80, cost: 250000 }, { level: 85, cost: 400000 }],
@@ -536,8 +545,8 @@ export const REGIONS = [
   { id: 'market', name: 'Market', emoji: '🛒', pos: [0, 1], level: 1 },
   { id: 'depot', name: 'Arka depo', emoji: '📦', pos: [0, -18.5], level: 1 },
   { id: 'office', name: 'Muhasebe odası', emoji: '🧾', pos: [8.4, -10.6], level: 1 },
-  { id: 'valley', name: 'Tedarik vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
-  { id: 'logistics', name: 'Lojistik', emoji: '🚛', pos: [38, -35.8], level: 29 },
+  { id: 'valley', name: 'KOBİ vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
+  { id: 'logistics', name: 'Lojistik merkezi', emoji: '🚛', pos: [38, -35.8], level: 29 },
   { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [3, -97], level: 31 },
   { id: 'east', name: 'Doğu mahallesi', emoji: '🏘️', pos: [78, 14], level: 36 },
   { id: 'branches', name: 'Rakip marketler', emoji: '🏪', pos: [43, 12.5], level: 50 },
@@ -577,9 +586,9 @@ export const CUSTOMER_SPEED = 3.6;
 // İşe alım ucuzdur; her çalışana gün sonunda maaş ödenir. Ödenemeyen çalışan işten ayrılır,
 // alanı yeniden belirir ve para kazanınca tekrar işe alınabilir.
 export const ROLE_NAMES = {
-  cashier: '💳 Kasiyer', stocker: '📦 Taşıyıcı', cleaner: '🧹 Temizlikçi', manager: '🟥 Müdür', accountant: '🟦 Muhasebeci',
-  guard: '🛡️ Güvenlik', advertiser: '📣 Reklamcı', valet: '🅿️ Otopark görevlisi',
-  deputy: '🧑‍💻 Müdür yardımcısı', picker: '🧺 Online toplayıcı', courier: '🛵 Kurye',
+  cashier: '💳 Kasiyer', stocker: '📦 Reyon Görevlisi', cleaner: '🧹 Temizlik Görevlisi', manager: '🟥 Müdür', accountant: '🟦 Muhasebeci',
+  guard: '🛡️ Güvenlik Görevlisi', advertiser: '📣 Reklam Personeli', valet: '🅿️ Otopark Görevlisi',
+  deputy: '🧑‍💻 Müdür yardımcısı', picker: '🧺 Paket Hazırlama Görevlisi', courier: '🛵 Kurye',
 };
 export const WAGES = {
   cashier: 50, stocker: 50, cleaner: 45, manager: 65, accountant: 70,
@@ -748,8 +757,8 @@ export const CITY = {
     { id: 'coast', name: 'Sahil Şeridi', emoji: '🏖️', level: 83, props: [
       { name: 'Martı Pansiyon', owner: 'Gül Hanım', price: 450000, mood: 'flex', pos: [66, 34], model: 'building-small-c', facing: -1 },
       { name: 'Deniz Kafe', owner: 'Kaptan Ali', price: 350000, mood: 'angry', pos: [78, 34], model: 'building_B_withoutBase', facing: -1 },
-      { name: 'Yat Kulübü', owner: 'Sahil A.Ş.', price: 900000, mood: 'flex', pos: [92, 36], model: 'building_E_withoutBase', facing: -1 },
-      { name: 'Balıkçı Barınağı', owner: 'Kooperatif', price: 300000, mood: 'flex', pos: [106, 34], model: 'building-small-a', facing: -1 },
+      { name: 'Yat Kulübü', owner: 'Yat İş A.Ş.', price: 900000, mood: 'flex', pos: [92, 36], model: 'building_E_withoutBase', facing: -1 },
+      { name: 'Balıkçı Barınağı', owner: 'Balbar Kooperatif', price: 300000, mood: 'flex', pos: [106, 34], model: 'building-small-a', facing: -1 },
     ] },
     { id: 'industry', name: 'Sanayi Bölgesi', emoji: '🏗️', level: 85, props: [
       { name: 'Çimento Fabrikası', owner: 'Demir Holding', price: 1200000, mood: 'angry', pos: [-56, 34], procedural: 'factory', facing: -1 },
@@ -763,7 +772,7 @@ export const CITY = {
     ] },
     { id: 'villages', name: 'Kuzey Köyleri', emoji: '🌄', level: 89, props: [
       { name: 'Çamlıca Köyü', owner: 'Muhtar Osman', price: 500000, mood: 'flex', pos: [48, -116], model: 'building_windmill_green' },
-      { name: 'Yayla Mandırası', owner: 'Yaylacı Fatma', price: 450000, mood: 'angry', pos: [62, -116], model: 'building_grain' },
+      { name: 'Yayla Mandırası', owner: 'Fatma Nene', price: 450000, mood: 'angry', pos: [62, -116], model: 'building_grain' },
       { name: 'Göl Kenarı Arazisi', owner: 'Orman İşletmesi', price: 800000, mood: 'flex', pos: [55, -132], model: 'trees_A_large' },
     ] },
     { id: 'hall', name: 'Belediye Meydanı', emoji: '🏙️', level: 95, props: [

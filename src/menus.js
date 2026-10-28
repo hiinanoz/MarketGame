@@ -222,15 +222,17 @@ export class Menus {
     const go = this.game.goals;
     const pending = go.loginPending;
     const cur = go.loginDay;
+    // 7 günlük pencere; seri 7'yi geçince bugün ortada kalacak şekilde kayar
+    const start = cur > GOALS.login.length ? cur - 3 : 1;
     const cells = GOALS.login.map((_, i) => {
-      const d = i + 1;
+      const d = start + i;
       const r = go.loginReward(d);
       const got = pending ? d < cur : d <= cur;
       const today = pending && d === cur;
       return `<div class="${got ? 'got' : ''} ${today ? 'today' : ''} ${d === 7 ? 'big' : ''}"><span>${d}. gün</span><b>${got ? '✅' : d === 7 ? '🎁' : '💎'}</b>${r.money ? `$${formatMoney(r.money)}` : ''}<span>💎${r.gems}</span></div>`;
     }).join('');
     const r = go.loginReward(cur);
-    this.openSheet('📅 Günlük ödül', `<p class="note">Her gün oyuna gir, ödülünü al. 7 gün üst üste gelirsen büyük ödül! Bir gün kaçırırsan seri baştan başlar.</p>
+    this.openSheet('📅 Günlük ödül', `<p class="note">Her gün oyuna gir, ödülünü al. 7 gün üst üste gelirsen büyük ödül! Sonra seri sürdükçe her gün +$100 ve +💎1 artar. Bir gün kaçırırsan seri baştan başlar.</p>
       <div class="cal">${cells}</div>
       ${pending ? `<div class="big-reward">Bugün (${cur}. gün)<b>${r.money ? `$${formatMoney(r.money)} + ` : ''}💎${r.gems}</b><button data-claim class="primary">Ödülü al</button></div>` : '<p class="big-reward">Bugünün ödülünü aldın. Yarın tekrar gel! 👋</p>'}`,
     { onClick: (e) => {

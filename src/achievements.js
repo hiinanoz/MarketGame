@@ -10,7 +10,7 @@ export const ACHIEVEMENTS = [
   { id: 'second_room', name: 'Genişleme', emoji: '🏗️', check: (g) => g.room2Open },
   { id: 'five_stars', name: 'Beş yıldız', emoji: '🌟', check: (g) => g.rating.stars >= 4.95 },
   { id: 'market_owner', name: 'Bina artık senin', emoji: '🏪', check: (g) => g.rent.marketOwned },
-  { id: 'accountant', name: 'Muhasebeci', emoji: '🧾', check: (g) => !!g.accountant },
+  { id: 'accountant', name: 'Muhasebeci işe aldın', emoji: '🧾', check: (g) => !!g.accountant },
   { id: 'first_supplier', name: 'İlk tedarikçi', emoji: '🌾', check: (g) => g.holding.owned.some((b) => b.def.products?.length) },
   { id: 'logistics', name: 'Kendi filon', emoji: '🚛', check: (g) => g.holding.logisticsOwned },
   { id: 'first_plant', name: 'Enerji üreticisi', emoji: '☀️', check: (g) => g.holding.owned.some((b) => b.isEnergy) },

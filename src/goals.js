@@ -131,11 +131,14 @@ export class Goals {
     const y = `${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`;
     if (this.login.claimed === this.today) return this.login.streak;
     const cont = this.login.claimed === y;
-    return cont ? (this.login.streak % 7) + 1 : 1;
+    // 7. günden sonra seri sıfırlanmaz, ödül her gün biraz artar
+    return cont ? this.login.streak + 1 : 1;
   }
 
   loginReward(day) {
-    const r = GOALS.login[day - 1];
+    const base = GOALS.login[Math.min(day, GOALS.login.length) - 1];
+    const extra = Math.max(0, day - GOALS.login.length);
+    const r = { money: base.money + extra * GOALS.loginAfter.money, gems: base.gems + extra * GOALS.loginAfter.gems };
     const scale = 1 + this.game.level / 8;
     return { gems: this.gemBonus(r.gems), money: Math.round((r.money * scale) / 10) * 10 };
   }
@@ -164,9 +167,9 @@ export class Goals {
 
   checkMilestone() {
     const n = this.game.stats.customers ?? 0;
-    const list = GOALS.milestones;
-    if (this.milestone >= list.length || n < list[this.milestone][0]) return;
-    const [count, gems] = list[this.milestone];
+    const next = milestoneAt(this.milestone);
+    if (n < next[0]) return;
+    const [count, gems] = next;
     this.milestone++;
     this.addGems(gems);
     // Günü tamamla simülasyonunda kutlama, simülasyon bitince başlar
@@ -207,11 +210,18 @@ export class Goals {
     return { gems: this.gems, quests: this.quests, questDay: this.questDay, bonusDone: this.bonusDone, login: this.login, milestone: this.milestone };
   }
 
+  /** Geçilmiş kilometre taşı sayısı (kutlamadan işaretlemek için). */
+  passedMilestones() {
+    const n = this.game.stats.customers ?? 0;
+    let i = 0;
+    while (milestoneAt(i)[0] <= n) i++;
+    return i;
+  }
+
   restore(d) {
     if (!d) {
       // Eski kayıt: geçilmiş kilometre taşlarını kutlamadan işaretle
-      const n = this.game.stats.customers ?? 0;
-      this.milestone = GOALS.milestones.filter(([c]) => c <= n).length;
+      this.milestone = this.passedMilestones();
       return;
     }
     this.gems = d.gems ?? 0;
@@ -219,8 +229,26 @@ export class Goals {
     this.questDay = d.questDay ?? 0;
     this.bonusDone = !!d.bonusDone;
     this.login = d.login ?? this.login;
-    this.milestone = d.milestone ?? 0;
+    // Liste değişebildiği için sıra müşteri sayısından yeniden bulunur
+    this.milestone = this.passedMilestones();
   }
+}
+
+/** i. müşteri kilometre taşı: [müşteri sayısı, elmas]. Liste sonsuz devam eder. */
+export function milestoneAt(i) {
+  const list = GOALS.milestones;
+  if (i < list.length) return list[i];
+  let [count, gems] = list[list.length - 1];
+  let k = i - list.length + 1;
+  for (const b of GOALS.milestoneBands) {
+    while (k > 0 && count + b.step <= b.upTo) {
+      count += b.step;
+      gems += b.gems;
+      k--;
+    }
+    if (!k) break;
+  }
+  return [count, gems];
 }
 
 /** Görevin okunur metni. */
