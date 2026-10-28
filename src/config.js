@@ -270,11 +270,8 @@ export const PREMIUM = {
   decorSlots: 6,        // standart: mağaza önünde 6 süs yeri (Premium 10)
   gemFactor: 1.5,       // Premium: görev ve giriş ödülünde elmas 1.5 kat
   // Geliştiriciye teşekkür (App Store'da tekrar alınabilen bahşiş ürünleri)
-  tips: [
-    { id: 'tip_small', name: 'Çay ısmarla', emoji: '🍵', price: '0,99 $' },
-    { id: 'tip_medium', name: 'Kahve ısmarla', emoji: '☕', price: '2,99 $' },
-    { id: 'tip_large', name: 'Yemek ısmarla', emoji: '🍽️', price: '6,99 $' },
-  ],
+  price: '9,99 $',       // Premium (tek seferlik)
+  tips: [{ id: 'tip_thanks', name: 'Geliştiriciye teşekkür et', emoji: '💚', price: '2,99 $' }],
 };
 
 // ---- Hedefler, ödüller, dekorasyon -------------------------------------------------------------

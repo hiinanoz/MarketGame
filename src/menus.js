@@ -178,11 +178,11 @@ export class Menus {
       ${row('🏗️', 'Aynı anda inşaat', String(PREMIUM.builds), 'Sınırsız, %25 hızlı')}
       ${row('🎨', 'Süs yeri + özel desen', `${PREMIUM.decorSlots}`, '10 + 👑 set')}
       ${row('💎', 'Görev/giriş elması', '1×', `${PREMIUM.gemFactor}×`)}
-      <p class="note">Durum: <b>${g.premium ? '👑 Premium' : 'Standart'}</b>. Satın alma App Store sürümüyle gelecek.</p>
+      <p class="note">Durum: <b>${g.premium ? '👑 Premium' : 'Standart'}</b> · Premium tek seferlik <b>${PREMIUM.price}</b>. Satın alma App Store sürümüyle gelecek.</p>
       <button data-ptoggle class="${g.premium ? '' : 'primary'}">${g.premium ? 'Standarda dön (test)' : 'Premium\'u dene (test)'}</button>
-      <h4 class="tip-h">☕ Geliştiriciye teşekkür et</h4>
+      <h4 class="tip-h">💚 Geliştiriciye teşekkür et</h4>
       <p class="note">Oyunu sevdiysen küçük bir teşekkür gönderebilirsin. Hiçbir şey kilitlemez; karşılığında <b>☕ Destekçi</b> rozeti alırsın.${this.supporter ? ` Teşekkürlerin: <b>${this.supporter}</b> 💚` : ''}</p>
-      <div class="tip-row">${PREMIUM.tips.map((t) => `<button data-tip="${t.id}"><span class="ic">${t.emoji}</span>${t.name}<small>${t.price}</small></button>`).join('')}</div>`,
+      <div class="tip-row one">${PREMIUM.tips.map((t) => `<button data-tip="${t.id}"><span class="ic">${t.emoji}</span>${t.name}<small>${t.price}</small></button>`).join('')}</div>`,
     { onClick: (e) => {
       const tip = e.target.closest('[data-tip]');
       if (tip) {

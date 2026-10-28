@@ -683,3 +683,5 @@ button { color: var(--ink); font-family: inherit; -webkit-tap-highlight-color: t
 .home-badges { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
 .hb { font-size: 12px; font-weight: 900; padding: 3px 10px; border-radius: 12px; color: #3a2600; background: #ffe38a; }
 .hb.sup { background: #c9f7c4; color: #13451a; }
+.tip-row.one { grid-template-columns: 1fr; }
+.panel .tip-row.one button { flex-direction: row; justify-content: center; gap: 8px; font-size: 15px; padding: 12px; }
