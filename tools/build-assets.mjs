@@ -9,6 +9,7 @@
 //   git clone --depth 1 https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0
 //   git clone --depth 1 https://github.com/KenneyNL/Starter-Kit-Racing
 //   git clone --depth 1 https://github.com/KenneyNL/Starter-Kit-City-Builder
+//   + kenney.nl: city-kit-commercial, city-kit-industrial, city-kit-suburban, city-kit-roads (zip → assets-src)
 //   node tools/build-assets.mjs <bu klasörlerin bulunduğu dizin>
 //
 // Çıktı: src/assets/characters/*.glb, src/assets/characters/anims.glb ve src/assets/props.glb
@@ -76,6 +77,12 @@ const SPACE = path.join(SRC, 'KayKit-Space-Base-Bits-1.0/addons/kaykit_space_bas
 const MED = path.join(SRC, 'KayKit-Medieval-Hexagon-Pack-1.0/addons/kaykit_medieval_hexagon_pack/Assets/gltf');
 const KENNEY_RACING = path.join(SRC, 'Starter-Kit-Racing/models');
 const KENNEY_CITY = path.join(SRC, 'Starter-Kit-City-Builder/models');
+// Kenney City Kit paketleri (CC0) — kenney.nl'den indirilip assets-src'ye açılır
+const KC = (name) => path.join(SRC, name, 'Models/GLB format');
+const K_COMM = KC('kenney_city-kit-commercial_2');
+const K_IND = KC('kenney_city-kit-industrial_2');
+const K_SUB = KC('kenney_city-kit-suburban_20');
+const K_ROAD = KC('kenney_city-kit-roads');
 const PROPS = {
   [REST]: [
     'crate', 'crate_lid', 'crate_tomatoes', 'crate_carrots', 'crate_cheese', 'crate_lettuce', 'crate_onions',
@@ -108,16 +115,30 @@ const PROPS = {
   // Kamyonlar ve kasaba binaları — Kenney Starter Kits (MIT)
   [KENNEY_RACING]: ['vehicle-truck-red', 'vehicle-truck-green'],
   [KENNEY_CITY]: ['building-garage', 'building-small-a', 'building-small-b', 'building-small-c'],
+  // Kenney City Kit (CC0): rakip marketler, medya, konutlar, fabrika/liman, sokak detayları.
+  // Adlar paket önekiyle (kc-, ki-, ks-, kr-) — farklı paketlerde aynı dosya adları var.
+  ['kc:' + K_COMM]: ['building-c', 'building-e', 'building-f', 'building-k', 'building-skyscraper-a', 'detail-awning-wide', 'low-detail-building-a', 'low-detail-building-g'],
+  ['ki:' + K_IND]: ['building-i', 'building-m', 'building-l', 'shipping-container-a', 'shipping-container-b', 'shipping-container-c', 'detail-tank-large'],
+  ['ks:' + K_SUB]: ['building-type-a', 'building-type-c', 'building-type-f', 'building-type-n', 'fence-low', 'planter', 'tree-large', 'tree-small'],
+  ['kr:' + K_ROAD]: ['traffic-light', 'construction-cone', 'construction-barrier', 'construction-fence', 'light-square-double'],
 };
 
 const merged = new Document();
-for (const [dir, names] of Object.entries(PROPS)) {
+for (const [key, names] of Object.entries(PROPS)) {
+  // 'kc:/yol' biçimi: modeller önekle adlandırılır (kc-building-c)
+  const m = key.match(/^(k[a-z]):(.*)$/);
+  const dir = m ? m[2] : key;
+  const prefix = m ? `${m[1]}-` : '';
   for (const name of names) {
     const file = fs.existsSync(path.join(dir, `${name}.gltf`)) ? `${name}.gltf` : `${name}.glb`;
+    if (!fs.existsSync(path.join(dir, file))) {
+      console.warn('yok, atlandı:', prefix + name);
+      continue;
+    }
     const doc = await io.read(path.join(dir, file));
     const scene = doc.getRoot().getDefaultScene() ?? doc.getRoot().listScenes()[0];
     // Tüm kök düğümleri modelin adını taşıyan tek bir kök altında topla.
-    const wrapper = doc.createNode(name);
+    const wrapper = doc.createNode(prefix + name);
     for (const child of scene.listChildren()) {
       scene.removeChild(child);
       wrapper.addChild(child);

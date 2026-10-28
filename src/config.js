@@ -416,27 +416,27 @@ export const BUSINESSES = {
   // Satın alınınca boş gelir: müdürü ve çalışanları sen atarsın.
   branch1: {
     name: 'Köşe Bakkal', emoji: '🏪', owner: 'Bakkal Cemil', kind: 'shop', workerName: 'çalışan',
-    plot: { x: 43.5, w: 6 }, building: { model: 'building-small-c', z: 7.5, scale: 6, labelY: 10.2 },
+    plot: { x: 43.5, w: 6 }, building: { model: 'kc-building-c', z: 7.5, scale: 6.4, labelY: 8.4 },
     price: 50000, level: 50, products: [], revenuePerModule: 900, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 50 }, { level: 52, cost: 25000 }, { level: 56, cost: 40000 }],
   },
   branch2: {
     name: 'Kiralık Dükkân', emoji: '🔑', owner: 'Emlak ofisi', kind: 'shop', workerName: 'çalışan',
-    plot: { x: 50, w: 6 }, building: { model: 'building-small-b', z: 7.5, scale: 6 },
+    plot: { x: 50, w: 6 }, building: { model: 'kc-building-f', z: 7.5, scale: 6.4, labelY: 13 },
     price: 15000, level: 52, products: [], revenuePerModule: 1000, workersPerModule: 3, startWorkers: 0,
     lease: { weekly: 1500, perModule: 600, buyLevel: 60, buyPrice: 70000 },
     modules: [{ level: 52 }, { level: 54, cost: 25000 }, { level: 58, cost: 40000 }],
   },
   branch3: {
     name: 'Ucuz Market', emoji: '🛍️', owner: 'Ucuzcu A.Ş.', kind: 'shop', workerName: 'çalışan',
-    plot: { x: 36.5, w: 6 }, building: { model: 'building-small-a', z: 7.5, scale: 6 },
+    plot: { x: 36.5, w: 6 }, building: { model: 'kc-building-c', z: 7.5, scale: 6.4, labelY: 8.4 },
     price: 110000, level: 56, products: [], revenuePerModule: 1400, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 56 }, { level: 58, cost: 45000 }, { level: 62, cost: 70000 }],
   },
   // ---- Medya (Sv.52): reklam harcaması düşer, ciro artar ----
   media: {
     name: 'Kasaba Gazetesi & Radyo', emoji: '📰', owner: 'Basın A.Ş.', kind: 'media', workerName: 'muhabir',
-    plot: { x: -58, w: 6 }, building: { model: 'building-small-b', z: 7.5, scale: 6 },
+    plot: { x: -58, w: 6 }, building: { model: 'kc-building-skyscraper-a', z: 7.5, scale: 4.2, labelY: 14.5 },
     price: 80000, level: 52, products: [], revenuePerModule: 700, workersPerModule: 2,
     modules: [{ level: 52 }, { level: 55, cost: 30000 }, { level: 60, cost: 50000 }],
   },

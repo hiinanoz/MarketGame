@@ -485,7 +485,16 @@ export class Business {
     roof.position.set(0, 3.4, -5.5);
     const door = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.4, 0.1), new THREE.MeshStandardMaterial({ color: 0xf5f0e6 }));
     door.position.set(0, 1.2, -0.25);
-    for (const m of [body, roof, door]) { m.castShadow = true; m.receiveShadow = true; g.add(m); }
+    if (kind === 'garage') {
+      // Lojistik deposu (Kenney City Kit Industrial, CC0)
+      const wh = prop('ki-building-i');
+      wh.scale.setScalar(5);
+      wh.position.set(2.15, 0, -4.15);
+      wh.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      g.add(wh);
+    } else {
+      for (const m of [body, roof, door]) { m.castShadow = true; m.receiveShadow = true; g.add(m); }
+    }
     // Çit (arsa sınırı)
     const fenceMat = new THREE.MeshStandardMaterial({ color: 0x9c6b3f, roughness: 0.9 });
     this.fence = new THREE.Group();
@@ -958,12 +967,14 @@ function proceduralBuilding(type, [w, d]) {
   if (type === 'port') {
     // Rıhtım, iki vinç, konteyner yığınları
     g.add(pbox(w, 0.6, d, 0x9e9e9e, 0, 0.3, 0));
-    // Konteyner yığınları (KayKit Space Base, CC0)
-    for (let i = 0; i < 5; i++) {
-      const c = prop(i % 2 ? 'cargo_A_stacked' : 'containers_B');
-      c.scale.setScalar(i % 2 ? 3.4 : 3.8);
-      c.position.set(-w / 2 + 2.8 + i * 5, 0.6, 1.8);
-      c.rotation.y = (i % 3) * Math.PI / 2;
+    // Konteyner yığınları (Kenney City Kit Industrial, CC0): iki kat, renkli
+    const kinds = ['ki-shipping-container-a', 'ki-shipping-container-b', 'ki-shipping-container-c'];
+    for (let i = 0; i < 12; i++) {
+      const c = prop(kinds[(i * 7) % 3]);
+      c.scale.setScalar(4);
+      c.rotation.y = Math.PI / 2;
+      const col = i % 6;
+      c.position.set(-w / 2 + 3 + col * 3.6, 0.6 + Math.floor(i / 6) * 1.4, 1.8 + (Math.floor(i / 6) ? 0 : 0));
       g.add(c);
     }
     const stack = prop('cargo_A_stacked');
@@ -976,30 +987,20 @@ function proceduralBuilding(type, [w, d]) {
       g.add(pbox(1.6, 1.2, 1.6, 0x455a64, x, 8.6, -d / 2 + 2.2)); // kabin
     }
   } else if (type === 'factory') {
-    g.add(pbox(w, 4.5, d * 0.8, 0xb0a596, 0, 2.25, 0));
-    for (let i = 0; i < 3; i++) g.add(pbox(w / 3 - 0.2, 1.2, d * 0.8, 0x78909c, -w / 3 + i * (w / 3), 5.1, 0));
-    for (const x of [-w / 3, w / 4]) {
-      const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 6, 10), new THREE.MeshStandardMaterial({ color: 0x8d6e63 }));
-      ch.position.set(x, 6.5, -d / 4);
-      g.add(ch);
-      // Kırmızı-beyaz baca bandı
-      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.5, 10), new THREE.MeshStandardMaterial({ color: 0xe53935 }));
-      band.position.set(x, 8.8, -d / 4);
-      g.add(band);
-    }
-    // Çatıda su kulesi, yanda kule ve kolilenmiş ürünler (KayKit City/Space, CC0)
-    const tower = prop('watertower');
-    tower.scale.setScalar(3);
-    tower.position.set(0, 5.7, d / 6);
-    g.add(tower);
-    const silo = prop('structure_tall');
-    silo.scale.setScalar(2.6);
-    silo.position.set(w / 2 + 1.6, 0, -d / 6);
-    g.add(silo);
+    // Fabrika binası, depo tankı ve konteynerler (Kenney City Kit Industrial, CC0)
+    const fab = prop('ki-building-m');
+    fab.scale.setScalar(Math.min(w / 1.32 * 0.62, d / 1.7));
+    fab.position.set(-w * 0.12, 0, 0);
+    g.add(fab);
+    const tank = prop('ki-detail-tank-large');
+    tank.scale.setScalar(3.2);
+    tank.position.set(w * 0.33, 0, -d * 0.12);
+    g.add(tank);
     for (let i = 0; i < 3; i++) {
-      const c = prop('cargo_A_stacked');
-      c.scale.setScalar(2);
-      c.position.set(-w / 2 + 2 + i * 2.6, 0, d / 2 + 1.2);
+      const c = prop(['ki-shipping-container-a', 'ki-shipping-container-b', 'ki-shipping-container-c'][i]);
+      c.scale.setScalar(4);
+      c.rotation.y = Math.PI / 2;
+      c.position.set(-w / 2 + 2 + i * 1.7, i === 2 ? 1.4 : 0, d / 2 + 1);
       g.add(c);
     }
   } else if (type === 'airport') {

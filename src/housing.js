@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { prop } from './assets.js';
 import { HOUSING, DAY, RENT, XP_PER_PURCHASE } from './config.js';
 import { textTexture } from './fx.js';
 import { formatMoney } from './hud.js';
@@ -530,8 +531,36 @@ function windows(g, w, floors, floorH, z, cols) {
   }
 }
 
+// Biten binalar: Kenney City Kit (CC0) modelleri — [model, ölçek]
+const FINISHED = {
+  house: ['ks-building-type-c', 5.2],
+  villa: ['ks-building-type-n', 4.9],
+  apartment: ['kc-building-f', 6.6],
+  site: ['kc-building-k', 4.4],
+};
+
 function houseMesh(type, progress, color) {
   const g = new THREE.Group();
+  if (progress >= 1 && FINISHED[type]) {
+    const [name, sc] = FINISHED[type];
+    g.add(box(type === 'site' ? 9.4 : 8.6, 0.12, type === 'site' ? 9.4 : 8.6, 0x9ccc65, 0, 0.06, 0)); // bahçe
+    const m = prop(name);
+    m.scale.setScalar(sc);
+    m.position.set(0, 0.1, -0.6);
+    m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    g.add(m);
+    // Bahçe süsleri: ağaç ve saksı
+    const t = prop('ks-tree-large');
+    t.scale.setScalar(5);
+    t.position.set(-3.6, 0.1, 3.2);
+    g.add(t);
+    const pl = prop('ks-planter');
+    pl.scale.setScalar(4);
+    pl.position.set(3.2, 0.1, 3.4);
+    g.add(pl);
+    if (type === 'site' || type === 'villa') g.add(box(type === 'site' ? 4 : 3, 0.08, 1.4, 0x4fc3f7, 1.5, 0.14, 3.6)); // havuz
+    return g;
+  }
   g.add(box(type === 'site' ? 9.4 : 7.4, 0.3, type === 'site' ? 9.4 : 7.4, 0x9e9e9e, 0, 0.15, 0)); // temel
   if (progress < 0.25) return g;
   const wallK = Math.min(1, (progress - 0.25) / 0.55); // duvarlar 0.25 → 0.8 arası yükselir
@@ -592,6 +621,18 @@ function scaffold(type, progress) {
   const s = type === 'site' ? 4.8 : 3.8;
   for (const [x, z] of [[-s, -s], [s, -s], [-s, s], [s, s]]) g.add(box(0.15, h, 0.15, 0xf2b705, x, h / 2, z));
   g.add(box(0.6, 0.6, 0.6, 0xe67e22, s + 0.8, 0.3, s)); // malzeme yığını
+  // Şantiye: koniler ve bariyer (Kenney City Kit Roads, CC0)
+  for (const [x, z] of [[-s - 0.6, s + 0.6], [s + 0.6, s + 1.2], [-s - 0.6, -s]]) {
+    const c = prop('kr-construction-cone');
+    c.scale.setScalar(6);
+    c.position.set(x, 0, z);
+    g.add(c);
+  }
+  const fence = prop('kr-construction-fence');
+  fence.scale.setScalar(6);
+  fence.rotation.y = Math.PI / 2;
+  fence.position.set(0, 0, s + 1.4);
+  g.add(fence);
   return g;
 }
 
