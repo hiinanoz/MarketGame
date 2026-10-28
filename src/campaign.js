@@ -3,7 +3,7 @@ import { Shelf, QUEUE_COLS, QUEUE_ROWS, QUEUE_DX, QUEUE_DZ } from './stations.js
 import { Customer, workerBadge } from './actors.js';
 import { Character } from './character.js';
 import { CHARACTER_NAMES } from './assets.js';
-import { PRODUCTS, CAMPAIGN, DOOR_X, DAY, CAMPAIGN_PROMO } from './config.js';
+import { PRODUCTS, CAMPAIGN, DOOR_X, DAY, CAMPAIGN_PROMO, PREMIUM } from './config.js';
 
 // Kampanyalar: bir gün önceden hazırlanır (ürün + stok seçilir, ücret ödenir). Aynı anda en fazla 3.
 // Kampanya günü: her kampanyanın mağaza önünde kendi standı ve yanında stok paleti olur,
@@ -25,8 +25,13 @@ export class Campaign {
     return this.game.level >= CAMPAIGN.fromLevel;
   }
 
+  /** Aynı gün en fazla kampanya: standart 2, Premium 3. */
+  get maxCampaigns() {
+    return this.game.premium ? PREMIUM.campaigns.premium : PREMIUM.campaigns.standard;
+  }
+
   get slotsFree() {
-    return CAMPAIGN.maxCampaigns - this.scheduled.length;
+    return this.maxCampaigns - this.scheduled.length;
   }
 
   fee() {

@@ -667,3 +667,12 @@ button { color: var(--ink); font-family: inherit; -webkit-tap-highlight-color: t
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button { flex: 0 0 auto; }
 @media (max-width: 380px) { .tabs button { padding: 6px 8px; font-size: 13px; } }
+.panel .seg button.locked { opacity: 0.45; }
+.panel .seg button.locked::after { content: ' 👑'; font-size: 10px; }
+.panel .home-grid button.prem { background: linear-gradient(160deg, #ffe38a, #f5b400); }
+.prem-head, .prem-row { display: grid; grid-template-columns: 26px 1fr 58px 58px; align-items: center; gap: 6px; }
+.prem-head span { font-size: 12px; font-weight: 800; opacity: 0.7; text-align: center; }
+.prem-row { background: #f3eee2; border-radius: 12px; padding: 8px 6px; font-size: 14px; }
+.prem-row .pe { font-size: 20px; text-align: center; }
+.prem-row .std, .prem-row .pr { text-align: center; font-weight: 800; }
+.prem-row .pr { color: #b07d00; }

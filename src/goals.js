@@ -1,4 +1,4 @@
-import { PRODUCTS, GOALS, DAY } from './config.js';
+import { PRODUCTS, GOALS, DAY, BANK } from './config.js';
 import { formatMoney } from './hud.js';
 import { confettiBurst } from './celebrate.js';
 
@@ -176,7 +176,7 @@ export class Goals {
 
   /**
    * Kayıttan bu yana geçen gerçek süre için kazanç: son günlerin ortalama günlük gelirinin
-   * küçük bir kısmı (müdür yoksa yarısı), en fazla GOALS.offlineHours saat.
+   * net geliri; zaman yavaş akar (1 gerçek gün = en fazla 5 oyun günü), müdür yoksa yarısı.
    */
   computeOffline(savedAt) {
     const g = this.game;
@@ -187,13 +187,15 @@ export class Goals {
     const avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
     const staff = g.workers.filter((w) => w.role === 'cashier').length;
     if (avg <= 0 || !staff) return null;
-    const capped = Math.min(ms, GOALS.offlineHours * 3600e3);
-    // Uzaktayken oyun zamanı en fazla yarım gün ilerlemiş sayılır (kaç saat geçerse geçsin)
-    const gameDays = Math.min(GOALS.offlineMaxDays, capped / 1000 / (DAY.length + DAY.night));
+    // Uzaktayken oyun zamanı yavaş akar: 1 gerçek gün = en fazla GOALS.offlineDaysPerRealDay oyun günü
+    const realDays = ms / 864e5;
+    const gameDays = Math.min(GOALS.offlineDaysPerRealDay, realDays * GOALS.offlineDaysPerRealDay);
     const hasManager = g.workers.some((w) => w.role === 'manager');
-    const amount = Math.round(avg * gameDays * (hasManager ? 1 : 0.5));
+    // Net kazanç: ciro − maaşlar − faiz − kira (günlük payı)
+    const net = Math.max(0, avg - g.dailyPayroll - g.bank.debt * BANK.loanRate - (g.rent?.weeklyTotal ?? 0) / 7);
+    const amount = Math.round(net * gameDays * (hasManager ? 1 : 0.5));
     if (amount < 10) return null;
-    return { amount, minutes: Math.round(ms / 60e3), capped: gameDays >= GOALS.offlineMaxDays, manager: hasManager };
+    return { amount, minutes: Math.round(ms / 60e3), gameDays, capped: realDays >= 1, manager: hasManager };
   }
 
   serialize() {

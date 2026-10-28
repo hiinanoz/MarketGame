@@ -1,5 +1,5 @@
 import { platform } from './platform.js';
-import { GOALS, DECOR } from './config.js';
+import { GOALS, DECOR, PREMIUM } from './config.js';
 import { formatMoney } from './hud.js';
 import { questText, questEmoji } from './goals.js';
 import { AVATAR_MODELS, HAIR_CSS, OUTFIT_CSS, PANTS_CSS } from './assets.js';
@@ -86,6 +86,7 @@ export class Menus {
     on('home-avatar', () => this.showAvatar());
     on('home-decor', () => this.showDecor());
     on('home-ach', () => this.showAchievements());
+    on('home-premium', () => this.showPremium());
     on('home-help', () => this.openSheet('Nasıl oynanır', HELP.map(([e, t]) => `<p class="help-row"><span>${e}</span>${t}</p>`).join('')));
     on('home-settings', () => {
       this.home.classList.add('hidden');
@@ -157,6 +158,26 @@ export class Menus {
     this.afterSheet = null;
   }
 
+  // ---- Premium ----
+
+  showPremium() {
+    const g = this.game;
+    const row = (e, t, std, prem) => `<div class="prem-row"><span class="pe">${e}</span><b>${t}</b><span class="std">${std}</span><span class="pr">${prem}</span></div>`;
+    this.openSheet('👑 Premium', `
+      <p class="note">Oyun reklamsız. Her şeyi ücretsiz oynayabilirsin; Premium tek seferlik satın alma ile ilerlemeyi hızlandırır ve geliştirmeyi destekler.</p>
+      <div class="prem-head"><span></span><b></b><span class="std">Standart</span><span class="pr">Premium</span></div>
+      ${row('🏦', 'Banka kredi limiti', '¼', 'Tam')}
+      ${row('⏩', `Oyun hızı (Sv.${PREMIUM.fastLevel}+)`, '1.5×', '2×')}
+      ${row('📢', 'Aynı gün kampanya', String(PREMIUM.campaigns.standard), String(PREMIUM.campaigns.premium))}
+      <p class="note">Durum: <b>${g.premium ? '👑 Premium' : 'Standart'}</b>. Satın alma App Store sürümüyle gelecek.</p>
+      <button data-ptoggle class="${g.premium ? '' : 'primary'}">${g.premium ? 'Standarda dön (test)' : 'Premium\'u dene (test)'}</button>`,
+    { onClick: (e) => {
+      if (!e.target.closest('[data-ptoggle]')) return;
+      g.setPremium(!g.premium);
+      this.showPremium();
+    } });
+  }
+
   // ---- Görevler ----
 
   showQuests() {
@@ -206,7 +227,7 @@ export class Menus {
     const time = h ? `${h} saat ${m} dk` : `${m} dk`;
     this.afterSheet = then;
     this.openSheet('🌙 Sen yokken', `<div class="big-reward">${time} uzaktaydın.<br>Çalışanların çalışmaya devam etti:<b>+Đ${formatMoney(res.amount)}</b></div>
-      <p class="note">${res.manager ? '💼 Müdürün dükkânı yönetti.' : 'Müdürün olsaydı iki kat kazanırdın (Sv.7).'}${res.capped ? ' Uzakta kaldığın süre ne olursa olsun en fazla yarım günlük kazanç birikir.' : ''}</p>`,
+      <p class="note">${res.manager ? '💼 Müdürün dükkânı yönetti.' : 'Müdürün olsaydı iki kat kazanırdın (Sv.7).'}${` Sen yokken oyunda yaklaşık ${res.gameDays.toFixed(1)} gün geçti (uygulama kapalıyken zaman yavaş akar: 1 gün = en fazla ${GOALS.offlineDaysPerRealDay} oyun günü).`}</p>`,
     { close: 'Topla 💰' });
     g.money += res.amount;
     g.hud.setMoney(g.money);

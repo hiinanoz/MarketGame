@@ -306,7 +306,7 @@ class OfficePanel {
         <button data-cancel="${sch.product}">İptal (Đ${formatMoney(sch.paid ?? 0)} iade)</button></div>`);
     }
     if (c.slotsFree <= 0) {
-      parts.push(`<p class="note">Yarın için en fazla ${CAMPAIGN.maxCampaigns} kampanya yapılabilir.</p>`);
+      parts.push(`<p class="note">Yarın için en fazla ${c.maxCampaigns} kampanya yapılabilir.${this.game.premium ? '' : ' 👑 Premium ile 3 kampanya.'}</p>`);
       sec.innerHTML = parts.join('');
       return;
     }
@@ -321,7 +321,7 @@ class OfficePanel {
     this.campaignStaff ??= false;
     const total = c.costFor(this.campaignPick, this.campaignQty, this.campaignStaff);
     parts.push(`
-      <p class="note">Yarın için özel ürün ve stok seç (${c.scheduled.length}/${CAMPAIGN.maxCampaigns}). Her kampanyada <b>${CAMPAIGN.extraMin}–${CAMPAIGN.extraMax}</b> ek müşteri gelir, %${Math.round(CAMPAIGN.extraShopping * 100)}'si başka ürün de alır. Kalan stok gün sonunda zarar yazılır.</p>
+      <p class="note">Yarın için özel ürün ve stok seç (${c.scheduled.length}/${c.maxCampaigns}${this.game.premium ? '' : ' · 👑 Premium: 3'}). Her kampanyada <b>${CAMPAIGN.extraMin}–${CAMPAIGN.extraMax}</b> ek müşteri gelir, %${Math.round(CAMPAIGN.extraShopping * 100)}'si başka ürün de alır. Kalan stok gün sonunda zarar yazılır.</p>
       <div class="camp-cards">${cards}</div>
       <div class="bank-group"><span>Stok</span>
         <button data-q="-100">−100</button><button data-q="-20">−20</button><b class="o-qty">${this.campaignQty}</b><button data-q="20">+20</button><button data-q="100">+100</button>

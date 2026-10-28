@@ -1,5 +1,5 @@
 import { platform } from './platform.js';
-import { PRODUCTS } from './config.js';
+import { PRODUCTS, PREMIUM } from './config.js';
 // DOM tabanlı arayüz: para göstergesi, ipucu, bildirim, menü.
 
 export class Hud {
@@ -42,10 +42,17 @@ export class Hud {
     // Çoklu seçim düğmeleri (hız, görüş açısı)
     const seg = (id, key, parse = (v) => v, apply) => {
       const el = document.getElementById(id);
-      const sync = () => el.querySelectorAll('button').forEach((b) => b.classList.toggle('on', parse(b.dataset.v) === opts[key]));
+      const sync = () => el.querySelectorAll('button').forEach((b) => {
+        b.classList.toggle('on', parse(b.dataset.v) === opts[key]);
+        if (key === 'speed') b.classList.toggle('locked', !game.speedAllowed(parse(b.dataset.v)));
+      });
       el.addEventListener('click', (e) => {
         const b = e.target.closest('button');
         if (!b) return;
+        if (key === 'speed' && !game.speedAllowed(parse(b.dataset.v))) {
+          this.toast(`👑 Sv.${PREMIUM.fastLevel}'den sonra 2× hız Premium'da`);
+          return;
+        }
         opts[key] = parse(b.dataset.v);
         game.saveOptions();
         sync();
@@ -59,8 +66,8 @@ export class Hud {
     this.speedBtn = document.getElementById('speed-btn');
     this.speedBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
     this.speedBtn.addEventListener('click', () => {
-      const steps = [1, 1.5, 2];
-      opts.speed = steps[(steps.indexOf(opts.speed) + 1) % steps.length];
+      const steps = [1, 1.5, 2].filter((v) => game.speedAllowed(v));
+      opts.speed = steps[(steps.indexOf(opts.speed) + 1) % steps.length] ?? 1;
       game.saveOptions();
       this.syncSpeed();
       this.syncSpeedSeg();
@@ -122,7 +129,8 @@ export class Hud {
   }
 
   syncSpeed() {
-    const sp = this.game.options.speed ?? 1;
+    let sp = this.game.options.speed ?? 1;
+    if (!this.game.speedAllowed(sp)) sp = 1.5;
     this.speedBtn.classList.toggle('on', sp > 1);
     this.speedBtn.textContent = `${sp}×`;
     this.speedBtn.title = `Oyun hızı ${sp}× (dokun: değiştir)`;

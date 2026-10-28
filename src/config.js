@@ -258,6 +258,14 @@ export const PRODUCERS = {
 export const WHOLESALER_DISCOUNT = 0.7;
 export const CRISIS = { fromLevel: 16, chance: 0.4, priceMult: 1.8, shortageLimit: 10 };
 
+// ---- Premium (tek seferlik satın alma; reklam yok) --------------------------------------------
+// Standart oyuncu her şeyi oynayabilir ama bazı şeyler daha yavaş ilerler.
+export const PREMIUM = {
+  creditFactor: 0.25,   // standart: banka kredi limiti dörtte bir
+  fastLevel: 20,        // bu seviyeden sonra 2× hız Premium (standart en fazla 1.5×)
+  campaigns: { standard: 2, premium: 3 }, // aynı gün en fazla kampanya
+};
+
 // ---- Hedefler, ödüller, dekorasyon -------------------------------------------------------------
 export const GOALS = {
   allQuestsGems: 5,
@@ -270,8 +278,7 @@ export const GOALS = {
   milestones: [[100, 5], [500, 10], [1000, 15], [2500, 20], [5000, 30], [10000, 40], [25000, 60], [50000, 80], [100000, 120]],
   partySeconds: 8,
   offlineMinMinutes: 3,
-  offlineHours: 8,
-  offlineMaxDays: 0.5, // çevrimdışı: oyun zamanı en fazla yarım gün ilerlemiş sayılır
+  offlineDaysPerRealDay: 5, // uygulama kapalıyken: 1 gerçek gün = en fazla 5 oyun günü (yavaş akar)
 };
 export const DECOR = {
   floors: [

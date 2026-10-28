@@ -66,7 +66,8 @@ async function start() {
     last = now;
     // Hız 1× / 1.5× / 2×: adım küçük kalsın diye kare başına en fazla iki alt adım
     if (game.running && !game.simulating) {
-      const sp = game.options.speed ?? 1;
+      let sp = game.options.speed ?? 1;
+      if (!game.speedAllowed(sp)) sp = 1.5; // Sv.20 sonrası 2× Premium
       const n = Math.ceil(sp);
       for (let i = 0; i < n; i++) game.update((dt * sp) / n);
     }

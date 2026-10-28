@@ -8,7 +8,7 @@ import { World } from './world.js';
 import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker, Cleaner, Manager, Guard, Advertiser, Valet } from './actors.js';
-import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
+import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO, PREMIUM } from './config.js';
 import { Rating, DirtSystem } from './upkeep.js';
 import { Traffic } from './traffic.js';
 import { Supply, Producer } from './production.js';
@@ -80,6 +80,8 @@ export class Game {
     this.options = { sound: true, music: true, speed: 1, cam: 'normal', background: false };
     try { Object.assign(this.options, JSON.parse(localStorage.getItem('marketgame-options') || '{}')); } catch { /* yok */ }
     if (this.options.fast) this.options.speed = 2; // eski ayar (aç/kapa 2×)
+    // Premium: şimdilik test anahtarı (App Store satın alımı gelince platform.entitlement)
+    try { this.premium = localStorage.getItem('marketgame-premium') === '1'; } catch { this.premium = false; }
     delete this.options.fast;
     this.audio.enabled = this.options.sound;
     this.music = new Music(this.audio);
@@ -496,6 +498,20 @@ export class Game {
     requestAnimationFrame(tick);
   }
 
+  /** Bu hız şu an kullanılabilir mi? (Sv.20 sonrası 2× Premium) */
+  speedAllowed(sp) {
+    return sp < 2 || this.premium || this.level < PREMIUM.fastLevel;
+  }
+
+  setPremium(on) {
+    this.premium = !!on;
+    try { localStorage.setItem('marketgame-premium', on ? '1' : '0'); } catch { /* yok */ }
+    if (!this.speedAllowed(this.options.speed)) this.options.speed = 1.5;
+    this.hud.syncSpeed();
+    this.hud.syncSpeedSeg?.();
+    this.hud.toast(on ? '👑 Premium açık' : 'Standart sürüm');
+  }
+
   saveOptions() {
     try { localStorage.setItem('marketgame-options', JSON.stringify(this.options)); } catch { /* gizli mod */ }
   }
@@ -713,6 +729,8 @@ export class Game {
       const names = [...new Set(UNLOCKS.filter((u) => u.level === this.level).map((u) =>
         u.type === 'shelfStage' ? 'Raf kapasitesi' : this.padLabel(u).title))];
       this.hud.levelUp(this.level, names);
+      this.hud.syncSpeed();
+      this.hud.syncSpeedSeg?.();
       this.audio.play('unlock');
       this.refreshPads();
       this.save();

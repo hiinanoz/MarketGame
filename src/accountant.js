@@ -219,14 +219,14 @@ export class MarketAccountant extends Character {
       const extra = c.rollExtra();
       // Kampanya personeli: tecrübeli, talep normal standın kaldırabileceğinden fazlaysa tutar;
       // stajyer bütçe yettikçe rastgele karar verir
-      const staff = this.expert ? extra > this.campaignCapacity(CAMPAIGN.maxCampaigns, false) * 1.1 : Math.random() < 0.4;
-      let qty = this.expert ? this.expertEstimate(extra, CAMPAIGN.maxCampaigns, staff) : this.estimate(product);
+      const staff = this.expert ? extra > this.campaignCapacity(this.game.campaign.maxCampaigns, false) * 1.1 : Math.random() < 0.4;
+      let qty = this.expert ? this.expertEstimate(extra, this.game.campaign.maxCampaigns, staff) : this.estimate(product);
       while (qty > CAMPAIGN.minStock && c.costFor(product, qty, staff) > budget) qty -= 10;
       const cost = c.costFor(product, qty, staff);
       if (cost > budget) break;
       // Tecrübeli: bütçe talebin çok altında kalıyorsa (stok talebin %40'ından azsa) bu ürünü atlar,
       // daha ucuz bir ürünle dener; personel tutuyorsa ürün bitince müşteri az üzülür
-      if (this.expert && qty < this.expertEstimate(extra, CAMPAIGN.maxCampaigns, staff) * 0.4) continue;
+      if (this.expert && qty < this.expertEstimate(extra, this.game.campaign.maxCampaigns, staff) * 0.4) continue;
       if (c.prepare(product, qty, { by: 'accountant', extra, staff })) {
         budget -= cost;
         made++;

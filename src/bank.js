@@ -1,4 +1,4 @@
-import { BANK, START_LOAN } from './config.js';
+import { BANK, START_LOAN, PREMIUM } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Banka: kredi (günlük faizli borç) ve mevduat (günlük faiz getiren birikim).
@@ -33,7 +33,9 @@ export class Bank {
 
   get limit() {
     const p = this.limitParts;
-    return Math.round((p.base + p.assets + p.income) * (this.game.finance?.limitFactor ?? 1));
+    // Standart oyuncuda limit dörtte bir (Premium tam limit)
+    const prem = this.game.premium ? 1 : PREMIUM.creditFactor;
+    return Math.round((p.base + p.assets + p.income) * (this.game.finance?.limitFactor ?? 1) * prem);
   }
 
   get available() {
