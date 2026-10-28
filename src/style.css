@@ -64,8 +64,8 @@ html, body {
   position: relative;
 }
 .bill::after {
-  /* Kasaba Doları: yeşil kağıt para, ortada D logosu */
-  content: 'D';
+  /* Kasaba Doları: yeşil kağıt para, ortada $ */
+  content: '$';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -676,3 +676,10 @@ button { color: var(--ink); font-family: inherit; -webkit-tap-highlight-color: t
 .prem-row .pe { font-size: 20px; text-align: center; }
 .prem-row .std, .prem-row .pr { text-align: center; font-weight: 800; }
 .prem-row .pr { color: #b07d00; }
+.tip-h { margin: 8px 0 0; }
+.tip-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.panel .tip-row button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; font-size: 12.5px; background: #e8f5e4; }
+.tip-row .ic { font-size: 24px; }
+.home-badges { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+.hb { font-size: 12px; font-weight: 900; padding: 3px 10px; border-radius: 12px; color: #3a2600; background: #ffe38a; }
+.hb.sup { background: #c9f7c4; color: #13451a; }

@@ -136,7 +136,7 @@ export class Politics {
     const pts = amount / (POLITICS.donationPerPoint + g.level * 20);
     this.temp += pts;
     this.donated += amount;
-    g.hud.toast(`🤝 Đ${formatMoney(amount)} bağış: nüfuz +${pts.toFixed(1)}`);
+    g.hud.toast(`🤝 $${formatMoney(amount)} bağış: nüfuz +${pts.toFixed(1)}`);
     g.save();
     return true;
   }
@@ -393,16 +393,16 @@ export class Politics {
     // Nüfuz kaynakları
     parts.push(`<p class="note"><b>Nüfuz kaynakları</b> · kalıcı ${this.permanent} + geçici ${this.temp.toFixed(1)} (geçici puan her gün %${Math.round(POLITICS.decay * 100)} azalır)</p>
       <div class="biz-row"><span>👥 İstihdam</span><b>${g.totalStaff} çalışan</b><small>${this.jobsInfluence ? `+${this.jobsInfluence} nüfuz` : `${POLITICS.jobs.min}+ çalışanda nüfuz verir`}</small></div>
-      <div class="bank-group"><span>🤝 Bağış</span>${POLITICS.donations.map((n) => `<button data-donate="${n}" ${m < n ? 'disabled' : ''}>Đ${formatMoney(n)}</button>`).join('')}</div>
-      <div class="biz-row"><span>⚽ Spor kulübü sponsorluğu</span><b>${this.sponsor ? 'var' : 'yok'}</b><button data-sponsor>${this.sponsor ? 'Bitir' : `Başla Đ${formatMoney(POLITICS.sponsorCost + g.level * 20)}/gün`}</button></div>
-      ${this.campaignTime ? `<div class="biz-row"><span>📣 Miting</span><b>+${POLITICS.rallyPoints} nüfuz</b><button data-rally ${this.rallyDay === g.day.day || m < POLITICS.rallyCost + g.level * 60 ? 'disabled' : ''}>${this.rallyDay === g.day.day ? 'bugün yapıldı' : `Yap Đ${formatMoney(POLITICS.rallyCost + g.level * 60)}`}</button></div>` : ''}`);
-    parts.push(`<p class="note"><b>Kamu binası bağışla</b> (şehir merkezi, kalıcı nüfuz)</p>${Object.entries(POLITICS.buildings).map(([k, b]) => `<div class="biz-row"><span>${b.emoji} ${b.name}</span><b>${this.buildings[k] ? 'yapıldı' : `+${b.influence} nüfuz`}</b>${this.buildings[k] ? '' : `<button data-build="${k}" ${m < b.cost ? 'disabled' : ''}>Đ${formatMoney(b.cost)}</button>`}</div>`).join('')}`);
+      <div class="bank-group"><span>🤝 Bağış</span>${POLITICS.donations.map((n) => `<button data-donate="${n}" ${m < n ? 'disabled' : ''}>$${formatMoney(n)}</button>`).join('')}</div>
+      <div class="biz-row"><span>⚽ Spor kulübü sponsorluğu</span><b>${this.sponsor ? 'var' : 'yok'}</b><button data-sponsor>${this.sponsor ? 'Bitir' : `Başla $${formatMoney(POLITICS.sponsorCost + g.level * 20)}/gün`}</button></div>
+      ${this.campaignTime ? `<div class="biz-row"><span>📣 Miting</span><b>+${POLITICS.rallyPoints} nüfuz</b><button data-rally ${this.rallyDay === g.day.day || m < POLITICS.rallyCost + g.level * 60 ? 'disabled' : ''}>${this.rallyDay === g.day.day ? 'bugün yapıldı' : `Yap $${formatMoney(POLITICS.rallyCost + g.level * 60)}`}</button></div>` : ''}`);
+    parts.push(`<p class="note"><b>Kamu binası bağışla</b> (şehir merkezi, kalıcı nüfuz)</p>${Object.entries(POLITICS.buildings).map(([k, b]) => `<div class="biz-row"><span>${b.emoji} ${b.name}</span><b>${this.buildings[k] ? 'yapıldı' : `+${b.influence} nüfuz`}</b>${this.buildings[k] ? '' : `<button data-build="${k}" ${m < b.cost ? 'disabled' : ''}>$${formatMoney(b.cost)}</button>`}</div>`).join('')}`);
     if (this.mayor) {
       parts.push(`<p class="note"><b>Başkanlık</b> · belediye cezası kesilmez</p>
         <div class="bank-group"><span>💰 Vergi %${this.taxRate}</span>${[0, 5, 10, 15, 20, 30].map((r) => `<button data-tax="${r}" ${r === this.taxRate ? 'class="primary"' : ''}>%${r}</button>`).join('')}</div>
         <p class="note">Vergi her gün gelir getirir ama %5'in üstü halk memnuniyetini düşürür.</p>
-        <div class="biz-row"><span>🗺️ İmar izni</span><b>${this.zoned ? 'verildi' : '+4 arsa'}</b>${this.zoned ? '' : `<button data-zone ${m < POLITICS.zoningCost ? 'disabled' : ''}>Đ${formatMoney(POLITICS.zoningCost)}</button>`}</div>
-        ${Object.entries(POLITICS.projects).map(([k, pr]) => `<div class="biz-row"><span>${pr.emoji} ${pr.name}</span><b>${this.projects[k] ? `+Đ${formatMoney(pr.income)}/gün` : pr.desc}</b>${this.projects[k] ? '' : `<button data-project="${k}" ${m < pr.cost ? 'disabled' : ''}>İhale Đ${formatMoney(pr.cost)}</button>`}</div>`).join('')}`);
+        <div class="biz-row"><span>🗺️ İmar izni</span><b>${this.zoned ? 'verildi' : '+4 arsa'}</b>${this.zoned ? '' : `<button data-zone ${m < POLITICS.zoningCost ? 'disabled' : ''}>$${formatMoney(POLITICS.zoningCost)}</button>`}</div>
+        ${Object.entries(POLITICS.projects).map(([k, pr]) => `<div class="biz-row"><span>${pr.emoji} ${pr.name}</span><b>${this.projects[k] ? `+$${formatMoney(pr.income)}/gün` : pr.desc}</b>${this.projects[k] ? '' : `<button data-project="${k}" ${m < pr.cost ? 'disabled' : ''}>İhale $${formatMoney(pr.cost)}</button>`}</div>`).join('')}`);
     }
     if (this.wins >= POLITICS.autocracyWins && !this.autocracy) {
       parts.push(`<div class="biz-btns"><button class="primary" data-autocracy>👑 Otokrasiye geç (seçimler kalkar)</button></div>`);

@@ -84,7 +84,7 @@ export class Fx {
     }
   }
 
-  /** Bir noktanın üstünde yükselip kaybolan yazı (+Đ12 gibi). */
+  /** Bir noktanın üstünde yükselip kaybolan yazı (+$12 gibi). */
   floatText(pos, text, color = '#2fbf3a') {
     const tex = textTexture(text, { color, size: 64, stroke: '#ffffff' });
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
@@ -162,14 +162,32 @@ export function makeBill() {
   if (!billGeo) {
     billGeo = new THREE.BoxGeometry(0.62, 0.1, 0.34);
     bandGeo = new THREE.BoxGeometry(0.14, 0.105, 0.35);
-    billMat = new THREE.MeshStandardMaterial({ color: 0x4cc552, roughness: 0.7 });
+    // Kasaba Doları: üst yüzde $ işareti
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 72;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#4cc552';
+    ctx.fillRect(0, 0, 128, 72);
+    ctx.fillStyle = '#d8f5d0';
+    ctx.beginPath();
+    ctx.arc(64, 36, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1f7a28';
+    ctx.font = '900 38px "Trebuchet MS", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$', 64, 38);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const side = new THREE.MeshStandardMaterial({ color: 0x4cc552, roughness: 0.7 });
+    const top = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 });
+    billMat = [side, side, top, side, side, side];
     bandMat = new THREE.MeshStandardMaterial({ color: 0xd8f5d0, roughness: 0.7 });
   }
   const g = new THREE.Group();
   const m = new THREE.Mesh(billGeo, billMat);
   m.castShadow = true;
   g.add(m);
-  const band = new THREE.Mesh(bandGeo, bandMat);
-  g.add(band);
   return g;
 }

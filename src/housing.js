@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { prop } from './assets.js';
-import { HOUSING, DAY, RENT, XP_PER_PURCHASE } from './config.js';
+import { HOUSING, DAY, RENT, XP_PER_PURCHASE, PREMIUM } from './config.js';
 import { textTexture } from './fx.js';
 import { formatMoney } from './hud.js';
 
@@ -90,7 +90,16 @@ export class Housing {
   }
 
   buildDays(typeId) {
-    return HOUSING.types[typeId].days * (this.company ? HOUSING.company.timeFactor : 1);
+    return HOUSING.types[typeId].days * (this.company ? HOUSING.company.timeFactor : 1) * (this.game.premium ? PREMIUM.buildSpeed : 1);
+  }
+
+  /** Şu an süren inşaat sayısı (standart en fazla PREMIUM.builds). */
+  get activeBuilds() {
+    return this.plots.filter((p) => p.type && !p.built).length;
+  }
+
+  get canStartBuild() {
+    return this.game.premium || this.activeBuilds < PREMIUM.builds;
   }
 
   /** Toplam değer (kredi limiti için). */
@@ -209,6 +218,10 @@ export class Housing {
     const t = HOUSING.types[typeId];
     const cost = this.costOf(typeId);
     if (!p.owned || p.type || !t || g.level < t.level || g.money < cost) return false;
+    if (!this.canStartBuild) {
+      g.hud.toast(`👑 Aynı anda en fazla ${PREMIUM.builds} inşaat — Premium'da sınırsız`);
+      return false;
+    }
     g.spend(cost);
     p.type = typeId;
     p.progress = 0;
@@ -453,7 +466,7 @@ export class Housing {
   }
 
   labelText(p) {
-    if (!p.owned) return this.game.level < HOUSING.fromLevel ? `🔒 Sv.${HOUSING.fromLevel}` : `📜 Đ${formatMoney(HOUSING.plotPrice)}`;
+    if (!p.owned) return this.game.level < HOUSING.fromLevel ? `🔒 Sv.${HOUSING.fromLevel}` : `📜 $${formatMoney(HOUSING.plotPrice)}`;
     if (!p.type) return `📜 Arsa ${p.i + 1}`;
     const t = this.type(p);
     if (!p.built) return `${t.emoji} 🏗️ %${Math.floor(p.progress * 100)}`;

@@ -56,7 +56,7 @@ export class Business {
   get isEnergy() { return !!this.def.energy; }
   get perModule() { return this.def.workersPerModule ?? STAFF.workersPerModule; }
   staffLevel(role) { return this.def.staffLevels?.[role] ?? STAFF.levels[role]; }
-  /** Tam kadroyla günlük elektrik üretimi (birim = Đ1'lık elektrik). */
+  /** Tam kadroyla günlük elektrik üretimi (birim = $1'lık elektrik). */
   get energyCapacity() { return this.isEnergy ? Math.round(this.def.energyPerModule * this.modules * this.efficiency) : 0; }
   get isLogistics() { return this.def.kind === 'garage'; }
   /** Hazır binada çalışan işletme (market şubesi, medya): arsa/modül şeridi yok. */
@@ -162,7 +162,7 @@ export class Business {
     this.rebuildStaff();
     if (this.isLogistics) g.depot.refreshFleet?.();
     g.gainXp(Math.floor(this.def.price / XP_PER_PURCHASE));
-    g.hud.toast(this.leased ? `🔑 ${this.def.emoji} ${this.name} kiralandı (haftalık Đ${this.weeklyRent})` : `🤝 ${this.def.emoji} ${this.name} artık senin!`);
+    g.hud.toast(this.leased ? `🔑 ${this.def.emoji} ${this.name} kiralandı (haftalık $${this.weeklyRent})` : `🤝 ${this.def.emoji} ${this.name} artık senin!`);
     if (this.isBuilding && !this.workers) g.later.push({ t: 1.8, fn: () => g.hud.toast('👥 Şimdi müdür ve çalışan ata (💼 tablet)') });
     g.audio.play('unlock');
     g.save();
@@ -546,8 +546,8 @@ export class Business {
     else if (this.seized) text = `${this.def.emoji} 🏦 Bankaya ait`;
     else if (g.level < this.def.level) text = `${this.def.emoji} ${this.def.owner} · 🔒 Sv.${this.def.level}`;
     else if (this.missingReq.length) text = `${this.def.emoji} ${this.def.owner} · 🔒 önce tedarikçiler`;
-    else if (this.def.lease) text = `${this.def.emoji} KİRALIK · devir Đ${this.def.price.toLocaleString('tr-TR')}`;
-    else text = `${this.def.emoji} SATILIK Đ${this.def.price.toLocaleString('tr-TR')}`;
+    else if (this.def.lease) text = `${this.def.emoji} KİRALIK · devir $${this.def.price.toLocaleString('tr-TR')}`;
+    else text = `${this.def.emoji} SATILIK $${this.def.price.toLocaleString('tr-TR')}`;
     if (!force && text === this.labelText) return;
     this.labelText = text;
     this.label.material.map?.dispose();

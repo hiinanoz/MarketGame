@@ -1,4 +1,4 @@
-import { PRODUCTS, GOALS, DAY, BANK } from './config.js';
+import { PRODUCTS, GOALS, DAY, BANK, PREMIUM } from './config.js';
 import { formatMoney } from './hud.js';
 import { confettiBurst } from './celebrate.js';
 
@@ -90,8 +90,8 @@ export class Goals {
     q.done = true;
     g.money += q.money;
     g.hud.setMoney(g.money);
-    this.addGems(q.gems);
-    g.hud.toast(`🎯 Görev tamam: ${questText(q)} · +Đ${formatMoney(q.money)} 💎${q.gems}`);
+    this.addGems(this.gemBonus(q.gems));
+    g.hud.toast(`🎯 Görev tamam: ${questText(q)} · +$${formatMoney(q.money)} 💎${this.gemBonus(q.gems)}`);
     g.audio.play('unlock');
     confettiBurst(36);
     if (!this.bonusDone && this.quests.every((x) => x.done)) {
@@ -137,7 +137,12 @@ export class Goals {
   loginReward(day) {
     const r = GOALS.login[day - 1];
     const scale = 1 + this.game.level / 8;
-    return { gems: r.gems, money: Math.round((r.money * scale) / 10) * 10 };
+    return { gems: this.gemBonus(r.gems), money: Math.round((r.money * scale) / 10) * 10 };
+  }
+
+  /** Premium: görev ve giriş ödülünde elmas 1.5 kat. */
+  gemBonus(n) {
+    return this.game.premium ? Math.round(n * PREMIUM.gemFactor) : n;
   }
 
   claimLogin() {
@@ -222,7 +227,7 @@ export class Goals {
 export function questText(q) {
   switch (q.type) {
     case 'customers': return `${q.target} müşteriye hizmet et`;
-    case 'revenue': return `Bugün Đ${formatMoney(q.target)} ciro yap`;
+    case 'revenue': return `Bugün $${formatMoney(q.target)} ciro yap`;
     case 'cash': return `Kasadan ${q.target} kez para topla`;
     case 'buy': return 'Yeni bir alan satın al';
     case 'sell': return `${q.target} kasa ${PRODUCTS[q.product].emoji} ${PRODUCTS[q.product].name} sat`;

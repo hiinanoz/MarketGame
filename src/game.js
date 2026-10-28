@@ -264,7 +264,7 @@ export class Game {
 
   /** Sıradaki seviyenin alanları da kilitli (gri) olarak görünür; ulaşınca açılır. */
   refreshPads() {
-    for (const [id, pad] of this.pads) pad.setLocked(pad.def.level > this.level);
+    for (const [id, pad] of this.pads) pad.setLocked(pad.def.level > this.level, this.premiumLocked(pad.def));
     for (const def of UNLOCKS) {
       if (this.unlocked.has(def.id) || this.pads.has(def.id)) continue;
       if (!def.requires.every((r) => this.unlocked.has(r))) continue;
@@ -274,10 +274,10 @@ export class Game {
       const label = this.padLabel(def);
       // Personel alanında günlük maaş da yazsın (işe alım ucuz ama her gün maaş ödenir)
       const role = def.type === 'ads' ? (def.target === 'advertiser' ? 'advertiser' : null) : STAFF_ROLE[def.type];
-      if (role && WAGES[role]) label.title = `${label.title} · Đ${WAGES[role]}/gün`;
+      if (role && WAGES[role]) label.title = `${label.title} · $${WAGES[role]}/gün`;
       if (def.type === 'roadboard') def.cost = this.roadboardCost();
       const pad = new UnlockPad(this, def, x, z, label);
-      pad.setLocked(def.level > this.level);
+      pad.setLocked(def.level > this.level, this.premiumLocked(def));
       if (this.savedPads?.[def.id]) {
         pad.paid = Math.min(this.savedPads[def.id], def.cost - 1);
         pad.redraw();
@@ -428,7 +428,7 @@ export class Game {
     this.day.today.revenue += amount;
     this.hud.setMoney(this.money);
     this.hud.bump();
-    this.fx.floatText(pos, `+Đ${amount}`);
+    this.fx.floatText(pos, `+$${amount}`);
     this.audio.play('coin');
   }
 
@@ -436,7 +436,7 @@ export class Game {
     this.money -= amount;
     this.day.today.spent += amount;
     this.hud.setMoney(this.money);
-    if (pos) this.fx.floatText(pos, `-Đ${amount}`, '#e04b3a');
+    if (pos) this.fx.floatText(pos, `-$${amount}`, '#e04b3a');
   }
 
   /** Hiç para ve stok kalmadıysa oyuncu takılı kalmasın: depodan bedava ürün verilir. */
@@ -498,6 +498,13 @@ export class Game {
     requestAnimationFrame(tick);
   }
 
+  /** Standart sürümde kilitli alan mı? (online bölümünde 6 kişiden fazlası Premium) */
+  premiumLocked(def) {
+    if (this.premium) return false;
+    if (/^online(Deputy|Picker|Courier)$/.test(def.type)) return (this.online?.staffCount ?? 0) >= PREMIUM.onlineStaff;
+    return false;
+  }
+
   /** Bu hız şu an kullanılabilir mi? (Sv.20 sonrası 2× Premium) */
   speedAllowed(sp) {
     return sp < 2 || this.premium || this.level < PREMIUM.fastLevel;
@@ -507,6 +514,8 @@ export class Game {
     this.premium = !!on;
     try { localStorage.setItem('marketgame-premium', on ? '1' : '0'); } catch { /* yok */ }
     if (!this.speedAllowed(this.options.speed)) this.options.speed = 1.5;
+    this.refreshPads();
+    this.decor?.placeItems();
     this.hud.syncSpeed();
     this.hud.syncSpeedSeg?.();
     this.hud.toast(on ? '👑 Premium açık' : 'Standart sürüm');
@@ -561,7 +570,7 @@ export class Game {
     if (!shelvesEmpty || !depotEmpty || carrying || cash >= cheapest * 3) return;
     if (this.stuckWarnedDay === this.day.day) return;
     this.stuckWarnedDay = this.day.day;
-    this.hud.toast(`🏦 Mal kalmadı, para da yetmiyor: muhasebe odası → Banka'dan kredi çekip sipariş ver (limit Đ${formatMoney(this.bank.available)})`);
+    this.hud.toast(`🏦 Mal kalmadı, para da yetmiyor: muhasebe odası → Banka'dan kredi çekip sipariş ver (limit $${formatMoney(this.bank.available)})`);
   }
 
   /** Akşam 19:00: kasa gün sonu ödemelerine yetmiyorsa uyar. */
@@ -571,7 +580,7 @@ export class Game {
     this.dueWarnedDay = d.day;
     const due = this.dueTonight;
     const have = this.money + this.bank.deposit + this.checkouts.reduce((a, c) => a + c.cash.value, 0);
-    if (due > 0 && have < due) this.hud.toast(`⚠️ Gün sonu ödemeler Đ${Math.round(due)}, kasada Đ${Math.round(have)} — yetmezse çalışanlar ayrılır`);
+    if (due > 0 && have < due) this.hud.toast(`⚠️ Gün sonu ödemeler $${Math.round(due)}, kasada $${Math.round(have)} — yetmezse çalışanlar ayrılır`);
   }
 
   /** Yol kenarı panosu fiyatı: alınan pano sayısı arttıkça (kalan azaldıkça) iki katına çıkar. */
@@ -690,7 +699,7 @@ export class Game {
     if (ot.cost > 0) {
       this.spend(ot.cost);
       this.day.today.overtime = ot.cost;
-      this.hud.toast(`💼 Ek mesai: ${ot.people} çalışana Đ${ot.cost} ödendi`);
+      this.hud.toast(`💼 Ek mesai: ${ot.people} çalışana $${ot.cost} ödendi`);
     }
     this.overtime = null;
     return true;

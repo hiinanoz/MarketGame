@@ -98,7 +98,7 @@ export class Ads {
     if (amount > pay) g.bank.debt += amount - pay;
     g.day.today.fine = { amount, reason };
     g.hud.setMoney(g.money);
-    g.hud.toast(`🏛️ Belediye cezası: ${reason} −Đ${formatMoney(amount)}`);
+    g.hud.toast(`🏛️ Belediye cezası: ${reason} −$${formatMoney(amount)}`);
   }
 
   serialize() {

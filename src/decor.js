@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DECOR } from './config.js';
+import { DECOR, PREMIUM } from './config.js';
 import { prop } from './assets.js';
 
 // Dekorasyon (💎 elmasla): zemin deseni, tabela rengi, mağaza önüne süsler ve ışık zinciri.
@@ -21,8 +21,13 @@ export class Decor {
     return 1 + Math.min(DECOR.bonusMax, this.items.length * DECOR.bonusPerItem + (this.lights ? DECOR.bonusPerItem : 0));
   }
 
+  /** Süs yeri: standart 6, Premium 10. */
+  get slotCount() {
+    return this.game.premium ? DECOR.slots.length : Math.min(DECOR.slots.length, PREMIUM.decorSlots);
+  }
+
   get freeSlots() {
-    return DECOR.slots.length - this.items.length;
+    return Math.max(0, this.slotCount - this.items.length);
   }
 
   /** Zemin ya da tabela: sahipsen seç, değilsen elmasla al. */
@@ -31,6 +36,10 @@ export class Decor {
     const list = kind === 'floor' ? DECOR.floors : DECOR.signs;
     const d = list.find((x) => x.id === id);
     if (!d) return false;
+    if (d.premium && !g.premium) {
+      g.hud.toast('👑 Bu desen Premium\'a özel');
+      return false;
+    }
     const key = `${kind}:${id}`;
     if (!this.owned.has(key)) {
       if (!g.goals.spendGems(d.gems)) return false;

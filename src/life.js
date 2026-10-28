@@ -244,7 +244,7 @@ class Citizen extends Character {
       g.money += amount;
       d.biz.today.sales += amount;
       g.hud.setMoney(g.money);
-      g.fx.floatText(this.position.clone().add(new THREE.Vector3(0, 2.2, 0)), `+Đ${amount}`, '#2f7a2f');
+      g.fx.floatText(this.position.clone().add(new THREE.Vector3(0, 2.2, 0)), `+$${amount}`, '#2f7a2f');
     }
   }
 

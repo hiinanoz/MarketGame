@@ -32,8 +32,8 @@ export const LEVELS = [0, 15, 40, 80, 130, 200, 280, 380, 500, 650, 800, 1000, 1
 for (let l = 21; l <= 100; l++) LEVELS.push(Math.round((4000 * 1.075 ** (l - 20)) / 50) * 50);
 export const MAX_LEVEL = 100;
 // Sv.20 sonrası XP kaynakları: market müşterisi 1 XP + diğer işletmelerin kârı + satın alımlar
-export const XP_PER_PROFIT = 100;   // diğer işletmelerin günlük kârında her Đ100 = 1 XP
-export const XP_PER_PURCHASE = 100; // işletme/arsa alımında her Đ100 = 1 XP
+export const XP_PER_PROFIT = 100;   // diğer işletmelerin günlük kârında her $100 = 1 XP
+export const XP_PER_PURCHASE = 100; // işletme/arsa alımında her $100 = 1 XP
 
 // ---- Memnuniyet ve temizlik --------------------------------------------------------
 export const RATING = {
@@ -264,6 +264,17 @@ export const PREMIUM = {
   creditFactor: 0.25,   // standart: banka kredi limiti dörtte bir
   fastLevel: 20,        // bu seviyeden sonra 2× hız Premium (standart en fazla 1.5×)
   campaigns: { standard: 2, premium: 3 }, // aynı gün en fazla kampanya
+  onlineStaff: 6,       // standart: online bölümünde en fazla 6 kişi (ciro ≈ marketin %50'si)
+  builds: 2,            // standart: aynı anda en fazla 2 inşaat; Premium sınırsız
+  buildSpeed: 0.75,     // Premium: inşaat süresi %25 kısa
+  decorSlots: 6,        // standart: mağaza önünde 6 süs yeri (Premium 10)
+  gemFactor: 1.5,       // Premium: görev ve giriş ödülünde elmas 1.5 kat
+  // Geliştiriciye teşekkür (App Store'da tekrar alınabilen bahşiş ürünleri)
+  tips: [
+    { id: 'tip_small', name: 'Çay ısmarla', emoji: '🍵', price: '0,99 $' },
+    { id: 'tip_medium', name: 'Kahve ısmarla', emoji: '☕', price: '2,99 $' },
+    { id: 'tip_large', name: 'Yemek ısmarla', emoji: '🍽️', price: '6,99 $' },
+  ],
 };
 
 // ---- Hedefler, ödüller, dekorasyon -------------------------------------------------------------
@@ -288,6 +299,7 @@ export const DECOR = {
     { id: 'peach', name: 'Şeftali', colors: ['#fbe7da', '#f3d3bf'], gems: 15 },
     { id: 'checker', name: 'Dama', colors: ['#f5f5f5', '#4a4a4a'], gems: 25 },
     { id: 'wood', name: 'Ahşap', colors: ['#d9b48a', '#c79c6c'], gems: 30 },
+    { id: 'royal', name: 'Saray', colors: ['#f6e7b0', '#b98c2e'], gems: 20, premium: true },
   ],
   signs: [
     { id: 'green', name: 'Yeşil', color: '#2b8a35', gems: 0 },
@@ -296,6 +308,7 @@ export const DECOR = {
     { id: 'purple', name: 'Mor', color: '#7a3cc2', gems: 8 },
     { id: 'gold', name: 'Altın', color: '#c99a12', gems: 15 },
     { id: 'black', name: 'Gece', color: '#1e1e28', gems: 12 },
+    { id: 'royal', name: 'Kraliyet', color: '#6a1fa0', gems: 15, premium: true },
   ],
   // Mağaza önüne konan süsler: her biri +%1 müşteri (en fazla +%10)
   items: [
@@ -590,7 +603,7 @@ export const STAFF_ROLE = {
   onlineDeputy: 'deputy', onlinePicker: 'picker', onlineCourier: 'courier',
 };
 // ---- Elektrik (Sv.30+) -----------------------------------------------------------------------
-// Günlük tüketim birim cinsinden (1 birim = şebeke fiyatıyla Đ1). Kendi santrallerin üretirse
+// Günlük tüketim birim cinsinden (1 birim = şebeke fiyatıyla $1). Kendi santrallerin üretirse
 // fatura düşer; fazla üretim, santralde müdür varsa şebekeye satılır.
 export const ELECTRICITY = {
   fromLevel: 30,

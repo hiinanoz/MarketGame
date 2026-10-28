@@ -11,7 +11,7 @@ import { confettiBurst } from './celebrate.js';
 const HELP = [
   ['🕹️', 'Ekrana dokunup sürükleyerek yürü. Depodaki paletten kasa al, aynı ürünün reyonuna bırak.'],
   ['💳', 'Müşteriler kasada bekler: kasiyer alana kadar kasanın arkasında dur, parayı topla.'],
-  ['💵', 'Kasabanın parası <b>Kasaba Doları</b> (Đ). Elmas 💎 ise süsleme için ayrı bir ödüldür.'],
+  ['💵', 'Kasabanın parası <b>Kasaba Doları</b> ($). Elmas 💎 ise süsleme için ayrı bir ödüldür.'],
   ['🟩', 'Yerdeki alanların üstünde kısa bir an durarak para öde: reyon, çalışan, genişleme açılır.'],
   ['🧾', 'Muhasebe odası: sipariş, banka, kampanya ve reklam. Sv.21\'den sonra 💼 tabletle işletmeleri yönet.'],
   ['🎯', 'Her sabah 3 yeni görev gelir; tamamlayınca para ve 💎 elmas kazanırsın. Elmasla marketini süsle.'],
@@ -37,6 +37,7 @@ export class Menus {
     this.home = document.getElementById('home');
     this.sheet = document.getElementById('sheet');
     this.avatarEl = document.getElementById('avatar');
+    try { this.supporter = Number(localStorage.getItem('marketgame-supporter') || 0); } catch { this.supporter = 0; }
     for (const el of [this.home, this.sheet, this.avatarEl]) el.addEventListener('pointerdown', (e) => e.stopPropagation());
     this.bind();
   }
@@ -59,10 +60,13 @@ export class Menus {
   refreshHome() {
     const g = this.game;
     const isNew = g.isNewGame && !g.started;
-    document.getElementById('home-meta').textContent = isNew ? 'Kasabanın küçük marketi seni bekliyor' : `${g.marketTitle} · Gün ${g.day.day} · Sv.${g.level} · Đ${formatMoney(Math.round(g.money))}`;
+    document.getElementById('home-meta').textContent = isNew ? 'Kasabanın küçük marketi seni bekliyor' : `${g.marketTitle} · Gün ${g.day.day} · Sv.${g.level} · $${formatMoney(Math.round(g.money))}`;
     document.getElementById('home-continue').textContent = isNew ? '▶️ Oyuna başla' : '▶️ Devam et';
     document.getElementById('home-new').classList.toggle('hidden', isNew);
     document.getElementById('home-gems').textContent = g.goals.gems;
+    // Rozetler: Premium ve Destekçi
+    const badges = `${g.premium ? '<span class="hb prem">👑 Premium</span>' : ''}${this.supporter ? '<span class="hb sup">☕ Destekçi</span>' : ''}`;
+    document.getElementById('home-badges').innerHTML = badges;
     document.getElementById('home-daily-dot').classList.toggle('hidden', !g.goals.loginPending);
   }
 
@@ -169,9 +173,28 @@ export class Menus {
       ${row('🏦', 'Banka kredi limiti', '¼', 'Tam')}
       ${row('⏩', `Oyun hızı (Sv.${PREMIUM.fastLevel}+)`, '1.5×', '2×')}
       ${row('📢', 'Aynı gün kampanya', String(PREMIUM.campaigns.standard), String(PREMIUM.campaigns.premium))}
+      ${row('🌐', 'Online personel', `${PREMIUM.onlineStaff} kişi`, '10 kişi')}
+      ${row('🎓', 'Tecrübeli muhasebeci', '—', '✓')}
+      ${row('🏗️', 'Aynı anda inşaat', String(PREMIUM.builds), 'Sınırsız, %25 hızlı')}
+      ${row('🎨', 'Süs yeri + özel desen', `${PREMIUM.decorSlots}`, '10 + 👑 set')}
+      ${row('💎', 'Görev/giriş elması', '1×', `${PREMIUM.gemFactor}×`)}
       <p class="note">Durum: <b>${g.premium ? '👑 Premium' : 'Standart'}</b>. Satın alma App Store sürümüyle gelecek.</p>
-      <button data-ptoggle class="${g.premium ? '' : 'primary'}">${g.premium ? 'Standarda dön (test)' : 'Premium\'u dene (test)'}</button>`,
+      <button data-ptoggle class="${g.premium ? '' : 'primary'}">${g.premium ? 'Standarda dön (test)' : 'Premium\'u dene (test)'}</button>
+      <h4 class="tip-h">☕ Geliştiriciye teşekkür et</h4>
+      <p class="note">Oyunu sevdiysen küçük bir teşekkür gönderebilirsin. Hiçbir şey kilitlemez; karşılığında <b>☕ Destekçi</b> rozeti alırsın.${this.supporter ? ` Teşekkürlerin: <b>${this.supporter}</b> 💚` : ''}</p>
+      <div class="tip-row">${PREMIUM.tips.map((t) => `<button data-tip="${t.id}"><span class="ic">${t.emoji}</span>${t.name}<small>${t.price}</small></button>`).join('')}</div>`,
     { onClick: (e) => {
+      const tip = e.target.closest('[data-tip]');
+      if (tip) {
+        // App Store'da: tekrar alınabilen bahşiş ürünü (StoreKit). Şimdilik test: rozet verilir.
+        this.supporter = (this.supporter ?? 0) + 1;
+        try { localStorage.setItem('marketgame-supporter', String(this.supporter)); } catch { /* yok */ }
+        g.hud.toast('💚 Teşekkürler! ☕ Destekçi rozeti senin');
+        g.audio.play('levelup');
+        confettiBurst(70);
+        this.showPremium();
+        return;
+      }
       if (!e.target.closest('[data-ptoggle]')) return;
       g.setPremium(!g.premium);
       this.showPremium();
@@ -184,7 +207,7 @@ export class Menus {
     const g = this.game;
     const qs = g.goals.quests;
     const rows = qs.map((q) => `<div class="quest ${q.done ? 'done' : ''}"><span class="qe">${q.done ? '✅' : questEmoji(q)}</span>
-      <div class="qt">${questText(q)}<small>${q.done ? 'tamamlandı' : `${q.type === 'revenue' ? `Đ${formatMoney(q.progress)}` : q.type === 'rating' ? (q.progress / 10).toFixed(1) : q.progress} / ${q.type === 'revenue' ? `Đ${formatMoney(q.target)}` : q.type === 'rating' ? '4.5' : q.target}`} · ödül Đ${formatMoney(q.money)} + 💎${q.gems}</small>
+      <div class="qt">${questText(q)}<small>${q.done ? 'tamamlandı' : `${q.type === 'revenue' ? `$${formatMoney(q.progress)}` : q.type === 'rating' ? (q.progress / 10).toFixed(1) : q.progress} / ${q.type === 'revenue' ? `$${formatMoney(q.target)}` : q.type === 'rating' ? '4.5' : q.target}`} · ödül $${formatMoney(q.money)} + 💎${q.gems}</small>
       <div class="qbar"><i style="width:${Math.round((q.progress / q.target) * 100)}%"></i></div></div></div>`).join('');
     const all = qs.length && qs.every((q) => q.done);
     this.openSheet(`🎯 Gün ${g.day.day} görevleri`, `${rows}<p class="note">Üçünü de bitirirsen ek 💎${GOALS.allQuestsGems}. ${all ? '<b>Bugünün tüm görevleri tamam!</b> ' : ''}Yeni görevler her sabah gelir.</p>
@@ -202,17 +225,17 @@ export class Menus {
       const r = go.loginReward(d);
       const got = pending ? d < cur : d <= cur;
       const today = pending && d === cur;
-      return `<div class="${got ? 'got' : ''} ${today ? 'today' : ''} ${d === 7 ? 'big' : ''}"><span>${d}. gün</span><b>${got ? '✅' : d === 7 ? '🎁' : '💎'}</b>${r.money ? `Đ${formatMoney(r.money)}` : ''}<span>💎${r.gems}</span></div>`;
+      return `<div class="${got ? 'got' : ''} ${today ? 'today' : ''} ${d === 7 ? 'big' : ''}"><span>${d}. gün</span><b>${got ? '✅' : d === 7 ? '🎁' : '💎'}</b>${r.money ? `$${formatMoney(r.money)}` : ''}<span>💎${r.gems}</span></div>`;
     }).join('');
     const r = go.loginReward(cur);
     this.openSheet('📅 Günlük ödül', `<p class="note">Her gün oyuna gir, ödülünü al. 7 gün üst üste gelirsen büyük ödül! Bir gün kaçırırsan seri baştan başlar.</p>
       <div class="cal">${cells}</div>
-      ${pending ? `<div class="big-reward">Bugün (${cur}. gün)<b>${r.money ? `Đ${formatMoney(r.money)} + ` : ''}💎${r.gems}</b><button data-claim class="primary">Ödülü al</button></div>` : '<p class="big-reward">Bugünün ödülünü aldın. Yarın tekrar gel! 👋</p>'}`,
+      ${pending ? `<div class="big-reward">Bugün (${cur}. gün)<b>${r.money ? `$${formatMoney(r.money)} + ` : ''}💎${r.gems}</b><button data-claim class="primary">Ödülü al</button></div>` : '<p class="big-reward">Bugünün ödülünü aldın. Yarın tekrar gel! 👋</p>'}`,
     { onClick: (e) => {
       if (!e.target.closest('[data-claim]')) return;
       const got = go.claimLogin();
       if (got) {
-        this.game.hud.toast(`📅 Günlük ödül: ${got.money ? `Đ${formatMoney(got.money)} + ` : ''}💎${got.gems}`);
+        this.game.hud.toast(`📅 Günlük ödül: ${got.money ? `$${formatMoney(got.money)} + ` : ''}💎${got.gems}`);
         this.showLogin();
       }
     } });
@@ -226,7 +249,7 @@ export class Menus {
     const m = res.minutes % 60;
     const time = h ? `${h} saat ${m} dk` : `${m} dk`;
     this.afterSheet = then;
-    this.openSheet('🌙 Sen yokken', `<div class="big-reward">${time} uzaktaydın.<br>Çalışanların çalışmaya devam etti:<b>+Đ${formatMoney(res.amount)}</b></div>
+    this.openSheet('🌙 Sen yokken', `<div class="big-reward">${time} uzaktaydın.<br>Çalışanların çalışmaya devam etti:<b>+$${formatMoney(res.amount)}</b></div>
       <p class="note">${res.manager ? '💼 Müdürün dükkânı yönetti.' : 'Müdürün olsaydı iki kat kazanırdın (Sv.7).'}${` Sen yokken oyunda yaklaşık ${res.gameDays.toFixed(1)} gün geçti (uygulama kapalıyken zaman yavaş akar: 1 gün = en fazla ${GOALS.offlineDaysPerRealDay} oyun günü).`}</p>`,
     { close: 'Topla 💰' });
     g.money += res.amount;
@@ -255,15 +278,16 @@ export class Menus {
     const gems = g.goals.gems;
     const owned = (k, id) => d.owned.has(`${k}:${id}`);
     const price = (k, x) => (owned(k, x.id) ? (d[k] === x.id ? 'seçili' : 'sende') : `💎${x.gems}`);
-    const floors = DECOR.floors.map((f) => `<button data-floor="${f.id}" class="${d.floor === f.id ? 'on' : ''}" ${!owned('floor', f.id) && gems < f.gems ? 'disabled' : ''}><span class="swatch" style="background:linear-gradient(135deg,${f.colors[0]} 50%,${f.colors[1]} 50%)"></span>${f.name}<small>${price('floor', f)}</small></button>`).join('');
-    const signs = DECOR.signs.map((s) => `<button data-sign="${s.id}" class="${d.sign === s.id ? 'on' : ''}" ${!owned('sign', s.id) && gems < s.gems ? 'disabled' : ''}><span class="swatch" style="background:${s.color}"></span>${s.name}<small>${price('sign', s)}</small></button>`).join('');
+    const prem = (x) => x.premium && !g.premium;
+    const floors = DECOR.floors.map((f) => `<button data-floor="${f.id}" class="${d.floor === f.id ? 'on' : ''}" ${(!owned('floor', f.id) && gems < f.gems) || prem(f) ? 'disabled' : ''}>${f.premium ? '👑 ' : ''}<span class="swatch" style="background:linear-gradient(135deg,${f.colors[0]} 50%,${f.colors[1]} 50%)"></span>${f.name}<small>${price('floor', f)}</small></button>`).join('');
+    const signs = DECOR.signs.map((s) => `<button data-sign="${s.id}" class="${d.sign === s.id ? 'on' : ''}" ${(!owned('sign', s.id) && gems < s.gems) || prem(s) ? 'disabled' : ''}>${s.premium ? '👑 ' : ''}<span class="swatch" style="background:${s.color}"></span>${s.name}<small>${price('sign', s)}</small></button>`).join('');
     const items = DECOR.items.map((it) => `<button data-item="${it.id}" ${gems < it.gems || d.freeSlots <= 0 ? 'disabled' : ''}><span class="ic">${it.emoji}</span>${it.name}<small>💎${it.gems}</small></button>`).join('');
     const placed = d.items.map((id, i) => `<span>${DECOR.items.find((x) => x.id === id).emoji}<button data-remove="${i}" class="x-mini" aria-label="Kaldır">✕</button></span>`).join('');
     const L = DECOR.lights;
     this.openSheet(`🎨 Dekorasyon · 💎${gems}`, `
       <div class="decor-sec"><h4>Zemin deseni</h4><div class="decor-row">${floors}</div></div>
       <div class="decor-sec"><h4>Tabela rengi</h4><div class="decor-row">${signs}</div></div>
-      <div class="decor-sec"><h4>Mağaza önü süsleri <small>(${d.items.length}/${DECOR.slots.length} · müşteri +%${Math.round((d.customerFactor - 1) * 100)})</small></h4><div class="decor-row">${items}</div>
+      <div class="decor-sec"><h4>Mağaza önü süsleri <small>(${d.items.length}/${d.slotCount}${g.premium ? '' : ' · 👑 Premium: 10'} · müşteri +%${Math.round((d.customerFactor - 1) * 100)})</small></h4><div class="decor-row">${items}</div>
         ${placed ? `<div class="decor-placed">${placed}</div>` : ''}</div>
       <div class="decor-sec"><h4>Işıklar</h4><div class="decor-row"><button data-lights ${d.lights || gems < L.gems ? 'disabled' : ''}><span class="ic">${L.emoji}</span>${L.name}<small>${d.lights ? 'takılı' : `💎${L.gems}`}</small></button></div></div>
       <p class="note">💎 elmas: günlük görevler, günlük ödül ve müşteri kutlamalarından gelir. Her süs ve ışık zinciri müşteriyi %1 artırır (en fazla %10).</p>`,

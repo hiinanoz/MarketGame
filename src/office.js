@@ -181,9 +181,9 @@ class OfficePanel {
     const other = a.expert ? 'junior' : 'expert';
     sec.innerHTML = `
       <div class="acc-tier">
-        <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · günlük Đ${a.wage}
+        <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · günlük $${a.wage}
         <small>${a.expert ? 'Pazar araştırması yapar: kampanya talebini doğru bilir (az mağdur müşteri, az kalan stok), maaşı karşılanmayacak personeli almaz, akşam ödemelerine göre yedek tutar, tam ihtiyaç kadar kredi çeker.' : 'Ucuz ama tecrübesiz: kampanya stoğunu son kampanyaya bakarak tahmin eder (talep her gün değişir, sık yanılır), personeli parası yettikçe alır, kredi çekerken fazla çeker.'}</small>
-        <button data-tier="${other}" ${other === 'expert' && this.game.money < T.expert.hire ? 'disabled' : ''}>${other === 'expert' ? `🎓 Tecrübeli muhasebeciyle değiştir (Đ${T.expert.hire} · Đ${T.expert.wage}/gün)` : `🧑‍💼 Stajyere dön (Đ${T.junior.wage}/gün)`}</button>
+        <button data-tier="${other}" ${other === 'expert' && (this.game.money < T.expert.hire || !this.game.premium) ? 'disabled' : ''}>${other === 'expert' ? `${this.game.premium ? '' : '👑 '}🎓 Tecrübeli muhasebeciyle değiştir ($${T.expert.hire} · $${T.expert.wage}/gün)` : `🧑‍💼 Stajyere dön ($${T.junior.wage}/gün)`}</button>
       </div>
       <p class="note"><b>Yetkiler</b> — kapattığın işi sen yaparsın.</p>
       ${t('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
@@ -192,12 +192,12 @@ class OfficePanel {
       ${t('ads', '📣 Reklam', 'Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)')}
       <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>Reklam kanalı</span><select data-set="adChannel">
         <option value="auto" ${a.settings.adChannel === 'auto' ? 'selected' : ''}>Otomatik (bütçeye göre)</option>
-        ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (Sv.${ad.level})` : ` · Đ${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
+        ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (Sv.${ad.level})` : ` · $${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
       </select></label>
       ${t('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
       ${t('hire', '👥 Personel alımı', 'Kasiyer, taşıyıcı, temizlikçi, güvenlik… işe alır')}
       ${t('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
-      <p class="note"><b>Kasada bırakılan en az para:</b> Đ${formatMoney(a.reserve)} · bu akşamki ödemeler Đ${formatMoney(this.game.dueTonight)}</p>
+      <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)} · bu akşamki ödemeler $${formatMoney(this.game.dueTonight)}</p>
       <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : '<div>Henüz karar yok.</div>'}</div>`;
   }
 
@@ -206,7 +206,7 @@ class OfficePanel {
   renderBank() {
     const b = this.game.bank;
     const m = this.game.money;
-    const row = (label, value, cls = '') => `<div class="${cls}"><span>${label}</span><b>Đ${formatMoney(Math.round(value))}</b></div>`;
+    const row = (label, value, cls = '') => `<div class="${cls}"><span>${label}</span><b>$${formatMoney(Math.round(value))}</b></div>`;
     document.getElementById('bank-sec').innerHTML = `
       <div class="stats">
         ${row('Nakit', m)}
@@ -220,20 +220,20 @@ class OfficePanel {
       ${b.missed ? `<p class="note warn">⚠️ Faiz ${b.missed} gündür ödenemedi. ${3 - b.missed} gün daha ödenmezse banka en değersiz işletmene el koyar.</p>` : ''}
       ${this.game.holding.businesses.some((x) => x.seized) ? `<p class="note">🏦 Bankaya geçen işletmeler borcun tamamen kapanınca 💼 tabletten geri alınabilir.</p>` : ''}
       ${this.renderRent()}
-      <p class="note">Kredi limiti Đ${formatMoney(b.limit)} = seviye Đ${formatMoney(b.limitParts.base)} + işletmeler Đ${formatMoney(b.limitParts.assets)} + kazanç Đ${formatMoney(b.limitParts.income)}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.</p>
+      <p class="note">Kredi limiti $${formatMoney(b.limit)} = seviye $${formatMoney(b.limitParts.base)} + işletmeler $${formatMoney(b.limitParts.assets)} + kazanç $${formatMoney(b.limitParts.income)}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.</p>
       <div class="bank-group"><span>Kredi çek</span>
-        ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+Đ${formatMoney(n)}</button>`).join('')}
+        ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
       </div>
       <div class="bank-group"><span>Borç öde</span>
-        <button data-act="repay" data-n="500" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>Đ${formatMoney(Math.min(500, b.totalDebt, Math.max(0, Math.floor(m))))}</button>
-        <button data-act="repay" data-n="all" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>${m >= b.totalDebt ? 'Borcun tamamı' : 'Elimdekini öde'} (Đ${formatMoney(Math.min(b.totalDebt, Math.max(0, Math.floor(m))))})</button>
+        <button data-act="repay" data-n="500" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(500, b.totalDebt, Math.max(0, Math.floor(m))))}</button>
+        <button data-act="repay" data-n="all" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>${m >= b.totalDebt ? 'Borcun tamamı' : 'Elimdekini öde'} ($${formatMoney(Math.min(b.totalDebt, Math.max(0, Math.floor(m))))})</button>
       </div>
       <div class="bank-group"><span>Para yatır</span>
-        <button data-act="put" data-n="500" ${m < 1 ? 'disabled' : ''}>Đ500</button>
+        <button data-act="put" data-n="500" ${m < 1 ? 'disabled' : ''}>$500</button>
         <button data-act="put" data-n="half" ${m < 2 ? 'disabled' : ''}>Yarısı</button>
       </div>
       <div class="bank-group"><span>Para çek</span>
-        <button data-act="withdraw" data-n="500" ${!b.deposit ? 'disabled' : ''}>Đ500</button>
+        <button data-act="withdraw" data-n="500" ${!b.deposit ? 'disabled' : ''}>$500</button>
         <button data-act="withdraw" data-n="all" ${!b.deposit ? 'disabled' : ''}>Tümünü çek</button>
       </div>
       ${b.lastLog ? `<p class="note bank-log">${b.lastLog}</p>` : ''}`;
@@ -248,12 +248,12 @@ class OfficePanel {
     const lines = [];
     if (r.marketOwned) lines.push(`<p class="note">🏪 <b>${g.marketTitle}</b> binası senin.</p>`);
     else {
-      lines.push(`<p class="note">🔑 <b>${g.marketTitle}</b> kiralık: haftalık <b>Đ${formatMoney(r.marketRent)}</b> (dükkân büyüdükçe artar).</p>`);
+      lines.push(`<p class="note">🔑 <b>${g.marketTitle}</b> kiralık: haftalık <b>$${formatMoney(r.marketRent)}</b> (dükkân büyüdükçe artar).</p>`);
       lines.push(r.canBuyMarket
-        ? `<div class="bank-group"><span>Binayı satın al</span><button class="primary" data-act="buymarket" ${g.money < r.marketPrice ? 'disabled' : ''}>Đ${formatMoney(r.marketPrice)}</button></div>`
+        ? `<div class="bank-group"><span>Binayı satın al</span><button class="primary" data-act="buymarket" ${g.money < r.marketPrice ? 'disabled' : ''}>$${formatMoney(r.marketPrice)}</button></div>`
         : `<p class="note">Binayı satın alma seçeneği Seviye ${RENT.market.buyLevel}'de açılır.</p>`);
     }
-    if (r.weeklyTotal) lines.push(`<p class="note">Haftalık kira toplamı Đ${formatMoney(r.weeklyTotal)} · ödeme ${when}.</p>`);
+    if (r.weeklyTotal) lines.push(`<p class="note">Haftalık kira toplamı $${formatMoney(r.weeklyTotal)} · ödeme ${when}.</p>`);
     return lines.join('');
   }
 
@@ -303,7 +303,7 @@ class OfficePanel {
       const info = PRODUCTS[sch.product];
       const who = sch.by === 'accountant' ? ' (muhasebeci)' : '';
       parts.push(`<div class="camp-plan"><span>${info.emoji} <b>${info.name}</b> · ${sch.qty} kasa${sch.staff ? ' · 👥' : ''}${who}</span>
-        <button data-cancel="${sch.product}">İptal (Đ${formatMoney(sch.paid ?? 0)} iade)</button></div>`);
+        <button data-cancel="${sch.product}">İptal ($${formatMoney(sch.paid ?? 0)} iade)</button></div>`);
     }
     if (c.slotsFree <= 0) {
       parts.push(`<p class="note">Yarın için en fazla ${c.maxCampaigns} kampanya yapılabilir.${this.game.premium ? '' : ' 👑 Premium ile 3 kampanya.'}</p>`);
@@ -316,7 +316,7 @@ class OfficePanel {
       const p = PRODUCTS[k];
       const last = c.lastResults[k];
       return `<button class="camp-card ${k === this.campaignPick ? 'active' : ''}" data-pick="${k}">
-        <span class="e">${p.emoji}</span><span>${p.name}</span><small>Đ${p.cost} → Đ${p.price}${last ? ` · son: ${last.sold}/${last.qty}` : ''}</small></button>`;
+        <span class="e">${p.emoji}</span><span>${p.name}</span><small>$${p.cost} → $${p.price}${last ? ` · son: ${last.sold}/${last.qty}` : ''}</small></button>`;
     }).join('');
     this.campaignStaff ??= false;
     const total = c.costFor(this.campaignPick, this.campaignQty, this.campaignStaff);
@@ -326,10 +326,10 @@ class OfficePanel {
       <div class="bank-group"><span>Stok</span>
         <button data-q="-100">−100</button><button data-q="-20">−20</button><b class="o-qty">${this.campaignQty}</b><button data-q="20">+20</button><button data-q="100">+100</button>
       </div>
-      <label class="row toggle"><span>👥 Kampanya personeli (Đ${CAMPAIGN.staffCost}/gün)<small>Standda satış ve ödeme alır, paletten hızlı doldurur: günde ~250 kişiye kadar. Ürün erken biterse sıradakilerden özür diler (memnuniyet az düşer).</small></span><input type="checkbox" id="camp-staff" ${this.campaignStaff ? 'checked' : ''} /></label>
+      <label class="row toggle"><span>👥 Kampanya personeli ($${CAMPAIGN.staffCost}/gün)<small>Standda satış ve ödeme alır, paletten hızlı doldurur: günde ~250 kişiye kadar. Ürün erken biterse sıradakilerden özür diler (memnuniyet az düşer).</small></span><input type="checkbox" id="camp-staff" ${this.campaignStaff ? 'checked' : ''} /></label>
       <div class="sheet-foot">
-        <span class="o-total">Hazırlık Đ${c.fee()} + stok Đ${formatMoney(this.campaignQty * PRODUCTS[this.campaignPick].cost)}${this.campaignStaff ? ` + personel Đ${CAMPAIGN.staffCost}` : ''}</span>
-        <button id="camp-go" class="primary" ${this.game.money < total ? 'disabled' : ''}>Hazırla Đ${formatMoney(total)}</button>
+        <span class="o-total">Hazırlık $${c.fee()} + stok $${formatMoney(this.campaignQty * PRODUCTS[this.campaignPick].cost)}${this.campaignStaff ? ` + personel $${CAMPAIGN.staffCost}` : ''}</span>
+        <button id="camp-go" class="primary" ${this.game.money < total ? 'disabled' : ''}>Hazırla $${formatMoney(total)}</button>
       </div>`);
     sec.innerHTML = parts.join('');
   }
@@ -342,7 +342,7 @@ class OfficePanel {
     const btns = Object.entries(AD_TYPES).map(([k, t]) => {
       if (g.level < t.level) return `<button disabled>${t.emoji} 🔒 Sv.${t.level}</button>`;
       const done = a.has(k);
-      return `<button data-ad="${k}" ${done || g.money < a.cost(k) ? 'disabled' : ''}>${t.emoji} ${t.name}<br><small>${done ? 'verildi' : `Đ${formatMoney(a.cost(k))} · +%${Math.round(t.boost * 100)}`}</small></button>`;
+      return `<button data-ad="${k}" ${done || g.money < a.cost(k) ? 'disabled' : ''}>${t.emoji} ${t.name}<br><small>${done ? 'verildi' : `$${formatMoney(a.cost(k))} · +%${Math.round(t.boost * 100)}`}</small></button>`;
     }).join('');
     const today = a.todayList;
     const S = SALE_DAY;

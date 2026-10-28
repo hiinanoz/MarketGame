@@ -58,13 +58,17 @@ export class MarketAccountant extends Character {
     const g = this.game;
     if (tier === this.tier) return false;
     if (tier === 'expert') {
+      if (!g.premium) {
+        g.hud.toast('👑 Tecrübeli muhasebeci Premium\'a özel');
+        return false;
+      }
       const cost = ACCOUNTANT_TIERS.expert.hire;
       if (g.money < cost) return false;
       g.spend(cost);
     }
     this.tier = tier;
     this.applyTier();
-    g.hud.toast(`${ACCOUNTANT_TIERS[tier].emoji} ${ACCOUNTANT_TIERS[tier].name} işe başladı (günlük Đ${this.wage})`);
+    g.hud.toast(`${ACCOUNTANT_TIERS[tier].emoji} ${ACCOUNTANT_TIERS[tier].name} işe başladı (günlük $${this.wage})`);
     g.save();
     return true;
   }
@@ -126,7 +130,7 @@ export class MarketAccountant extends Character {
       total += qty * price;
       count += qty;
     }
-    if (count && depot.order(items)) this.note(`🚚 ${count} kasa sipariş (Đ${total})`);
+    if (count && depot.order(items)) this.note(`🚚 ${count} kasa sipariş ($${total})`);
   }
 
   // ---- Reklam: akşam yarın için, seçilen kanaldan bütçe yettikçe ----
@@ -146,10 +150,10 @@ export class MarketAccountant extends Character {
       pick = this.settings.adChannel;
     }
     if (!pick) {
-      this.note(`📣 Reklam verilmedi: bütçe yetmedi (yedek Đ${this.reserve})`);
+      this.note(`📣 Reklam verilmedi: bütçe yetmedi (yedek $${this.reserve})`);
       return;
     }
-    if (a.buy(pick)) this.note(`📣 Yarın için ${AD_TYPES[pick].emoji} ${AD_TYPES[pick].name} (Đ${a.cost(pick)})`);
+    if (a.buy(pick)) this.note(`📣 Yarın için ${AD_TYPES[pick].emoji} ${AD_TYPES[pick].name} ($${a.cost(pick)})`);
   }
 
   // ---- Online sipariş: bölümü açar, bütçe yettikçe personel alır ----
@@ -238,7 +242,7 @@ export class MarketAccountant extends Character {
       this.decidedDay = g.day.day;
       this.campaignTryT = 0;
       if (!made && !c.scheduled.length) {
-        this.note(`📢 Kampanya yapılamadı: bütçe yetmedi (kasa Đ${Math.round(g.money)}, yedek Đ${this.reserve})`);
+        this.note(`📢 Kampanya yapılamadı: bütçe yetmedi (kasa $${Math.round(g.money)}, yedek $${this.reserve})`);
         g.hud.toast('🧑‍💼 Muhasebeci: yarın için kampanya bütçesi yetmedi');
       }
     }
@@ -304,7 +308,7 @@ export class MarketAccountant extends Character {
     const label = g.padLabel(pad.def);
     const cost = Math.ceil(pad.remaining);
     g.completePad(pad.def.id);
-    this.note(`${emoji} ${label.emoji} ${label.title} satın aldı (Đ${cost})`);
+    this.note(`${emoji} ${label.emoji} ${label.title} satın aldı ($${cost})`);
   }
 
   // ---- Gün sonu: ödemeler için kredi ----
@@ -323,7 +327,7 @@ export class MarketAccountant extends Character {
     // Stajyer biraz fazla çeker (gereksiz faiz), tecrübeli tam ihtiyaç kadar
     const amount = this.expert ? short : Math.ceil(short * 1.2 + 50);
     const got = g.bank.borrow(amount);
-    if (got) this.note(`🏦 Ödemeler için Đ${got} kredi çekildi${got < amount ? ' (limit yetmedi)' : ''}`);
+    if (got) this.note(`🏦 Ödemeler için $${got} kredi çekildi${got < amount ? ' (limit yetmedi)' : ''}`);
     else this.note('🏦 Kredi limiti dolu: ödemeler eksik kalabilir');
   }
 
