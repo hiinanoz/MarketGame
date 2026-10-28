@@ -64,11 +64,19 @@ html, body {
   position: relative;
 }
 .bill::after {
-  content: '';
+  /* Kasaba Doları: yeşil kağıt para, ortada D logosu */
+  content: 'D';
   position: absolute;
-  inset: 4px 11px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   background: #c9f7c4;
+  color: #1f7a28;
+  font: 900 11px/15px 'Trebuchet MS', system-ui, sans-serif;
+  text-align: center;
 }
 
 .round {
@@ -642,3 +650,20 @@ button { color: var(--ink); font-family: inherit; -webkit-tap-highlight-color: t
 .panel .home-grid button { word-break: keep-all; overflow-wrap: normal; hyphens: none; letter-spacing: -0.2px; }
 @media (max-width: 340px) { .panel .home-grid button span:last-child { font-size: 9.5px; } }
 .avatar-ov ~ #toast, body.in-home #toast { top: 12%; }
+
+/* ---- Kaydırma: gövdedeki touch-action:none tüm kaydırma kutularında açılır, son satır görünsün ---- */
+#order-list, .sec, .acc-log, #holding-body, #politics-body, .panel.final, .sub-body, #summary .sum-extra, .avatar-panel, .overlay > .panel, .online-body {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+#order-list, .sec, #holding-body, #politics-body, .sub-body, .online-body { padding-bottom: 18px; }
+.sheet { max-height: min(62dvh, 560px); }
+.sheet .sec, .sheet #order-list { flex: 1 1 auto; min-height: 0; }
+.panel.final { max-height: 90dvh; }
+.panel.holding { max-height: calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; }
+.panel.holding > #holding-body, .panel.holding > #politics-body, .panel.holding > .online-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.tabs { overflow-x: auto; touch-action: pan-x; scrollbar-width: none; flex-wrap: nowrap; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 0 0 auto; }
+@media (max-width: 380px) { .tabs button { padding: 6px 8px; font-size: 13px; } }

@@ -11,6 +11,7 @@ import { confettiBurst } from './celebrate.js';
 const HELP = [
   ['🕹️', 'Ekrana dokunup sürükleyerek yürü. Depodaki paletten kasa al, aynı ürünün reyonuna bırak.'],
   ['💳', 'Müşteriler kasada bekler: kasiyer alana kadar kasanın arkasında dur, parayı topla.'],
+  ['💵', 'Kasabanın parası <b>Kasaba Doları</b> (Đ). Elmas 💎 ise süsleme için ayrı bir ödüldür.'],
   ['🟩', 'Yerdeki alanların üstünde kısa bir an durarak para öde: reyon, çalışan, genişleme açılır.'],
   ['🧾', 'Muhasebe odası: sipariş, banka, kampanya ve reklam. Sv.21\'den sonra 💼 tabletle işletmeleri yönet.'],
   ['🎯', 'Her sabah 3 yeni görev gelir; tamamlayınca para ve 💎 elmas kazanırsın. Elmasla marketini süsle.'],
@@ -58,7 +59,7 @@ export class Menus {
   refreshHome() {
     const g = this.game;
     const isNew = g.isNewGame && !g.started;
-    document.getElementById('home-meta').textContent = isNew ? 'Kasabanın küçük marketi seni bekliyor' : `${g.marketTitle} · Gün ${g.day.day} · Sv.${g.level} · $${formatMoney(Math.round(g.money))}`;
+    document.getElementById('home-meta').textContent = isNew ? 'Kasabanın küçük marketi seni bekliyor' : `${g.marketTitle} · Gün ${g.day.day} · Sv.${g.level} · Đ${formatMoney(Math.round(g.money))}`;
     document.getElementById('home-continue').textContent = isNew ? '▶️ Oyuna başla' : '▶️ Devam et';
     document.getElementById('home-new').classList.toggle('hidden', isNew);
     document.getElementById('home-gems').textContent = g.goals.gems;
@@ -162,7 +163,7 @@ export class Menus {
     const g = this.game;
     const qs = g.goals.quests;
     const rows = qs.map((q) => `<div class="quest ${q.done ? 'done' : ''}"><span class="qe">${q.done ? '✅' : questEmoji(q)}</span>
-      <div class="qt">${questText(q)}<small>${q.done ? 'tamamlandı' : `${q.type === 'revenue' ? `$${formatMoney(q.progress)}` : q.type === 'rating' ? (q.progress / 10).toFixed(1) : q.progress} / ${q.type === 'revenue' ? `$${formatMoney(q.target)}` : q.type === 'rating' ? '4.5' : q.target}`} · ödül $${formatMoney(q.money)} + 💎${q.gems}</small>
+      <div class="qt">${questText(q)}<small>${q.done ? 'tamamlandı' : `${q.type === 'revenue' ? `Đ${formatMoney(q.progress)}` : q.type === 'rating' ? (q.progress / 10).toFixed(1) : q.progress} / ${q.type === 'revenue' ? `Đ${formatMoney(q.target)}` : q.type === 'rating' ? '4.5' : q.target}`} · ödül Đ${formatMoney(q.money)} + 💎${q.gems}</small>
       <div class="qbar"><i style="width:${Math.round((q.progress / q.target) * 100)}%"></i></div></div></div>`).join('');
     const all = qs.length && qs.every((q) => q.done);
     this.openSheet(`🎯 Gün ${g.day.day} görevleri`, `${rows}<p class="note">Üçünü de bitirirsen ek 💎${GOALS.allQuestsGems}. ${all ? '<b>Bugünün tüm görevleri tamam!</b> ' : ''}Yeni görevler her sabah gelir.</p>
@@ -180,17 +181,17 @@ export class Menus {
       const r = go.loginReward(d);
       const got = pending ? d < cur : d <= cur;
       const today = pending && d === cur;
-      return `<div class="${got ? 'got' : ''} ${today ? 'today' : ''} ${d === 7 ? 'big' : ''}"><span>${d}. gün</span><b>${got ? '✅' : d === 7 ? '🎁' : '💎'}</b>${r.money ? `$${formatMoney(r.money)}` : ''}<span>💎${r.gems}</span></div>`;
+      return `<div class="${got ? 'got' : ''} ${today ? 'today' : ''} ${d === 7 ? 'big' : ''}"><span>${d}. gün</span><b>${got ? '✅' : d === 7 ? '🎁' : '💎'}</b>${r.money ? `Đ${formatMoney(r.money)}` : ''}<span>💎${r.gems}</span></div>`;
     }).join('');
     const r = go.loginReward(cur);
     this.openSheet('📅 Günlük ödül', `<p class="note">Her gün oyuna gir, ödülünü al. 7 gün üst üste gelirsen büyük ödül! Bir gün kaçırırsan seri baştan başlar.</p>
       <div class="cal">${cells}</div>
-      ${pending ? `<div class="big-reward">Bugün (${cur}. gün)<b>${r.money ? `$${formatMoney(r.money)} + ` : ''}💎${r.gems}</b><button data-claim class="primary">Ödülü al</button></div>` : '<p class="big-reward">Bugünün ödülünü aldın. Yarın tekrar gel! 👋</p>'}`,
+      ${pending ? `<div class="big-reward">Bugün (${cur}. gün)<b>${r.money ? `Đ${formatMoney(r.money)} + ` : ''}💎${r.gems}</b><button data-claim class="primary">Ödülü al</button></div>` : '<p class="big-reward">Bugünün ödülünü aldın. Yarın tekrar gel! 👋</p>'}`,
     { onClick: (e) => {
       if (!e.target.closest('[data-claim]')) return;
       const got = go.claimLogin();
       if (got) {
-        this.game.hud.toast(`📅 Günlük ödül: ${got.money ? `$${formatMoney(got.money)} + ` : ''}💎${got.gems}`);
+        this.game.hud.toast(`📅 Günlük ödül: ${got.money ? `Đ${formatMoney(got.money)} + ` : ''}💎${got.gems}`);
         this.showLogin();
       }
     } });
@@ -204,8 +205,8 @@ export class Menus {
     const m = res.minutes % 60;
     const time = h ? `${h} saat ${m} dk` : `${m} dk`;
     this.afterSheet = then;
-    this.openSheet('🌙 Sen yokken', `<div class="big-reward">${time} uzaktaydın.<br>Çalışanların çalışmaya devam etti:<b>+$${formatMoney(res.amount)}</b></div>
-      <p class="note">${res.manager ? '💼 Müdürün dükkânı yönetti.' : 'Müdürün olsaydı iki kat kazanırdın (Sv.7).'}${res.capped ? ` En fazla ${GOALS.offlineHours} saatlik kazanç birikir.` : ''}</p>`,
+    this.openSheet('🌙 Sen yokken', `<div class="big-reward">${time} uzaktaydın.<br>Çalışanların çalışmaya devam etti:<b>+Đ${formatMoney(res.amount)}</b></div>
+      <p class="note">${res.manager ? '💼 Müdürün dükkânı yönetti.' : 'Müdürün olsaydı iki kat kazanırdın (Sv.7).'}${res.capped ? ' Uzakta kaldığın süre ne olursa olsun en fazla yarım günlük kazanç birikir.' : ''}</p>`,
     { close: 'Topla 💰' });
     g.money += res.amount;
     g.hud.setMoney(g.money);

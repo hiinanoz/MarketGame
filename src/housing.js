@@ -453,7 +453,7 @@ export class Housing {
   }
 
   labelText(p) {
-    if (!p.owned) return this.game.level < HOUSING.fromLevel ? `🔒 Sv.${HOUSING.fromLevel}` : `📜 $${formatMoney(HOUSING.plotPrice)}`;
+    if (!p.owned) return this.game.level < HOUSING.fromLevel ? `🔒 Sv.${HOUSING.fromLevel}` : `📜 Đ${formatMoney(HOUSING.plotPrice)}`;
     if (!p.type) return `📜 Arsa ${p.i + 1}`;
     const t = this.type(p);
     if (!p.built) return `${t.emoji} 🏗️ %${Math.floor(p.progress * 100)}`;

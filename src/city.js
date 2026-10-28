@@ -57,7 +57,7 @@ export class City {
       g.spend(amount);
       p.owned = true;
       p.paid = amount;
-      p.lastMsg = `🤝 ${p.owner}: "Anlaştık!" ($${formatMoney(amount)})`;
+      p.lastMsg = `🤝 ${p.owner}: "Anlaştık!" (Đ${formatMoney(amount)})`;
       g.gainXp(Math.floor(amount / 300));
       g.hud.toast(`🏁 ${p.name} artık senin!`);
       g.audio.play('unlock');
@@ -65,11 +65,11 @@ export class City {
       this.checkFinish();
     } else if (p.mood === 'angry') {
       p.price = Math.round(p.price * (1 + CITY.angryRaise));
-      p.lastMsg = `😠 ${p.owner}: "Bu ne biçim teklif! Fiyat artık $${formatMoney(p.price)}."`;
+      p.lastMsg = `😠 ${p.owner}: "Bu ne biçim teklif! Fiyat artık Đ${formatMoney(p.price)}."`;
     } else {
       const next = this.minAccept(p);
       p.lastMsg = p.asks >= CITY.flexSteps.length
-        ? `🤔 ${p.owner}: "En son $${formatMoney(next)}, daha aşağı olmaz."`
+        ? `🤔 ${p.owner}: "En son Đ${formatMoney(next)}, daha aşağı olmaz."`
         : `🤔 ${p.owner}: "Olmaz… ama biraz daha konuşabiliriz."`;
     }
     this.build(p);
@@ -122,8 +122,8 @@ export class City {
       <div class="stats">
         <div><span>📅 Oyun günü</span><b>${this.finishDay}</b></div>
         <div><span>⏱️ Oynama süresi</span><b>${hours} sa ${mins} dk</b></div>
-        <div><span>💵 Para</span><b>$${formatMoney(Math.round(g.money))}</b></div>
-        <div><span>🏢 Şirket değeri</span><b>$${formatMoney(g.finance.companyValue)}</b></div>
+        <div><span>💵 Para</span><b>Đ${formatMoney(Math.round(g.money))}</b></div>
+        <div><span>🏢 Şirket değeri</span><b>Đ${formatMoney(g.finance.companyValue)}</b></div>
         <div><span>💼 İşletme</span><b>${g.holding.owned.length}</b></div>
         <div><span>🏙️ Şehir mülkü</span><b>${this.ownedCount}</b></div>
         <div><span>🏘️ Konut</span><b>${g.housing.plots.filter((p) => p.built).length}</b></div>
@@ -172,7 +172,7 @@ export class City {
     this.root.add(g);
     p.group = g;
     const open = this.regionOpen(p.region);
-    const text = p.owned ? `🏁 ${p.name}` : open ? `${p.region.emoji} ${p.name} · $${formatMoney(p.mood === 'angry' ? p.price : p.basePrice())}` : `🔒 ${p.region.name} · Sv.${p.region.level}`;
+    const text = p.owned ? `🏁 ${p.name}` : open ? `${p.region.emoji} ${p.name} · Đ${formatMoney(p.mood === 'angry' ? p.price : p.basePrice())}` : `🔒 ${p.region.name} · Sv.${p.region.level}`;
     const tex = textTexture(text, { color: p.owned ? '#1e5d2b' : '#5a3a10', size: 40, stroke: '#ffffff' });
     const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
     label.renderOrder = 6;
@@ -207,9 +207,9 @@ export class City {
       for (const p of this.props.filter((x) => x.region === r)) {
         const base = p.mood === 'angry' ? p.price : p.basePrice();
         parts.push(`<div class="biz ${p.owned ? 'owned' : ''}">
-          <div class="biz-head"><div><b>${p.owned ? '🏁 ' : ''}${p.name}</b><small>Sahibi: ${p.owner}${p.owned ? ` · $${formatMoney(p.paid)}'a alındı` : ` · istenen $${formatMoney(base)}${p.asks ? ` · ${p.asks} teklif` : ''}`}</small></div></div>
+          <div class="biz-head"><div><b>${p.owned ? '🏁 ' : ''}${p.name}</b><small>Sahibi: ${p.owner}${p.owned ? ` · Đ${formatMoney(p.paid)}'a alındı` : ` · istenen Đ${formatMoney(base)}${p.asks ? ` · ${p.asks} teklif` : ''}`}</small></div></div>
           ${p.lastMsg ? `<p class="note">${p.lastMsg}</p>` : ''}
-          ${p.owned ? '' : `<div class="biz-btns">${CITY.offers.map((o) => `<button data-offer="${p.id}:${o}" ${g.money < base * o ? 'disabled' : ''}>${o === 1 ? 'Tam fiyat' : `%${Math.round(o * 100)}`} $${formatMoney(base * o)}</button>`).join('')}<button data-go="city:${p.id}">📍</button></div>`}
+          ${p.owned ? '' : `<div class="biz-btns">${CITY.offers.map((o) => `<button data-offer="${p.id}:${o}" ${g.money < base * o ? 'disabled' : ''}>${o === 1 ? 'Tam fiyat' : `%${Math.round(o * 100)}`} Đ${formatMoney(base * o)}</button>`).join('')}<button data-go="city:${p.id}">📍</button></div>`}
         </div>`);
       }
     }

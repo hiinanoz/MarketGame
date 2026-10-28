@@ -320,7 +320,7 @@ class OrderPanel {
       rows.push(`
         <div class="order-row">
           <span class="o-emoji">${info.emoji}</span>
-          <span class="o-name">${info.name}<small>${pallet.stock}${inc ? ` +${inc}` : ''} / ${pallet.capacity} · <span class="${crisis === product ? 'o-crisis' : ''}">$${this.game.supply.costOf(product)}${crisis === product ? ' ⚠️' : ''}</span></small></span>
+          <span class="o-name">${info.name}<small>${pallet.stock}${inc ? ` +${inc}` : ''} / ${pallet.capacity} · <span class="${crisis === product ? 'o-crisis' : ''}">Đ${this.game.supply.costOf(product)}${crisis === product ? ' ⚠️' : ''}</span></small></span>
           <button data-p="${product}" data-d="-5" aria-label="${info.name} azalt">−</button>
           <span class="o-qty">${q}</span>
           <button data-p="${product}" data-d="5" aria-label="${info.name} artır">+</button>
@@ -328,7 +328,7 @@ class OrderPanel {
     }
     this.list.innerHTML = rows.join('');
     const total = this.total();
-    this.totalEl.textContent = `$${total}`;
+    this.totalEl.textContent = `Đ${total}`;
     this.buyBtn.disabled = total === 0 || total > this.game.money;
     this.autoRow.classList.toggle('hidden', this.depot.level === 0);
     this.autoBox.checked = this.depot.autoOrder;

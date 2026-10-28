@@ -91,7 +91,7 @@ export class Goals {
     g.money += q.money;
     g.hud.setMoney(g.money);
     this.addGems(q.gems);
-    g.hud.toast(`🎯 Görev tamam: ${questText(q)} · +$${formatMoney(q.money)} 💎${q.gems}`);
+    g.hud.toast(`🎯 Görev tamam: ${questText(q)} · +Đ${formatMoney(q.money)} 💎${q.gems}`);
     g.audio.play('unlock');
     confettiBurst(36);
     if (!this.bonusDone && this.quests.every((x) => x.done)) {
@@ -188,11 +188,12 @@ export class Goals {
     const staff = g.workers.filter((w) => w.role === 'cashier').length;
     if (avg <= 0 || !staff) return null;
     const capped = Math.min(ms, GOALS.offlineHours * 3600e3);
-    const gameDays = capped / 1000 / (DAY.length + DAY.night);
+    // Uzaktayken oyun zamanı en fazla yarım gün ilerlemiş sayılır (kaç saat geçerse geçsin)
+    const gameDays = Math.min(GOALS.offlineMaxDays, capped / 1000 / (DAY.length + DAY.night));
     const hasManager = g.workers.some((w) => w.role === 'manager');
-    const amount = Math.round(avg * gameDays * GOALS.offlineRate * (hasManager ? 1 : 0.5));
+    const amount = Math.round(avg * gameDays * (hasManager ? 1 : 0.5));
     if (amount < 10) return null;
-    return { amount, minutes: Math.round(ms / 60e3), capped: ms > GOALS.offlineHours * 3600e3, manager: hasManager };
+    return { amount, minutes: Math.round(ms / 60e3), capped: gameDays >= GOALS.offlineMaxDays, manager: hasManager };
   }
 
   serialize() {
@@ -219,7 +220,7 @@ export class Goals {
 export function questText(q) {
   switch (q.type) {
     case 'customers': return `${q.target} müşteriye hizmet et`;
-    case 'revenue': return `Bugün $${formatMoney(q.target)} ciro yap`;
+    case 'revenue': return `Bugün Đ${formatMoney(q.target)} ciro yap`;
     case 'cash': return `Kasadan ${q.target} kez para topla`;
     case 'buy': return 'Yeni bir alan satın al';
     case 'sell': return `${q.target} kasa ${PRODUCTS[q.product].emoji} ${PRODUCTS[q.product].name} sat`;

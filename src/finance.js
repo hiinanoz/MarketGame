@@ -193,7 +193,7 @@ export class Finance {
     g.money += cash;
     g.gainXp(Math.floor(cash / 200));
     g.hud.setMoney(g.money);
-    g.hud.toast(`🔔 Halka arz: hisselerin %${Math.round(FINANCE.ipo.share * 100)}'si satıldı, +$${formatMoney(cash)}`);
+    g.hud.toast(`🔔 Halka arz: hisselerin %${Math.round(FINANCE.ipo.share * 100)}'si satıldı, +Đ${formatMoney(cash)}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -274,14 +274,14 @@ export class Finance {
     const m = g.money;
     if (!this.unlocked) return `<p class="note">📈 Finans Seviye ${FINANCE.fromLevel}'da açılır: yatırım şirketi, borsa, kendi bankan, liman ve sanayi.</p>`;
     const parts = [`<div class="stats">
-      <div><span>🏢 Şirket değeri</span><b>$${formatMoney(this.companyValue)}</b></div>
-      <div><span>📈 Portföy</span><b>$${formatMoney(this.portfolio)}</b></div>
+      <div><span>🏢 Şirket değeri</span><b>Đ${formatMoney(this.companyValue)}</b></div>
+      <div><span>📈 Portföy</span><b>Đ${formatMoney(this.portfolio)}</b></div>
     </div>`];
     // Yatırım şirketi / borsa
     const L = FINANCE.investLicense;
     if (!this.invest) {
       parts.push(`<div class="biz"><div class="biz-head"><span class="biz-e">📈</span><div><b>Yatırım şirketi</b><small>Rakip şirketlerin hisselerini al; %${FINANCE.control} ile kontrol sende</small></div></div>
-        <div class="biz-btns"><button class="primary" data-fin="license" ${m < L.price ? 'disabled' : ''}>Kur $${formatMoney(L.price)}</button></div></div>`);
+        <div class="biz-btns"><button class="primary" data-fin="license" ${m < L.price ? 'disabled' : ''}>Kur Đ${formatMoney(L.price)}</button></div></div>`);
     } else {
       for (const [k, c] of Object.entries(FINANCE.companies)) {
         const s = this.stocks[k];
@@ -290,11 +290,11 @@ export class Finance {
         const locked = g.level < c.level;
         const ctrl = this.controls(k);
         parts.push(`<div class="biz ${ctrl ? 'owned' : locked ? 'locked' : ''}">
-          <div class="biz-head"><span class="biz-e">${c.emoji}</span><div><b>${c.name}</b><small>%1 = $${formatMoney(s.price)} <span class="${ch >= 0 ? 'up' : 'down'}">${ch >= 0 ? '▲' : '▼'}%${Math.abs(ch).toFixed(1)}</span> · ${sparkline(h)}</small></div></div>
+          <div class="biz-head"><span class="biz-e">${c.emoji}</span><div><b>${c.name}</b><small>%1 = Đ${formatMoney(s.price)} <span class="${ch >= 0 ? 'up' : 'down'}">${ch >= 0 ? '▲' : '▼'}%${Math.abs(ch).toFixed(1)}</span> · ${sparkline(h)}</small></div></div>
           <div class="biz-row"><span>Hissen</span><b>%${s.owned}${ctrl ? ' · 🏆 kontrol' : ''}</b><small>%${FINANCE.control}: ${c.effectText}</small></div>
           <div class="biz-btns">${locked ? `<span class="lock">🔒 Sv.${c.level}'de borsaya açılır</span>` : `
             <button data-sbuy="${k}:1" ${m < s.price || s.owned >= 100 ? 'disabled' : ''}>+%1</button>
-            <button data-sbuy="${k}:10" ${m < s.price * 10 || s.owned >= 100 ? 'disabled' : ''}>+%10 ($${formatMoney(s.price * 10)})</button>
+            <button data-sbuy="${k}:10" ${m < s.price * 10 || s.owned >= 100 ? 'disabled' : ''}>+%10 (Đ${formatMoney(s.price * 10)})</button>
             <button data-ssell="${k}:1" ${!s.owned ? 'disabled' : ''}>Sat %1</button>
             <button data-ssell="${k}:10" ${s.owned < 10 ? 'disabled' : ''}>Sat %10</button>`}</div></div>`);
       }
@@ -303,22 +303,22 @@ export class Finance {
     const B = FINANCE.bank;
     if (!this.bank) {
       parts.push(`<div class="biz ${g.level < B.license.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🏦</span><div><b>Kendi bankan</b><small>Lisans al, sermaye koy: halka kredi verip faiz kazan</small></div></div>
-        <div class="biz-btns">${g.level < B.license.level ? `<span class="lock">🔒 Sv.${B.license.level}</span>` : `<button class="primary" data-fin="bank" ${m < B.license.price ? 'disabled' : ''}>Lisans $${formatMoney(B.license.price)}</button>`}</div></div>`);
+        <div class="biz-btns">${g.level < B.license.level ? `<span class="lock">🔒 Sv.${B.license.level}</span>` : `<button class="primary" data-fin="bank" ${m < B.license.price ? 'disabled' : ''}>Lisans Đ${formatMoney(B.license.price)}</button>`}</div></div>`);
     } else {
       const b = this.bank;
       const up = (k, label) => {
         const u = B[k];
         if (k === 'branch' ? b.branches >= u.max : b[k]) return '';
-        return g.level < u.level ? `<span class="lock">${label} Sv.${u.level}</span>` : `<button data-up="${k}" ${m < u.price ? 'disabled' : ''}>${label} $${formatMoney(u.price)}</button>`;
+        return g.level < u.level ? `<span class="lock">${label} Sv.${u.level}</span>` : `<button data-up="${k}" ${m < u.price ? 'disabled' : ''}>${label} Đ${formatMoney(u.price)}</button>`;
       };
-      parts.push(`<div class="biz owned"><div class="biz-head"><span class="biz-e">🏦</span><div><b>${g.marketName} Bankası${b.center ? ' · 🏙️ Finans merkezi' : ''}</b><small>Günlük gelir ~$${formatMoney(this.bankIncome)} · şube ${b.branches}/${B.branch.max}${b.card ? ' · 💳' : ''}${b.insurance ? ' · 🛡️' : ''}</small></div></div>
-        <div class="biz-row"><span>💰 Sermaye</span><b>$${formatMoney(b.capital)}</b><small>günlük %${(B.rate * 100).toFixed(0)} faiz geliri</small></div>
-        <div class="bank-group"><span>Sermaye</span><button data-cap="10000" ${m < 10000 ? 'disabled' : ''}>+$10K</button><button data-cap="100000" ${m < 100000 ? 'disabled' : ''}>+$100K</button><button data-cap="-10000" ${b.capital < 10000 ? 'disabled' : ''}>−$10K</button></div>
+      parts.push(`<div class="biz owned"><div class="biz-head"><span class="biz-e">🏦</span><div><b>${g.marketName} Bankası${b.center ? ' · 🏙️ Finans merkezi' : ''}</b><small>Günlük gelir ~Đ${formatMoney(this.bankIncome)} · şube ${b.branches}/${B.branch.max}${b.card ? ' · 💳' : ''}${b.insurance ? ' · 🛡️' : ''}</small></div></div>
+        <div class="biz-row"><span>💰 Sermaye</span><b>Đ${formatMoney(b.capital)}</b><small>günlük %${(B.rate * 100).toFixed(0)} faiz geliri</small></div>
+        <div class="bank-group"><span>Sermaye</span><button data-cap="10000" ${m < 10000 ? 'disabled' : ''}>+Đ10K</button><button data-cap="100000" ${m < 100000 ? 'disabled' : ''}>+Đ100K</button><button data-cap="-10000" ${b.capital < 10000 ? 'disabled' : ''}>−Đ10K</button></div>
         <div class="biz-btns">${up('branch', '🏦 Şube')}${up('card', '💳 Kredi kartı')}${up('insurance', '🛡️ Sigorta')}${up('center', '🏙️ Finans merkezi')}</div></div>`);
     }
     // Halka arz
     const I = FINANCE.ipo;
-    parts.push(`<div class="biz ${this.ipo ? 'owned' : g.level < I.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🔔</span><div><b>Halka arz</b><small>${this.ipo ? 'Holding borsada' : `Şirketin %${Math.round(I.share * 100)}'ini sat: ~$${formatMoney(this.companyValue * I.share)} nakit`}</small></div></div>
+    parts.push(`<div class="biz ${this.ipo ? 'owned' : g.level < I.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🔔</span><div><b>Halka arz</b><small>${this.ipo ? 'Holding borsada' : `Şirketin %${Math.round(I.share * 100)}'ini sat: ~Đ${formatMoney(this.companyValue * I.share)} nakit`}</small></div></div>
       ${this.ipo ? '' : `<div class="biz-btns">${g.level < I.level ? `<span class="lock">🔒 Sv.${I.level}</span>` : '<button class="primary" data-fin="ipo">Halka arz et</button>'}</div>`}</div>`);
     const fx = [];
     if (this.customerFactor > 1) fx.push(`müşteri ×${this.customerFactor}`);

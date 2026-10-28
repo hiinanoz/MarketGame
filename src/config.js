@@ -32,8 +32,8 @@ export const LEVELS = [0, 15, 40, 80, 130, 200, 280, 380, 500, 650, 800, 1000, 1
 for (let l = 21; l <= 100; l++) LEVELS.push(Math.round((4000 * 1.075 ** (l - 20)) / 50) * 50);
 export const MAX_LEVEL = 100;
 // Sv.20 sonrası XP kaynakları: market müşterisi 1 XP + diğer işletmelerin kârı + satın alımlar
-export const XP_PER_PROFIT = 100;   // diğer işletmelerin günlük kârında her $100 = 1 XP
-export const XP_PER_PURCHASE = 100; // işletme/arsa alımında her $100 = 1 XP
+export const XP_PER_PROFIT = 100;   // diğer işletmelerin günlük kârında her Đ100 = 1 XP
+export const XP_PER_PURCHASE = 100; // işletme/arsa alımında her Đ100 = 1 XP
 
 // ---- Memnuniyet ve temizlik --------------------------------------------------------
 export const RATING = {
@@ -271,7 +271,7 @@ export const GOALS = {
   partySeconds: 8,
   offlineMinMinutes: 3,
   offlineHours: 8,
-  offlineRate: 0.12,   // çevrimdışı: günlük ortalama gelirin bu oranı (oyun günü başına)
+  offlineMaxDays: 0.5, // çevrimdışı: oyun zamanı en fazla yarım gün ilerlemiş sayılır
 };
 export const DECOR = {
   floors: [
@@ -583,7 +583,7 @@ export const STAFF_ROLE = {
   onlineDeputy: 'deputy', onlinePicker: 'picker', onlineCourier: 'courier',
 };
 // ---- Elektrik (Sv.30+) -----------------------------------------------------------------------
-// Günlük tüketim birim cinsinden (1 birim = şebeke fiyatıyla $1). Kendi santrallerin üretirse
+// Günlük tüketim birim cinsinden (1 birim = şebeke fiyatıyla Đ1). Kendi santrallerin üretirse
 // fatura düşer; fazla üretim, santralde müdür varsa şebekeye satılır.
 export const ELECTRICITY = {
   fromLevel: 30,

@@ -81,7 +81,7 @@ export class Rent {
   }
 
   label() {
-    return this.marketOwned ? 'Bina senin' : `Kiralık · haftalık $${formatMoney(this.marketRent)}`;
+    return this.marketOwned ? 'Bina senin' : `Kiralık · haftalık Đ${formatMoney(this.marketRent)}`;
   }
 
   serialize() {

@@ -208,7 +208,7 @@ export class Online {
     this.today.revenue += value;
     g.day.today.online = { ...this.today };
     g.hud.setMoney(g.money);
-    g.fx.floatText(pos, `🌐 +$${value}`, '#2a7fd4');
+    g.fx.floatText(pos, `🌐 +Đ${value}`, '#2a7fd4');
     g.gainXp(Math.max(1, Math.round(products.length / 3)));
   }
 
@@ -275,7 +275,7 @@ export class Online {
     const pads = [...g.pads.values()].filter((p) => p.def.type.startsWith('online') && p.def.type !== 'online');
     const padRows = pads.map((p) => {
       const l = g.padLabel(p.def);
-      return `<div class="biz-row"><span>${l.emoji} ${l.title}</span>${p.locked ? `<span class="lock">Sv.${p.def.level}</span>` : `<button data-hire="${p.def.id}" ${g.money < p.remaining ? 'disabled' : ''}>Al $${formatMoney(Math.ceil(p.remaining))}</button>`}</div>`;
+      return `<div class="biz-row"><span>${l.emoji} ${l.title}</span>${p.locked ? `<span class="lock">Sv.${p.def.level}</span>` : `<button data-hire="${p.def.id}" ${g.money < p.remaining ? 'disabled' : ''}>Al Đ${formatMoney(Math.ceil(p.remaining))}</button>`}</div>`;
     }).join('');
     const y = this.yesterday;
     const t = this.today;
@@ -285,8 +285,8 @@ export class Online {
       <div class="biz-row"><span>👥 Personel</span><b>${this.staffCount}/${ONLINE.fullStaff}</b><small>🧑‍💻 ${this.deputy ? 1 : 0} · 🧺 ${this.pickers.length} · 🛵 ${this.couriers.length}</small></div>
       <div class="biz-row"><span>📈 Kapasite</span><b>marketin %${pct}'i</b><small>günlük hedef ~${this.target} kasa (market ~${this.refCrates})</small></div>
       <div class="online-bar"><i style="width:${pct}%"></i></div>
-      <div class="biz-row"><span>📦 Bugün</span><b>${t.orders} sipariş · $${formatMoney(t.revenue)}</b><small>${t.crates} kasa · rafta ${this.rack?.count ?? 0}</small></div>
-      ${y ? `<div class="biz-row"><span>💵 Dün</span><b>$${formatMoney(y.revenue)}</b><small>${y.orders} sipariş</small></div>` : ''}
+      <div class="biz-row"><span>📦 Bugün</span><b>${t.orders} sipariş · Đ${formatMoney(t.revenue)}</b><small>${t.crates} kasa · rafta ${this.rack?.count ?? 0}</small></div>
+      ${y ? `<div class="biz-row"><span>💵 Dün</span><b>Đ${formatMoney(y.revenue)}</b><small>${y.orders} sipariş</small></div>` : ''}
       <div class="biz-row"><span>🛡️ Mağazaya bırak</span><span class="seg">${ONLINE.guards.map((v) => `<button data-guard="${v}" class="${v === this.guard ? 'on' : ''}">%${Math.round(v * 100)}</button>`).join('')}</span></div>
       <p class="note">Toplayıcılar paletlerde bu orandan az stok kalınca o ürünü almaz; market rafları boş kalmaz. Online satılan ürünler depodan düşer.</p>
       <p class="note"><b>Personel</b> — alanlar bu odanın yanında, Sv.26'dan itibaren her seviyede bir yeni kişi. 10 kişide online ciro marketle aynı.</p>

@@ -613,7 +613,7 @@ export class UnlockPad {
     ctx.fillText(this.title, w / 2, 150, w - 30);
     ctx.font = 'bold 46px "Trebuchet MS", sans-serif';
     ctx.fillStyle = this.locked ? '#e6e6e6' : '#ffe066';
-    ctx.fillText(this.locked ? `🔒 Sv.${this.def.level}` : `$${Math.ceil(this.remaining)}`, w / 2, 202);
+    ctx.fillText(this.locked ? `🔒 Sv.${this.def.level}` : `Đ${Math.ceil(this.remaining)}`, w / 2, 202);
     if (this.marker) this.drawMarker();
     // Bekleme halkası: dolunca ödeme başlar
     if (this.dwell > 0 && this.dwell < PAD_DWELL && this.paid < this.cost) {
@@ -630,7 +630,7 @@ export class UnlockPad {
   drawMarker() {
     const c = this.markerCanvas;
     const ctx = c.getContext('2d');
-    const text = `${this.markerText} · $${Math.ceil(this.remaining)}`;
+    const text = `${this.markerText} · Đ${Math.ceil(this.remaining)}`;
     if (text === this.markerDrawn) return;
     this.markerDrawn = text;
     ctx.clearRect(0, 0, c.width, c.height);

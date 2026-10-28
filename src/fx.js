@@ -84,7 +84,7 @@ export class Fx {
     }
   }
 
-  /** Bir noktanın üstünde yükselip kaybolan yazı (+$12 gibi). */
+  /** Bir noktanın üstünde yükselip kaybolan yazı (+Đ12 gibi). */
   floatText(pos, text, color = '#2fbf3a') {
     const tex = textTexture(text, { color, size: 64, stroke: '#ffffff' });
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });

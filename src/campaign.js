@@ -74,7 +74,7 @@ export class Campaign {
     const [s] = this.scheduled.splice(i, 1);
     this.game.money += s.paid ?? 0;
     this.game.hud.setMoney(this.game.money);
-    this.game.hud.toast(`❌ ${PRODUCTS[product].name} kampanyası iptal (+$${s.paid ?? 0} iade)`);
+    this.game.hud.toast(`❌ ${PRODUCTS[product].name} kampanyası iptal (+Đ${s.paid ?? 0} iade)`);
     for (const c of this.doorQueue.filter((c) => c.shelf.product === product)) c.leaveQuietly();
     this.doorQueue = this.doorQueue.filter((c) => c.shelf.product !== product);
     this.game.save();
