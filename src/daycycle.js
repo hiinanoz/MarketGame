@@ -120,6 +120,7 @@ export class DayCycle {
     this.phase = 'open';
     this.today = blankStats();
     this.game.hud.toast(`☀️ Gün ${this.day} başladı`);
+    this.game.audio.play('bell', 0.7); // dükkân açıldı
     this.game.supply.rollCrisis();
     this.game.ads.startDay();         // reklamlar, belediye denetimi
     this.game.campaign.startDay();

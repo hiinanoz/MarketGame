@@ -60,6 +60,7 @@ export class MarketAccountant extends Character {
     if (tier === 'expert') {
       if (!g.premium) {
         g.hud.toast('👑 Tecrübeli muhasebeci Premium\'a özel');
+        g.audio.play('error');
         return false;
       }
       const cost = ACCOUNTANT_TIERS.expert.hire;

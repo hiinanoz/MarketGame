@@ -17,6 +17,7 @@ export class Hud {
     document.getElementById('menu-btn').addEventListener('click', () => {
       this.menu.classList.remove('hidden');
       game.menuOpen = true;
+      this.syncSpeedSeg?.();
       this.syncPaused();
     });
     document.getElementById('close-menu').addEventListener('click', () => {
@@ -39,6 +40,22 @@ export class Hud {
     bind('opt-sound', 'sound', (on) => { game.audio.enabled = on; });
     bind('opt-music', 'music', (on) => game.music.setEnabled(on));
     bind('opt-bg', 'background');
+    bind('opt-music-adaptive', 'musicAdaptive', (on) => { game.music.adaptive = on; game.music.react(game); });
+    // Ses seviyeleri (0–100 kaydırıcı)
+    const vol = (id, key, apply) => {
+      const el = document.getElementById(id);
+      el.value = Math.round((opts[key] ?? 0.7) * 100);
+      el.addEventListener('input', () => {
+        opts[key] = Number(el.value) / 100;
+        apply(opts[key]);
+      });
+      el.addEventListener('change', () => {
+        game.saveOptions();
+        if (key === 'sfxVol') game.audio.play('coin');
+      });
+    };
+    vol('opt-sfx-vol', 'sfxVol', (v) => { game.audio.volume = v; });
+    vol('opt-music-vol', 'musicVol', (v) => game.music.setVolume(v));
     // Çoklu seçim düğmeleri (hız, görüş açısı)
     const seg = (id, key, parse = (v) => v, apply) => {
       const el = document.getElementById(id);
@@ -51,6 +68,7 @@ export class Hud {
         if (!b) return;
         if (key === 'speed' && !game.speedAllowed(parse(b.dataset.v))) {
           this.toast(`👑 Sv.${PREMIUM.fastLevel}'den sonra 2× hız Premium'da`);
+          game.audio.play('error');
           return;
         }
         opts[key] = parse(b.dataset.v);

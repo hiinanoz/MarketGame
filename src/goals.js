@@ -91,8 +91,8 @@ export class Goals {
     g.money += q.money;
     g.hud.setMoney(g.money);
     this.addGems(this.gemBonus(q.gems));
+    g.audio.play('quest');
     g.hud.toast(`🎯 Görev tamam: ${questText(q)} · +$${formatMoney(q.money)} 💎${this.gemBonus(q.gems)}`);
-    g.audio.play('unlock');
     confettiBurst(36);
     if (!this.bonusDone && this.quests.every((x) => x.done)) {
       this.bonusDone = true;
@@ -154,7 +154,7 @@ export class Goals {
     g.money += r.money;
     g.hud.setMoney(g.money);
     this.addGems(r.gems);
-    g.audio.play('levelup');
+    g.audio.play('reward');
     confettiBurst(day === 7 ? 90 : 50);
     g.save();
     return r;

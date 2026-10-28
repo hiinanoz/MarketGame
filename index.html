@@ -110,8 +110,9 @@
       <div class="panel">
         <h2>Market Krallığı</h2>
         <p class="menu-paused" id="menu-paused">⏸️ Oyun duraklatıldı</p>
-        <label class="row"><span>Ses efektleri</span><input id="opt-sound" type="checkbox" checked /></label>
-        <label class="row"><span>Müzik</span><input id="opt-music" type="checkbox" checked /></label>
+        <div class="row vol-row"><label><input id="opt-sound" type="checkbox" checked /> Ses efektleri</label><input id="opt-sfx-vol" type="range" min="0" max="100" step="5" aria-label="Efekt ses seviyesi" /></div>
+        <div class="row vol-row"><label><input id="opt-music" type="checkbox" checked /> Müzik</label><input id="opt-music-vol" type="range" min="0" max="100" step="5" aria-label="Müzik ses seviyesi" /></div>
+        <label class="row"><span>Müzik oyuna göre değişsin<small class="opt-sub" id="opt-mood">sabah sakin, yoğun saatte hızlı, akşam caz, gece lo-fi</small></span><input id="opt-music-adaptive" type="checkbox" checked /></label>
         <div class="row"><span>Oyun hızı</span><span class="seg" id="opt-speed"><button data-v="1">1×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button></span></div>
         <div class="row"><span>Görüş açısı</span><span class="seg" id="opt-cam"><button data-v="steep">Dik</button><button data-v="normal">Normal</button><button data-v="low">Yatay</button></span></div>
         <label class="row"><span>Menü açıkken arka planda devam et</span><input id="opt-bg" type="checkbox" /></label>
@@ -122,7 +123,7 @@
         <button id="finish-day">⏭️ Günü tamamla</button>
         <button id="reset-btn" class="danger">Oyunu sıfırla</button>
         <button id="close-menu" class="primary">Devam et</button>
-        <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0), Kenney (MIT)</p>
+        <p class="credits">3D modeller: KayKit — Kay Lousberg (CC0), Kenney (CC0/MIT) · Sesler: Kenney (CC0)</p>
       </div>
     </div>
 

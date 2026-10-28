@@ -38,6 +38,7 @@ export class Decor {
     if (!d) return false;
     if (d.premium && !g.premium) {
       g.hud.toast('👑 Bu desen Premium\'a özel');
+      g.audio.play('error');
       return false;
     }
     const key = `${kind}:${id}`;

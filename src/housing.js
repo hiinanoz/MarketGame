@@ -220,6 +220,7 @@ export class Housing {
     if (!p.owned || p.type || !t || g.level < t.level || g.money < cost) return false;
     if (!this.canStartBuild) {
       g.hud.toast(`👑 Aynı anda en fazla ${PREMIUM.builds} inşaat — Premium'da sınırsız`);
+      g.audio.play('error');
       return false;
     }
     g.spend(cost);

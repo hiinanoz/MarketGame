@@ -148,10 +148,12 @@ export class Menus {
     document.getElementById('sheet-body').scrollTop = 0;
     document.getElementById('sheet-close').textContent = close;
     this.sheetClick = onClick;
+    if (this.sheet.classList.contains('hidden')) this.game.audio.play('open', 0.6);
     this.sheet.classList.remove('hidden');
   }
 
   closeSheet() {
+    this.game.audio.play('close', 0.6);
     this.sheet.classList.add('hidden');
     this.sheetClick = null;
     // Ana menü açık değilse oyun kaldığı gibi devam etsin

@@ -62,7 +62,7 @@ export class Celebration {
       this.el.appendChild(c);
     }
     this.el.classList.remove('hidden');
-    g.audio.play('levelup', 1.3);
+    g.audio.play('party', 1.2);
     this.beatT = 0;
     g.platform?.haptic?.('HEAVY');
   }

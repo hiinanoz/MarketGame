@@ -77,7 +77,7 @@ export class Game {
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
     // Ayarlar (cihazda saklanır): ses, müzik, 2× hız, menüde arka planda devam
-    this.options = { sound: true, music: true, speed: 1, cam: 'normal', background: false };
+    this.options = { sound: true, music: true, speed: 1, cam: 'normal', background: false, sfxVol: 0.8, musicVol: 0.6, musicAdaptive: true };
     try { Object.assign(this.options, JSON.parse(localStorage.getItem('marketgame-options') || '{}')); } catch { /* yok */ }
     if (this.options.fast) this.options.speed = 2; // eski ayar (aç/kapa 2×)
     // Premium: şimdilik test anahtarı (App Store satın alımı gelince platform.entitlement)
@@ -86,6 +86,9 @@ export class Game {
     this.audio.enabled = this.options.sound;
     this.music = new Music(this.audio);
     this.music.enabled = this.options.music;
+    this.music.volume = this.options.musicVol;
+    this.music.adaptive = this.options.musicAdaptive;
+    this.audio.volume = this.options.sfxVol;
     this.audio.onUnlock = () => this.music.start();
     this.menuOpen = false;
     this.input = new Input(this.renderer.domElement);
@@ -838,6 +841,7 @@ export class Game {
     if (this.timers.goals <= 0) {
       this.timers.goals = 1;
       this.goals.update();
+      this.music.react(this);
     }
 
     this.day.update(dt);
@@ -934,6 +938,14 @@ export class Game {
     p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, this.level >= 66 ? 54 : 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);
+    // Ayak sesleri (hafif)
+    if (Math.hypot(p.velocity.x, p.velocity.z) > 1) {
+      this.stepT = (this.stepT ?? 0) - dt;
+      if (this.stepT <= 0) {
+        this.stepT = 0.3;
+        this.audio.play('step', 0.35);
+      }
+    }
 
     // Depo paletinden al
     this.timers.supply -= dt;

@@ -129,6 +129,7 @@ class OfficePanel {
   }
 
   show() {
+    this.game.audio.play('open', 0.6);
     this.open = true;
     this.el.classList.remove('hidden');
     this.setTab(this.tab);

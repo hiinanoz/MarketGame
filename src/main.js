@@ -31,6 +31,11 @@ async function start() {
     }
   });
   window.game = game; // tarayıcı konsolundan hata ayıklama için
+  // Arayüz düğmelerine dokununca hafif tık sesi
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b && !b.disabled) game.audio.play('click', 0.55);
+  }, true);
   const zoomBtn = document.getElementById('zoom-btn');
   zoomBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   zoomBtn.addEventListener('click', () => game.cycleZoom());
@@ -71,7 +76,10 @@ async function start() {
       const n = Math.ceil(sp);
       for (let i = 0; i < n; i++) game.update((dt * sp) / n);
     }
-    else if (game.viewMode) game.updateCamera(dt); // ana menü / karakter: oyun durur, kamera hareket eder
+    else if (game.viewMode) {
+      game.updateCamera(dt); // ana menü / karakter: oyun durur, kamera hareket eder
+      game.music.react(game);
+    }
     game.render();
     requestAnimationFrame(loop);
   };
