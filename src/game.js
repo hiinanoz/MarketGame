@@ -244,7 +244,7 @@ export class Game {
       case 'onlineCourier': return { title: 'Kurye', emoji: '🛵' };
       case 'accountant': return { title: 'Muhasebeci', emoji: '🧑‍💼' };
       case 'cashier': return { title: def.value === 2 ? '2. kasiyer' : 'Kasiyer', emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
-      case 'stocker': return { title: def.id === 'stocker1' ? `Reyon Görevlisi - ${WORKER_CAPACITY}` : 'Reyon Görevlisi', emoji: '📦' };
+      case 'stocker': return { title: 'Reyon Görevlisi', emoji: '📦' };
       case 'capacity': return { title: `Taşıma Kapasitesi ${def.value}`, emoji: '💪' };
       case 'expansion': return { title: 'Genişlet', emoji: '🏗️' };
       case 'checkout': return { title: 'Yeni kasa', emoji: '🛒' };
