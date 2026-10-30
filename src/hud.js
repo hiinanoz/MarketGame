@@ -1,5 +1,6 @@
 import { platform } from './platform.js';
 import { PRODUCTS, PREMIUM } from './config.js';
+import { LANGS, t } from './i18n.js';
 // DOM tabanlı arayüz: para göstergesi, ipucu, bildirim, menü.
 
 export class Hud {
@@ -79,6 +80,16 @@ export class Hud {
       sync();
       return sync;
     };
+    // Dil: değişince oyun kaydedilip sayfa yenilenir (sabit metinler yükleme sırasında çevrilir)
+    const langEl = document.getElementById('opt-lang');
+    langEl.innerHTML = [['auto', t('Otomatik (cihaz dili)')], ...LANGS].map(([v, n]) => `<option value="${v}">${n}</option>`).join('');
+    langEl.value = opts.lang || 'auto';
+    langEl.addEventListener('change', () => {
+      opts.lang = langEl.value;
+      game.saveOptions();
+      game.save();
+      location.reload();
+    });
     this.syncSpeedSeg = seg('opt-speed', 'speed', Number, () => this.syncSpeed());
     seg('opt-cam', 'cam');
     this.speedBtn = document.getElementById('speed-btn');

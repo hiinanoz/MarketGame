@@ -115,6 +115,7 @@
         <label class="row"><span>Müzik oyuna göre değişsin<small class="opt-sub" id="opt-mood">sabah sakin, yoğun saatte hızlı, akşam caz, gece lo-fi</small></span><input id="opt-music-adaptive" type="checkbox" checked /></label>
         <div class="row"><span>Oyun hızı</span><span class="seg" id="opt-speed"><button data-v="1">1×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button></span></div>
         <div class="row"><span>Görüş açısı</span><span class="seg" id="opt-cam"><button data-v="steep">Dik</button><button data-v="normal">Normal</button><button data-v="low">Yatay</button></span></div>
+        <label class="row"><span>Dil · Language</span><select id="opt-lang" class="opt-select"></select></label>
         <label class="row"><span>Menü açıkken arka planda devam et</span><input id="opt-bg" type="checkbox" /></label>
         <label class="name-field">Marketin adı
           <span class="name-row"><input id="menu-name" maxlength="20" autocomplete="off" /><button id="menu-name-save">Kaydet</button></span>
@@ -188,9 +189,9 @@
       <div class="panel intro">
         <div class="intro-art">🚌 🏪 🏦</div>
         <h2>Kasabaya hoş geldin!</h2>
-        <p>Cebinde birkaç kuruş, aklında büyük hayaller var. Banka sana <b>$1.500 kuruluş kredisi</b> verdi; sen de kasabanın küçük marketini <b>kiraladın</b>. Kira her hafta ödenir, dükkân büyüdükçe artar. Seviye 20'de binayı satın alabilirsin.</p>
-        <p>Hedefin: marketi büyütmek, tedarikçileri, santralleri ve arazileri almak, sonunda <b>şehrin tamamının sahibi</b> olmak. Ne kadar az günde başarırsan derecen o kadar yüksek olur.</p>
-        <p class="small">Kredinin faizi günlük %1. Muhasebe odasından istediğin zaman ödeyebilirsin.</p>
+        <p data-tx>Cebinde birkaç kuruş, aklında büyük hayaller var. Banka sana <b>$1.500 kuruluş kredisi</b> verdi; sen de kasabanın küçük marketini <b>kiraladın</b>. Kira her hafta ödenir, dükkân büyüdükçe artar. Seviye 20'de binayı satın alabilirsin.</p>
+        <p data-tx>Hedefin: marketi büyütmek, tedarikçileri, santralleri ve arazileri almak, sonunda <b>şehrin tamamının sahibi</b> olmak. Ne kadar az günde başarırsan derecen o kadar yüksek olur.</p>
+        <p data-tx class="small">Kredinin faizi günlük %1. Muhasebe odasından istediğin zaman ödeyebilirsin.</p>
         <label class="name-field">Marketinin adı
           <input id="intro-name" maxlength="20" placeholder="Örn. Güneş" autocomplete="off" />
           <small id="intro-preview">Tabelada: <b>Kasaba Market</b></small>

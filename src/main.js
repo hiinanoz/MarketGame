@@ -2,6 +2,9 @@ import { loadAssets } from './assets.js';
 import { Game } from './game.js';
 import { platform } from './platform.js';
 import { Menus } from './menus.js';
+import { translateDom } from './i18n.js';
+
+translateDom(); // index.html'deki sabit metinler (seçili dil Türkçe değilse)
 
 const bar = document.getElementById('loading-bar');
 

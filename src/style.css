@@ -521,6 +521,7 @@ button.wide { width: 100%; border: none; border-radius: 12px; padding: 10px; fon
 .camp-plan button { padding: 8px 10px; font-size: 14px; flex: 0 0 auto; }
 .sub-set { padding-left: 18px; }
 .sub-set.off { opacity: 0.45; }
+.opt-select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 10px; border: 2px solid #e0d8c6; background: #fff; }
 .sub-set select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 10px; border: 2px solid #e0d8c6; background: #fff; max-width: 60%; }
 .online-bar { height: 10px; border-radius: 5px; background: #e5dccb; overflow: hidden; }
 .online-bar i { display: block; height: 100%; background: #2a7fd4; }

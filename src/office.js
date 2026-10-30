@@ -177,7 +177,7 @@ class OfficePanel {
     const a = this.game.accountant;
     const sec = document.getElementById('acc-sec');
     if (!a) return;
-    const t = (k, label, desc) => `<label class="row toggle"><span>${label}<small>${desc}</small></span><input type="checkbox" data-set="${k}" ${a.settings[k] ? 'checked' : ''} /></label>`;
+    const opt = (k, label, desc) => `<label class="row toggle"><span>${label}<small>${desc}</small></span><input type="checkbox" data-set="${k}" ${a.settings[k] ? 'checked' : ''} /></label>`;
     const T = ACCOUNTANT_TIERS;
     const other = a.expert ? 'junior' : 'expert';
     sec.innerHTML = `
@@ -187,17 +187,17 @@ class OfficePanel {
         <button data-tier="${other}" ${other === 'expert' && (this.game.money < T.expert.hire || !this.game.premium) ? 'disabled' : ''}>${other === 'expert' ? `${this.game.premium ? '' : '👑 '}🎓 Tecrübeli muhasebeciyle değiştir ($${T.expert.hire} · $${T.expert.wage}/gün)` : `🧑‍💼 Stajyere dön ($${T.junior.wage}/gün)`}</button>
       </div>
       <p class="note"><b>Yetkiler</b> — kapattığın işi sen yaparsın.</p>
-      ${t('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
-      ${t('campaign', '📢 Kampanya seçimi', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar')}
-      ${t('online', '🌐 Online sipariş', `Sv.${25}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır`)}
-      ${t('ads', '📣 Reklam', 'Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)')}
+      ${opt('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
+      ${opt('campaign', '📢 Kampanya seçimi', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar')}
+      ${opt('online', '🌐 Online sipariş', `Sv.${25}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır`)}
+      ${opt('ads', '📣 Reklam', 'Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)')}
       <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>Reklam kanalı</span><select data-set="adChannel">
         <option value="auto" ${a.settings.adChannel === 'auto' ? 'selected' : ''}>Otomatik (bütçeye göre)</option>
         ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (Sv.${ad.level})` : ` · $${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
       </select></label>
-      ${t('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
-      ${t('hire', '👥 Personel alımı', 'Kasiyer, reyon görevlisi, temizlik görevlisi, güvenlik… işe alır')}
-      ${t('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
+      ${opt('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
+      ${opt('hire', '👥 Personel alımı', 'Kasiyer, reyon görevlisi, temizlik görevlisi, güvenlik… işe alır')}
+      ${opt('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
       <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)} · bu akşamki ödemeler $${formatMoney(this.game.dueTonight)}</p>
       <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : '<div>Henüz karar yok.</div>'}</div>`;
   }

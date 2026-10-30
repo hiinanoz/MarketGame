@@ -10,6 +10,12 @@
 	<array>
 		<string>tr</string>
 		<string>en</string>
+		<string>de</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>it</string>
+		<string>ko</string>
+		<string>ja</string>
 	</array>
 	<key>CFBundleDisplayName</key>
         <string>Market Krallığı</string>
