@@ -5,10 +5,15 @@ Otomatik imza arşivde geliştirme profili ister; o da takımda kayıtlı cihaz 
 Bunun yerine App Store Connect API ile her çalıştırmada geçici bir dağıtım sertifikası
 ve App Store profili oluşturulur (cihaz gerekmez), iş bitince ikisi de silinir.
 
-  asc_signing.py setup    → sertifika + profil + p12 + ExportOptions, proje Release ayarları manuel imzaya
-  asc_signing.py cleanup  → profili sil, sertifikayı iptal et (her durumda çalıştırılır)
+Kalıcı sertifika: SIGN_P12_BASE64 + SIGN_P12_PASSWORD gizli değişkenleri varsa her çalıştırmada o sertifika
+kullanılır (Apple'dan "sertifika iptal edildi" e-postası gelmez); yoksa geçici sertifika açılıp iptal edilir.
 
-Ortam: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH, APPLE_TEAM_ID, BUNDLE_ID, RUNNER_TEMP, GITHUB_ENV
+  asc_signing.py setup        → sertifika + profil + p12 + ExportOptions, proje Release ayarları manuel imzaya
+  asc_signing.py cleanup      → profili sil, geçici sertifikayı iptal et (her durumda çalıştırılır)
+  asc_signing.py create-cert  → kalıcı sertifika oluştur, şifreli p12'yi base64 olarak dist-cert.txt'ye yaz
+
+Ortam: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH, APPLE_TEAM_ID, BUNDLE_ID, RUNNER_TEMP, GITHUB_ENV,
+       (isteğe bağlı) SIGN_P12_BASE64, SIGN_P12_PASSWORD
 Gerekenler: pip install pyjwt cryptography
 """
 import base64
@@ -104,15 +109,8 @@ def patch_project(profile_name, team):
     open(PROJECT, 'w').write(src[:start] + block + src[end:])
 
 
-def setup():
-    team = os.environ['APPLE_TEAM_ID']
-    ident = os.environ['BUNDLE_ID']
-    state = {}
-
-    bid = bundle_id(ident)
-    ensure_capabilities(bid)
-
-    # Sertifika: anahtar ve CSR burada üretilir, özel anahtar çalıştırıcıdan çıkmaz.
+def new_cert(password):
+    """Yeni dağıtım sertifikası; anahtar ve CSR burada üretilir, özel anahtar yalnızca şifreli p12 içinde çıkar."""
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     csr = (x509.CertificateSigningRequestBuilder()
            .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'GitHub Actions'),
@@ -127,17 +125,56 @@ def setup():
             raise RuntimeError('Dağıtım sertifikası sınırı dolu: developer.apple.com → Certificates bölümünden '
                                'kullanılmayan "Apple Distribution" sertifikalarından birini iptal et.\n' + str(e)) from None
         raise
-    state['cert'] = cert['id']
-    json.dump(state, open(STATE, 'w'))
     der = base64.b64decode(cert['attributes']['certificateContent'])
-
     # Eski macOS anahtarlıkları da açabilsin diye 3DES/SHA1 p12
-    password = secrets.token_hex(16)
-    print('::add-mask::' + password)
     enc = (serialization.PrivateFormat.PKCS12.encryption_builder().kdf_rounds(50000)
            .key_cert_algorithm(pkcs12.PBES.PBESv1SHA1And3KeyTripleDESCBC)
            .hmac_hash(hashes.SHA1()).build(password.encode()))
-    p12 = pkcs12.serialize_key_and_certificates(b'dist', key, x509.load_der_x509_certificate(der), None, enc)
+    return cert['id'], pkcs12.serialize_key_and_certificates(b'dist', key, x509.load_der_x509_certificate(der), None, enc)
+
+
+def stored_cert():
+    """Gizli değişkendeki p12'nin sertifikasını App Store Connect'te bul (seri numarasıyla)."""
+    try:
+        _, cert, _ = pkcs12.load_key_and_certificates(base64.b64decode(os.environ['SIGN_P12_BASE64']),
+                                                      os.environ.get('SIGN_P12_PASSWORD', '').encode())
+    except ValueError:
+        raise RuntimeError('SIGN_P12_BASE64 açılamadı: SIGN_P12_PASSWORD yanlış ya da base64 eksik kopyalandı') from None
+    for c in call('GET', '/certificates?filter[certificateType]=DISTRIBUTION&limit=200')['data']:
+        if int(c['attributes']['serialNumber'], 16) == cert.serial_number:
+            print('Kalıcı sertifika kullanılıyor, son geçerlilik:', c['attributes'].get('expirationDate'))
+            return c['id']
+    raise RuntimeError('SIGN_P12_BASE64 içindeki sertifika App Store Connect\'te yok (iptal edilmiş ya da süresi dolmuş). '
+                       'Actions → "iOS imza sertifikası" ile yenisini oluştur (apple/TESTFLIGHT.md).')
+
+
+def create_cert():
+    password = os.environ.get('SIGN_P12_PASSWORD')
+    if not password:
+        raise RuntimeError('Önce SIGN_P12_PASSWORD gizli değişkenini ekle')
+    cert_id, p12 = new_cert(password)
+    open('dist-cert.txt', 'w').write(base64.b64encode(p12).decode())
+    print(f'Kalıcı dağıtım sertifikası oluşturuldu: {cert_id}')
+
+
+def setup():
+    team = os.environ['APPLE_TEAM_ID']
+    ident = os.environ['BUNDLE_ID']
+    state = {}
+
+    bid = bundle_id(ident)
+    ensure_capabilities(bid)
+
+    if os.environ.get('SIGN_P12_BASE64'):
+        cert_id = stored_cert()
+        p12 = base64.b64decode(os.environ['SIGN_P12_BASE64'])
+        password = os.environ['SIGN_P12_PASSWORD']
+    else:
+        password = secrets.token_hex(16)
+        print('::add-mask::' + password)
+        cert_id, p12 = new_cert(password)
+        state['cert'] = cert_id  # yalnızca geçici sertifika iptal edilir
+        json.dump(state, open(STATE, 'w'))
     p12_path = os.path.join(TMP, 'dist.p12')
     open(p12_path, 'wb').write(p12)
 
@@ -145,7 +182,7 @@ def setup():
     prof = call('POST', '/profiles', {'data': {
         'type': 'profiles', 'attributes': {'name': name, 'profileType': 'IOS_APP_STORE'},
         'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bid}},
-                          'certificates': {'data': [{'type': 'certificates', 'id': cert['id']}]}}}})['data']
+                          'certificates': {'data': [{'type': 'certificates', 'id': cert_id}]}}}})['data']
     state['profile'] = prof['id']
     json.dump(state, open(STATE, 'w'))
     uuid = prof['attributes']['uuid']
@@ -162,7 +199,7 @@ def setup():
     }, open('ExportOptions.plist', 'wb'))
 
     patch_project(name, team)
-    print(f'Sertifika {cert["id"]}, profil "{name}" ({uuid}) hazır')
+    print(f'Sertifika {cert_id}, profil "{name}" ({uuid}) hazır')
     env_out(SIGN_P12=p12_path, SIGN_P12_PASSWORD=password)
 
 
@@ -181,4 +218,4 @@ def cleanup():
 
 
 if __name__ == '__main__':
-    {'setup': setup, 'cleanup': cleanup}[sys.argv[1]]()
+    {'setup': setup, 'cleanup': cleanup, 'create-cert': create_cert}[sys.argv[1]]()

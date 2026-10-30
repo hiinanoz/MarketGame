@@ -28,15 +28,30 @@ iç test için App Store Connect → TestFlight → Dahili test grubu → kendin
 
 ## İmza
 
-Otomatik imza arşivde geliştirme profili ister, o da takımda kayıtlı cihaz ister. Bu yüzden iş akışı manuel imza kullanır:
-`apple/ci/asc_signing.py` API anahtarıyla geçici bir **Apple Distribution** sertifikası ve **App Store** profili oluşturur
-(cihaz gerekmez), App ID'de Game Center ve iCloud yeteneklerini açar, iş bitince sertifikayı iptal edip profili siler.
-Apple her çalıştırmada "sertifika iptal edildi" e-postası gönderebilir; yüklenen derlemeyi etkilemez.
+Otomatik imza arşivde geliştirme profili ister, o da takımda kayıtlı cihaz ister. Bu yüzden iş akışı manuel imza kullanır
+(`apple/ci/asc_signing.py`): App ID'de Game Center ve iCloud yeteneklerini açar, her çalıştırmada geçici bir **App Store**
+profili oluşturup sonunda siler (cihaz gerekmez). Sertifika:
+
+- `SIGN_P12_BASE64` gizli değişkeni varsa **kalıcı** sertifika kullanılır (önerilen).
+- Yoksa her çalıştırmada geçici sertifika açılır ve iptal edilir; Apple her seferinde "null null has revoked your certificate"
+  e-postası gönderir (zararsız, yüklenen derlemeyi etkilemez).
+
+### Kalıcı imza sertifikası (bir kez, sonra yılda bir)
+
+1. GitHub → Settings → Secrets and variables → Actions → New repository secret
+   → `SIGN_P12_PASSWORD`: uzun, rastgele bir parola (bir yere not etmen gerekmez)
+2. Actions → **iOS imza sertifikası** → Run workflow
+3. Bitince çalıştırmanın sayfasının altındaki **Artifacts** → `dist-cert` indir (zip), içindeki `dist-cert.txt` dosyasını aç
+4. New repository secret → `SIGN_P12_BASE64`: `dist-cert.txt` içeriğinin tamamı
+5. Artifact'i sil (çöp kutusu simgesi; zaten 1 gün sonra kendiliğinden silinir) ve indirilen dosyaları sil
+
+Sertifika 1 yıl geçerli. Süresi dolunca ya da iptal edilirse TestFlight iş akışı bunu söyler; 2–4. adımları tekrarla.
 
 ## Sorun giderme
 
-- *Dağıtım sertifikası sınırı dolu* → developer.apple.com → Certificates → kullanılmayan bir "Apple Distribution" sertifikasını iptal et
-  (yarıda kesilen bir çalıştırma geçici sertifikayı silemediyse olabilir; adı "GitHub Actions").
+- *Dağıtım sertifikası sınırı dolu* → developer.apple.com → Certificates → kullanılmayan bir "Distribution" sertifikasını iptal et
+  (yarıda kesilen bir çalıştırma geçici sertifikayı silemediyse olabilir). Kalıcı sertifikayı (`SIGN_P12_BASE64`) iptal etme.
+- *SIGN_P12_BASE64 açılamadı* → parola değişmiş ya da metin eksik kopyalanmış; "Kalıcı imza sertifikası" 2–4. adımları tekrarla.
 
 - *No profiles for 'com.othinks.cornershopempire'* → Bundle ID bu takımda kayıtlı değil (adım 1).
 - *Missing app record* → App Store Connect'te uygulama kaydı yok (adım 1).

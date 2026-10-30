@@ -91,9 +91,12 @@ jobs:
           printf '%s' "$ASC_PRIVATE_KEY" > $KEY
           chmod 600 $KEY
           echo "ASC_KEY_PATH=$KEY" >> "$GITHUB_ENV"
-      # Otomatik imza arşivde geliştirme profili ister (kayıtlı cihaz gerekir). Bunun yerine geçici
-      # dağıtım sertifikası + App Store profili (cihaz gerekmez); iş sonunda silinir. Bkz. apple/ci/asc_signing.py
-      - name: Geçici imza (sertifika + profil)
+      # Otomatik imza arşivde geliştirme profili ister (kayıtlı cihaz gerekir). Bunun yerine dağıtım sertifikası
+      # (SIGN_P12_BASE64 varsa kalıcı, yoksa geçici) + geçici App Store profili. Bkz. apple/ci/asc_signing.py
+      - name: İmza (sertifika + profil)
+        env:
+          SIGN_P12_BASE64: ${{ secrets.SIGN_P12_BASE64 }}
+          SIGN_P12_PASSWORD: ${{ secrets.SIGN_P12_PASSWORD }}
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install -q pyjwt cryptography
@@ -132,7 +135,7 @@ jobs:
         if: failure()
         run: |
           cat archive.log export.log 2>/dev/null | grep -E "error:|Error" | sort -u | head -40 | while IFS= read -r l; do echo "::error::${l}"; done
-      - name: Geçici sertifika ve profili sil
+      - name: Geçici profili (ve sertifikayı) sil
         if: always()
         run: |
           test -x "$RUNNER_TEMP/venv/bin/python" && "$RUNNER_TEMP/venv/bin/python" apple/ci/asc_signing.py cleanup || true
