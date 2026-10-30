@@ -11,7 +11,7 @@ Derleme ve yükleme GitHub'ın macOS sunucularında yapılır; Mac gerekmez. Bir
    - Erişim: **Admin** (dağıtım sertifikasını otomatik oluşturabilmesi için; App Manager bazen yetmiyor)
    - `.p8` dosyasını indir (bir kez indirilebilir), **Key ID** ve sayfanın üstündeki **Issuer ID**'yi not al
 3. **Takım kimliği** — developer.apple.com → Membership → **Team ID** (10 karakter)
-4. **GitHub gizli değişkenleri** — github.com/uyelikposya/MarketGame → Settings → Secrets and variables → Actions → New repository secret
+4. **GitHub gizli değişkenleri** — github.com/hiinanoz/MarketGame → Settings → Secrets and variables → Actions → New repository secret
    - `ASC_KEY_ID` — Key ID
    - `ASC_ISSUER_ID` — Issuer ID
    - `ASC_PRIVATE_KEY` — `.p8` dosyasının tüm içeriği (BEGIN/END satırları dahil)
