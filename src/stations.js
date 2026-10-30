@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { prop } from './assets.js';
 import { makeCrate, CRATE_HEIGHT } from './character.js';
 import { PRODUCTS, SHELF_STAGES, MANAGER, zoneOf } from './config.js';
@@ -613,7 +614,7 @@ export class UnlockPad {
     ctx.fillText(this.title, w / 2, 150, w - 30);
     ctx.font = 'bold 46px "Trebuchet MS", sans-serif';
     ctx.fillStyle = this.locked ? '#e6e6e6' : '#ffe066';
-    ctx.fillText(this.premiumLock ? '👑 Premium' : this.locked ? `🔒 Sv.${this.def.level}` : `$${Math.ceil(this.remaining)}`, w / 2, 202, w - 24);
+    ctx.fillText(this.premiumLock ? `👑 ${t('Premium')}` : this.locked ? `🔒 ${t('Sv.{n}', { n: this.def.level })}` : `$${Math.ceil(this.remaining)}`, w / 2, 202, w - 24);
     if (this.marker) this.drawMarker();
     // Bekleme halkası: dolunca ödeme başlar
     if (this.dwell > 0 && this.dwell < PAD_DWELL && this.paid < this.cost) {

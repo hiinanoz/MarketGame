@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t, upper } from './i18n.js';
 import { prop } from './assets.js';
 import { ROOM1, ROOM2, ROOM3, DEPOT, YARD, DOOR_X, DOOR2_X, DOOR3_X, BACK_ROAD_Z } from './config.js';
 
@@ -487,10 +488,10 @@ export function wallBox(x, z, rotY) {
 
 function mulberry(a) {
   return () => {
-    let t = (a += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    let ty = (a += 0x6d2b79f5);
+    ty = Math.imul(ty ^ (ty >>> 15), ty | 1);
+    ty ^= ty + Math.imul(ty ^ (ty >>> 7), ty | 61);
+    return ((ty ^ (ty >>> 14)) >>> 0) / 4294967296;
   };
 }
 
@@ -508,9 +509,9 @@ function signTexture(text) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(`🏪 ${text}`, 256, 66);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+  const ty = new THREE.CanvasTexture(c);
+  ty.colorSpace = THREE.SRGBColorSpace;
+  return ty;
 }
 
 /** Fontu metne sığacak şekilde küçült. */
@@ -531,12 +532,12 @@ function drawBillboard(ctx, title) {
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const t = title.toLocaleUpperCase('tr-TR');
-  fitFont(ctx, t, 0, 72, 470);
-  ctx.fillText(t, 256, 90);
+  const big = upper(title);
+  fitFont(ctx, big, 0, 72, 470);
+  ctx.fillText(big, 256, 90);
   ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
   ctx.fillStyle = '#ffe066';
-  ctx.fillText('Her gün taze! 🍅🥕🧀', 256, 180);
+  ctx.fillText(`${t('Her gün taze!')} 🍅🥕🧀`, 256, 180);
 }
 
 function shopSignTexture(title, color = '#2b8a35') {
@@ -554,9 +555,9 @@ function shopSignTexture(title, color = '#2b8a35') {
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const t = `🛒 ${title}`;
-  fitFont(ctx, t, 0, 104, 920);
-  ctx.fillText(t, 512, 132);
+  const ty = `🛒 ${title}`;
+  fitFont(ctx, ty, 0, 104, 920);
+  ctx.fillText(ty, 512, 132);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;

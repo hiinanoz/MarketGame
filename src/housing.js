@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { t } from './i18n.js';
+import { t, upper } from './i18n.js';
 import { prop } from './assets.js';
 import { HOUSING, DAY, RENT, XP_PER_PURCHASE, PREMIUM } from './config.js';
 import { textTexture } from './fx.js';
@@ -72,7 +72,7 @@ export class Housing {
           windows(g, 8, 1, 2.6, 2.53, 4);
         }
       } else {
-        g.add(signPost(`${a.name.toLocaleUpperCase('tr-TR')} ARSASI`));
+        g.add(signPost(upper(t('{name} ARSASI', { name: a.name }))));
       }
       grp.add(g);
     }

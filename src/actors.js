@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t, upper } from './i18n.js';
 import { Character } from './character.js';
 import { CUSTOMER_LOOKS } from './assets.js';
 import { bubbleTexture } from './fx.js';
@@ -158,7 +159,7 @@ export class Customer extends Character {
       this.queueT = (this.queueT ?? 0) + dt;
       if (this.queueT > 25 && !this.complainedQueue) {
         this.complainedQueue = true;
-        this.game.rating.add(RATING.slowQueue, 'uzun kuyruk');
+        this.game.rating.add(RATING.slowQueue, t('uzun kuyruk'));
         this.setBubble('⏳');
       }
     }
@@ -275,7 +276,7 @@ export class Customer extends Character {
     this.speed /= 1.45;
     this.setBubble('😳');
     this.game.rating.add(THEFT.caught);
-    this.game.hud.toast('👮 Hırsız yakalandı!');
+    this.game.hud.toast(t('👮 Hırsız yakalandı!'));
     this.game.audio.play('unlock', 0.6);
     this.walkOut();
   }
@@ -284,8 +285,8 @@ export class Customer extends Character {
     const n = this.stack.length;
     for (const e of this.stack.splice(0)) e.mesh.removeFromParent();
     this.game.day.today.stolen = (this.game.day.today.stolen ?? 0) + n;
-    this.game.rating.add(THEFT.escaped, 'hırsızlık');
-    this.game.hud.toast(`🦹 Hırsız ${n} kasa çaldı!`);
+    this.game.rating.add(THEFT.escaped, t('hırsızlık'));
+    this.game.hud.toast(t('🦹 Hırsız {n} kasa çaldı!', { n }));
     this.state = 'leaving';
   }
 
@@ -327,10 +328,10 @@ export class Customer extends Character {
       this.leaveAngry();
       return;
     }
-    const t = this.game.day.today;
-    t.campaignUnhappyBy ??= {};
-    t.campaignUnhappyBy[this.shelf.product] = (t.campaignUnhappyBy[this.shelf.product] ?? 0) + 1;
-    this.game.rating.add(RATING.angry / 30, 'kampanya ürünü bitti (personel özür diledi)');
+    const ty = this.game.day.today;
+    ty.campaignUnhappyBy ??= {};
+    ty.campaignUnhappyBy[this.shelf.product] = (ty.campaignUnhappyBy[this.shelf.product] ?? 0) + 1;
+    this.game.rating.add(RATING.angry / 30, t('kampanya ürünü bitti (personel özür diledi)'));
     this.releaseShelfSpot();
     this.setBubble('🙏');
     this.state = 'leaving';
@@ -340,13 +341,13 @@ export class Customer extends Character {
   leaveAngry() {
     this.game.day.today.angry++;
     if (this.campaign) {
-      const t = this.game.day.today;
-      t.campaignUnhappy = (t.campaignUnhappy ?? 0) + 1;
-      t.campaignUnhappyBy ??= {};
-      t.campaignUnhappyBy[this.shelf.product] = (t.campaignUnhappyBy[this.shelf.product] ?? 0) + 1;
-      this.game.rating.add(RATING.angry / 6, 'kampanya stoğu yetmedi');
+      const ty = this.game.day.today;
+      ty.campaignUnhappy = (ty.campaignUnhappy ?? 0) + 1;
+      ty.campaignUnhappyBy ??= {};
+      ty.campaignUnhappyBy[this.shelf.product] = (ty.campaignUnhappyBy[this.shelf.product] ?? 0) + 1;
+      this.game.rating.add(RATING.angry / 6, t('kampanya stoğu yetmedi'));
     } else {
-      this.game.rating.add(RATING.angry, 'ürün bulamayan müşteri');
+      this.game.rating.add(RATING.angry, t('ürün bulamayan müşteri'));
     }
     this.releaseShelfSpot();
     this.setBubble('😠');
@@ -705,10 +706,10 @@ export class Advertiser extends Character {
     ctx.font = 'bold 54px "Trebuchet MS", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('İNDİRİM', 128, 48);
+    ctx.fillText(upper(t('İndirim')), 128, 48);
     ctx.font = 'bold 34px "Trebuchet MS", sans-serif';
     ctx.fillStyle = '#23302a';
-    ctx.fillText('taze ürünler →', 128, 100);
+    ctx.fillText(t('taze ürünler →'), 128, 100);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     const board = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.75, 0.06), [

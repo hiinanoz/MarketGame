@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { ROOM1, ROOM2, RATING, DIRT } from './config.js';
 
 // Mağaza bakımı: kir lekeleri ve memnuniyet puanı.
@@ -24,7 +25,7 @@ export class Rating {
     const before = this.value;
     this.value = THREE.MathUtils.clamp(this.value + delta, 0, 100);
     if (reason && delta < 0 && Math.floor(before / 10) !== Math.floor(this.value / 10)) {
-      this.game.hud.toast(`⭐ Memnuniyet düştü: ${reason}`);
+      this.game.hud.toast(`⭐ ${t('Memnuniyet düştü: {reason}', { reason })}`);
     }
   }
 
@@ -57,9 +58,9 @@ function dirtTexture(i) {
         ctx.arc(64 + (rnd() - 0.5) * 100, 64 + (rnd() - 0.5) * 100, 3 + rnd() * 5, 0, Math.PI * 2);
         ctx.fill();
       }
-      const t = new THREE.CanvasTexture(c);
-      t.colorSpace = THREE.SRGBColorSpace;
-      return t;
+      const ty = new THREE.CanvasTexture(c);
+      ty.colorSpace = THREE.SRGBColorSpace;
+      return ty;
     });
   }
   return dirtTextures[i % dirtTextures.length];
@@ -141,9 +142,9 @@ function inRoom(x, z, r) {
 
 function mulberry(a) {
   return () => {
-    let t = (a += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    let ty = (a += 0x6d2b79f5);
+    ty = Math.imul(ty ^ (ty >>> 15), ty | 1);
+    ty ^= ty + Math.imul(ty ^ (ty >>> 7), ty | 61);
+    return ((ty ^ (ty >>> 14)) >>> 0) / 4294967296;
   };
 }

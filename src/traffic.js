@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { PARKING } from './config.js';
 import { prop } from './assets.js';
 import { bubbleTexture } from './fx.js';
@@ -39,10 +40,10 @@ class Car {
   }
 
   face() {
-    const t = this.points[0];
-    if (!t) return;
-    const dx = t.x - this.mesh.position.x;
-    const dz = t.y - this.mesh.position.z;
+    const ty = this.points[0];
+    if (!ty) return;
+    const dx = ty.x - this.mesh.position.x;
+    const dz = ty.y - this.mesh.position.z;
     if (Math.abs(dx) + Math.abs(dz) > 0.01) this.targetRot = Math.atan2(-dz, dx);
   }
 
@@ -53,16 +54,16 @@ class Car {
   }
 
   update(dt) {
-    const t = this.points[0];
-    if (!t) { this.done = true; return; }
+    const ty = this.points[0];
+    if (!ty) { this.done = true; return; }
     const p = this.mesh.position;
-    const dx = t.x - p.x;
-    const dz = t.y - p.z;
+    const dx = ty.x - p.x;
+    const dz = ty.y - p.z;
     const d = Math.hypot(dx, dz);
     const step = this.speed * dt;
     if (d <= step) {
-      p.x = t.x;
-      p.z = t.y;
+      p.x = ty.x;
+      p.z = ty.y;
       this.points.shift();
       this.face();
     } else {
@@ -221,7 +222,7 @@ export class ParkingLot {
           c.bubble.scale.setScalar(1.1);
           c.bubble.position.y = 2.6;
           c.mesh.add(c.bubble);
-          this.game.rating.add(PARKING.jamRating, 'otopark karmaşası');
+          this.game.rating.add(PARKING.jamRating, t('otopark karmaşası'));
           this.game.day.today.jams = (this.game.day.today.jams ?? 0) + 1;
         }
         c.jam -= dt;

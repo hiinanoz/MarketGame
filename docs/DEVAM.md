@@ -17,7 +17,8 @@ Genel kurallar ve sistemler için önce `CLAUDE.md`, App Store adımları için 
 
 ## Sıradaki işler
 
-0. **Çeviri** (en, de, es, fr, it, ko, ja) — `i18n` dalında sürüyor; kurallar ve ilerleme: `docs/I18N.md`.
+0. **Çeviri** (en, de, es, fr, it, ko, ja) — oyun içi metinler `i18n` dalında tamam; kalan: App Store metinleri (6 dil) ve
+   Game Center başarım adları. Kurallar ve araçlar: `docs/I18N.md`. Ko/ja çevirileri yayından önce anadili konuşan birine gösterilmeli.
 
 1. ✅ İlk TestFlight yüklemesi (30 Ekim, derleme 1.0 (22)). Arşiv ad-hoc imzayla, dışa aktarma
    Xcode bulut yönetimli otomatik imzayla (sertifika/profil Apple'da; bkz. `apple/TESTFLIGHT.md` → İmza). Durum: Actions → "iOS TestFlight durumu".

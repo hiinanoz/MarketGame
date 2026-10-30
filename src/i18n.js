@@ -46,6 +46,9 @@ export function t(src, p) {
 /** Sayı biçimi (binlik ayırıcı dile göre). */
 export const num = (n, opts) => Number(n).toLocaleString(TAGS[lang], opts);
 
+/** Büyük harf (Türkçede i → İ, diğer dillerde I). */
+export const upper = (s) => String(s).toLocaleUpperCase(TAGS[lang]);
+
 /** Tarih/saat biçimi. */
 export const dateTime = (d) => new Date(d).toLocaleString(TAGS[lang]);
 
