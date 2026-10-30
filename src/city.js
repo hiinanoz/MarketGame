@@ -1,4 +1,5 @@
 import { platform, LEADERBOARDS } from './platform.js';
+import { t } from './i18n.js';
 import * as THREE from 'three';
 import { CITY, LEVELS } from './config.js';
 import { prop } from './assets.js';
@@ -50,27 +51,27 @@ export class City {
     const p = this.props.find((x) => x.id === id);
     if (!p || p.owned || !this.regionOpen(p.region)) return null;
     const amount = Math.round((p.mood === 'angry' ? p.price : p.basePrice()) * ratio);
-    if (g.money < amount) return { ok: false, msg: 'Paran yetmiyor' };
+    if (g.money < amount) return { ok: false, msg: t('Paran yetmiyor') };
     const min = this.minAccept(p);
     p.asks++;
     if (amount >= min) {
       g.spend(amount);
       p.owned = true;
       p.paid = amount;
-      p.lastMsg = `🤝 ${p.owner}: "Anlaştık!" ($${formatMoney(amount)})`;
+      p.lastMsg = `🤝 ${p.owner}: ${t('"Anlaştık!" (${n})', { n: formatMoney(amount) })}`;
       g.gainXp(Math.floor(amount / 300));
-      g.hud.toast(`🏁 ${p.name} artık senin!`);
+      g.hud.toast(`🏁 ${t('{name} artık senin!', { name: p.name })}`);
       g.audio.play('unlock');
       this.build(p);
       this.checkFinish();
     } else if (p.mood === 'angry') {
       p.price = Math.round(p.price * (1 + CITY.angryRaise));
-      p.lastMsg = `😠 ${p.owner}: "Bu ne biçim teklif! Fiyat artık $${formatMoney(p.price)}."`;
+      p.lastMsg = `😠 ${p.owner}: ${t('"Bu ne biçim teklif! Fiyat artık ${n}."', { n: formatMoney(p.price) })}`;
     } else {
       const next = this.minAccept(p);
       p.lastMsg = p.asks >= CITY.flexSteps.length
-        ? `🤔 ${p.owner}: "En son $${formatMoney(next)}, daha aşağı olmaz."`
-        : `🤔 ${p.owner}: "Olmaz… ama biraz daha konuşabiliriz."`;
+        ? `🤔 ${p.owner}: ${t('"En son ${n}, daha aşağı olmaz."', { n: formatMoney(next) })}`
+        : `🤔 ${p.owner}: ${t('"Olmaz… ama biraz daha konuşabiliriz."')}`;
     }
     this.build(p);
     g.save();
@@ -118,22 +119,22 @@ export class City {
     const mins = Math.floor(((g.stats.playTime ?? 0) % 3600) / 60);
     document.getElementById('final-body').innerHTML = `
       <div class="final-grade">${this.grade}</div>
-      <p class="final-title">👑 Kasabanın Hakimi</p>
+      <p class="final-title">👑 ${t('Kasabanın Hakimi')}</p>
       <div class="stats">
-        <div><span>📅 Oyun günü</span><b>${this.finishDay}</b></div>
-        <div><span>⏱️ Oynama süresi</span><b>${hours} sa ${mins} dk</b></div>
-        <div><span>💵 Para</span><b>$${formatMoney(Math.round(g.money))}</b></div>
-        <div><span>🏢 Şirket değeri</span><b>$${formatMoney(g.finance.companyValue)}</b></div>
-        <div><span>💼 İşletme</span><b>${g.holding.owned.length}</b></div>
-        <div><span>🏙️ Şehir mülkü</span><b>${this.ownedCount}</b></div>
-        <div><span>🏘️ Konut</span><b>${g.housing.plots.filter((p) => p.built).length}</b></div>
-        <div><span>👥 Çalışan</span><b>${g.totalStaff}</b></div>
-        <div><span>🛒 Müşteri</span><b>${formatMoney(g.stats.customers ?? 0)}</b></div>
-        <div><span>🗳️ Kazanılan seçim</span><b>${wins}</b></div>
-        <div><span>🏆 En büyük işletme</span><b>${biggest ? `${biggest.def.emoji} ${biggest.name}` : '—'}</b></div>
-        <div><span>⭐ Market puanı</span><b>${g.rating.stars.toFixed(1)}</b></div>
+        <div><span>📅 ${t('Oyun günü')}</span><b>${this.finishDay}</b></div>
+        <div><span>⏱️ ${t('Oynama süresi')}</span><b>${t('{h} saat {m} dk', { h: hours, m: mins })}</b></div>
+        <div><span>💵 ${t('Para')}</span><b>$${formatMoney(Math.round(g.money))}</b></div>
+        <div><span>🏢 ${t('Şirket değeri')}</span><b>$${formatMoney(g.finance.companyValue)}</b></div>
+        <div><span>💼 ${t('İşletme')}</span><b>${g.holding.owned.length}</b></div>
+        <div><span>🏙️ ${t('Şehir mülkü')}</span><b>${this.ownedCount}</b></div>
+        <div><span>🏘️ ${t('Konut')}</span><b>${g.housing.plots.filter((p) => p.built).length}</b></div>
+        <div><span>👥 ${t('Çalışan')}</span><b>${g.totalStaff}</b></div>
+        <div><span>🛒 ${t('Müşteri')}</span><b>${formatMoney(g.stats.customers ?? 0)}</b></div>
+        <div><span>🗳️ ${t('Kazanılan seçim')}</span><b>${wins}</b></div>
+        <div><span>🏆 ${t('En büyük işletme')}</span><b>${biggest ? `${biggest.def.emoji} ${biggest.name}` : '—'}</b></div>
+        <div><span>⭐ ${t('Market puanı')}</span><b>${g.rating.stars.toFixed(1)}</b></div>
       </div>
-      <p class="note">Derece oyun gününe göre: S ≤ 200 · A ≤ 300 · B ≤ 420 · C ≤ 600 · D</p>`;
+      <p class="note">${t('Derece oyun gününe göre: S ≤ 200 · A ≤ 300 · B ≤ 420 · C ≤ 600 · D')}</p>`;
     el.classList.remove('hidden');
     g.paused = true;
   }
@@ -197,23 +198,23 @@ export class City {
 
   render() {
     const g = this.game;
-    if (!this.unlocked) return `<p class="note">🏙️ Seviye ${CITY.fromLevel}'den itibaren şehrin bölgelerindeki mülkleri sahiplerinden satın alabilirsin. Şehirdeki her şey senin olunca Seviye 100: Kasabanın Hakimi.</p>`;
+    if (!this.unlocked) return `<p class="note">🏙️ ${t('Seviye {n}\'den itibaren şehrin bölgelerindeki mülkleri sahiplerinden satın alabilirsin. Şehirdeki her şey senin olunca Seviye 100: Kasabanın Hakimi.', { n: CITY.fromLevel })}</p>`;
     const m = this.missing;
-    const parts = [`<p class="note"><b>🏙️ Şehri satın al</b> · ${this.ownedCount}/${this.props.length} mülk · ${g.holding.businesses.length - m.biz}/${g.holding.businesses.length} işletme${this.finished ? ' · 👑 Hakimsin' : ''}<br>Teklif ver: bazı sahipler 2–3 tekliften sonra %25'e kadar iner; bazıları sordukça kızar ve fiyatı artırır.</p>`];
+    const parts = [`<p class="note"><b>🏙️ ${t('Şehri satın al')}</b> · ${t('{n}/{max} mülk', { n: this.ownedCount, max: this.props.length })} · ${t('{n}/{max} işletme', { n: g.holding.businesses.length - m.biz, max: g.holding.businesses.length })}${this.finished ? ` · 👑 ${t('Hakimsin')}` : ''}<br>${t('Teklif ver: bazı sahipler 2–3 tekliften sonra %25\'e kadar iner; bazıları sordukça kızar ve fiyatı artırır.')}</p>`];
     for (const r of CITY.regions) {
       const open = this.regionOpen(r);
-      parts.push(`<p class="note"><b>${r.emoji} ${r.name}</b>${open ? '' : ` · 🔒 Sv.${r.level}`}</p>`);
+      parts.push(`<p class="note"><b>${r.emoji} ${r.name}</b>${open ? '' : ` · 🔒 ${t('Sv.{n}', { n: r.level })}`}</p>`);
       if (!open) continue;
       for (const p of this.props.filter((x) => x.region === r)) {
         const base = p.mood === 'angry' ? p.price : p.basePrice();
         parts.push(`<div class="biz ${p.owned ? 'owned' : ''}">
-          <div class="biz-head"><div><b>${p.owned ? '🏁 ' : ''}${p.name}</b><small>Sahibi: ${p.owner}${p.owned ? ` · $${formatMoney(p.paid)}'a alındı` : ` · istenen $${formatMoney(base)}${p.asks ? ` · ${p.asks} teklif` : ''}`}</small></div></div>
+          <div class="biz-head"><div><b>${p.owned ? '🏁 ' : ''}${p.name}</b><small>${t('Sahibi: {owner}', { owner: p.owner })}${p.owned ? ` · ${t('${n}\'a alındı', { n: formatMoney(p.paid) })}` : ` · ${t('istenen ${n}', { n: formatMoney(base) })}${p.asks ? ` · ${t('{n} teklif', { n: p.asks })}` : ''}`}</small></div></div>
           ${p.lastMsg ? `<p class="note">${p.lastMsg}</p>` : ''}
-          ${p.owned ? '' : `<div class="biz-btns">${CITY.offers.map((o) => `<button data-offer="${p.id}:${o}" ${g.money < base * o ? 'disabled' : ''}>${o === 1 ? 'Tam fiyat' : `%${Math.round(o * 100)}`} $${formatMoney(base * o)}</button>`).join('')}<button data-go="city:${p.id}">📍</button></div>`}
+          ${p.owned ? '' : `<div class="biz-btns">${CITY.offers.map((o) => `<button data-offer="${p.id}:${o}" ${g.money < base * o ? 'disabled' : ''}>${o === 1 ? t('Tam fiyat') : `%${Math.round(o * 100)}`} $${formatMoney(base * o)}</button>`).join('')}<button data-go="city:${p.id}">📍</button></div>`}
         </div>`);
       }
     }
-    if (this.finished) parts.push('<div class="biz-btns"><button class="primary" data-final>👑 Final ekranını göster</button></div>');
+    if (this.finished) parts.push(`<div class="biz-btns"><button class="primary" data-final>${t('👑 Final ekranını göster')}</button></div>`);
     return parts.join('');
   }
 

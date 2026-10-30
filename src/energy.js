@@ -1,4 +1,5 @@
 import { ELECTRICITY } from './config.js';
+import { t } from './i18n.js';
 import { formatMoney } from './hud.js';
 
 // Elektrik (Sv.30+): her gün sonunda market ve işletmelerin tüketimi faturalanır.
@@ -100,5 +101,5 @@ export class Energy {
 }
 
 export function energySummary(e) {
-  return `⚡ tüketim ${formatMoney(e.consumption)} · üretim ${formatMoney(e.produced)}`;
+  return `⚡ ${t('tüketim {use} · üretim {made}', { use: formatMoney(e.consumption), made: formatMoney(e.produced) })}`;
 }

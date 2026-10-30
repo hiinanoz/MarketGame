@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { FINANCE } from './config.js';
 import { prop } from './assets.js';
 import { textTexture } from './fx.js';
@@ -70,7 +71,7 @@ export class Finance {
     if (this.invest || g.level < L.level || g.money < L.price) return false;
     g.spend(L.price);
     this.invest = true;
-    g.hud.toast('📈 Yatırım şirketin kuruldu: borsada hisse alabilirsin');
+    g.hud.toast(t('📈 Yatırım şirketin kuruldu: borsada hisse alabilirsin'));
     g.save();
     return true;
   }
@@ -86,7 +87,7 @@ export class Finance {
     g.spend(cost);
     s.owned += n;
     if (!had && this.controls(id)) {
-      g.hud.toast(`🏆 ${c.emoji} ${c.name} artık senin kontrolünde: ${c.effectText}`);
+      g.hud.toast(`🏆 ${c.emoji} ${t('{name} artık senin kontrolünde: {effect}', { name: c.name, effect: c.effectText })}`);
       g.gainXp(Math.floor(c.value / 200));
       g.audio.play('unlock');
     }
@@ -126,7 +127,7 @@ export class Finance {
     g.spend(L.price);
     this.bank = { capital: 0, branches: 0, card: false, insurance: false, center: false };
     g.gainXp(Math.floor(L.price / 100));
-    g.hud.toast(`🏦 ${g.marketName} Bankası kuruldu! Sermaye koyup kredi vererek faiz kazan`);
+    g.hud.toast(`🏦 ${t('{bank} kuruldu! Sermaye koyup kredi vererek faiz kazan', { bank: this.bankName })}`);
     g.audio.play('unlock');
     this.buildBankHq();
     g.save();
@@ -167,7 +168,7 @@ export class Finance {
     }
     g.spend(u.price);
     g.gainXp(Math.floor(u.price / 100));
-    g.hud.toast({ branch: '🏦 Yeni banka şubesi açıldı', card: '💳 Kredi kartı işi başladı', insurance: '🛡️ Sigorta işi başladı', center: '🏙️ Finans merkezi: şehrin tüm kredileri senin bankanda — kredilerin faizsiz!' }[k]);
+    g.hud.toast({ branch: t('🏦 Yeni banka şubesi açıldı'), card: t('💳 Kredi kartı işi başladı'), insurance: t('🛡️ Sigorta işi başladı'), center: t('🏙️ Finans merkezi: şehrin tüm kredileri senin bankanda — kredilerin faizsiz!') }[k]);
     g.audio.play('unlock');
     this.buildBankHq();
     g.save();
@@ -193,7 +194,7 @@ export class Finance {
     g.money += cash;
     g.gainXp(Math.floor(cash / 200));
     g.hud.setMoney(g.money);
-    g.hud.toast(`🔔 Halka arz: hisselerin %${Math.round(FINANCE.ipo.share * 100)}'si satıldı, +$${formatMoney(cash)}`);
+    g.hud.toast(`🔔 ${t('Halka arz: hisselerin %{pct}\'si satıldı, +${n}', { pct: Math.round(FINANCE.ipo.share * 100), n: formatMoney(cash) })}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -257,7 +258,7 @@ export class Finance {
     m.traverse((o) => { if (o.isMesh) o.castShadow = true; });
     this.root.add(m);
     this.hq = m;
-    const tex = textTexture(`🏦 ${this.game.marketName} Bankası${this.bank.center ? ' · Finans merkezi' : ''}`, { color: '#1e3d5d', size: 40, stroke: '#ffffff' });
+    const tex = textTexture(`🏦 ${this.bankName}${this.bank.center ? ` · ${t('Finans merkezi')}` : ''}`, { color: '#1e3d5d', size: 40, stroke: '#ffffff' });
     const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
     label.renderOrder = 6;
     label.scale.set(0.8 * tex.image.width / tex.image.height, 0.8, 1);
@@ -272,16 +273,17 @@ export class Finance {
   render() {
     const g = this.game;
     const m = g.money;
-    if (!this.unlocked) return `<p class="note">📈 Finans Seviye ${FINANCE.fromLevel}'da açılır: yatırım şirketi, borsa, kendi bankan, liman ve sanayi.</p>`;
+    const lv = (n) => t('Sv.{n}', { n });
+    if (!this.unlocked) return `<p class="note">📈 ${t('Finans Seviye {n}\'da açılır: yatırım şirketi, borsa, kendi bankan, liman ve sanayi.', { n: FINANCE.fromLevel })}</p>`;
     const parts = [`<div class="stats">
-      <div><span>🏢 Şirket değeri</span><b>$${formatMoney(this.companyValue)}</b></div>
-      <div><span>📈 Portföy</span><b>$${formatMoney(this.portfolio)}</b></div>
+      <div><span>🏢 ${t('Şirket değeri')}</span><b>$${formatMoney(this.companyValue)}</b></div>
+      <div><span>📈 ${t('Portföy')}</span><b>$${formatMoney(this.portfolio)}</b></div>
     </div>`];
     // Yatırım şirketi / borsa
     const L = FINANCE.investLicense;
     if (!this.invest) {
-      parts.push(`<div class="biz"><div class="biz-head"><span class="biz-e">📈</span><div><b>Yatırım şirketi</b><small>Rakip şirketlerin hisselerini al; %${FINANCE.control} ile kontrol sende</small></div></div>
-        <div class="biz-btns"><button class="primary" data-fin="license" ${m < L.price ? 'disabled' : ''}>Kur $${formatMoney(L.price)}</button></div></div>`);
+      parts.push(`<div class="biz"><div class="biz-head"><span class="biz-e">📈</span><div><b>${t('Yatırım şirketi')}</b><small>${t('Rakip şirketlerin hisselerini al; %{n} ile kontrol sende', { n: FINANCE.control })}</small></div></div>
+        <div class="biz-btns"><button class="primary" data-fin="license" ${m < L.price ? 'disabled' : ''}>${t('Kur ${n}', { n: formatMoney(L.price) })}</button></div></div>`);
     } else {
       for (const [k, c] of Object.entries(FINANCE.companies)) {
         const s = this.stocks[k];
@@ -291,41 +293,47 @@ export class Finance {
         const ctrl = this.controls(k);
         parts.push(`<div class="biz ${ctrl ? 'owned' : locked ? 'locked' : ''}">
           <div class="biz-head"><span class="biz-e">${c.emoji}</span><div><b>${c.name}</b><small>%1 = $${formatMoney(s.price)} <span class="${ch >= 0 ? 'up' : 'down'}">${ch >= 0 ? '▲' : '▼'}%${Math.abs(ch).toFixed(1)}</span> · ${sparkline(h)}</small></div></div>
-          <div class="biz-row"><span>Hissen</span><b>%${s.owned}${ctrl ? ' · 🏆 kontrol' : ''}</b><small>%${FINANCE.control}: ${c.effectText}</small></div>
-          <div class="biz-btns">${locked ? `<span class="lock">🔒 Sv.${c.level}'de borsaya açılır</span>` : `
+          <div class="biz-row"><span>${t('Hissen')}</span><b>%${s.owned}${ctrl ? ` · 🏆 ${t('kontrol')}` : ''}</b><small>%${FINANCE.control}: ${c.effectText}</small></div>
+          <div class="biz-btns">${locked ? `<span class="lock">🔒 ${t('Sv.{n}\'de borsaya açılır', { n: c.level })}</span>` : `
             <button data-sbuy="${k}:1" ${m < s.price || s.owned >= 100 ? 'disabled' : ''}>+%1</button>
             <button data-sbuy="${k}:10" ${m < s.price * 10 || s.owned >= 100 ? 'disabled' : ''}>+%10 ($${formatMoney(s.price * 10)})</button>
-            <button data-ssell="${k}:1" ${!s.owned ? 'disabled' : ''}>Sat %1</button>
-            <button data-ssell="${k}:10" ${s.owned < 10 ? 'disabled' : ''}>Sat %10</button>`}</div></div>`);
+            <button data-ssell="${k}:1" ${!s.owned ? 'disabled' : ''}>${t('Sat %{n}', { n: 1 })}</button>
+            <button data-ssell="${k}:10" ${s.owned < 10 ? 'disabled' : ''}>${t('Sat %{n}', { n: 10 })}</button>`}</div></div>`);
       }
     }
     // Kendi bankan
     const B = FINANCE.bank;
     if (!this.bank) {
-      parts.push(`<div class="biz ${g.level < B.license.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🏦</span><div><b>Kendi bankan</b><small>Lisans al, sermaye koy: halka kredi verip faiz kazan</small></div></div>
-        <div class="biz-btns">${g.level < B.license.level ? `<span class="lock">🔒 Sv.${B.license.level}</span>` : `<button class="primary" data-fin="bank" ${m < B.license.price ? 'disabled' : ''}>Lisans $${formatMoney(B.license.price)}</button>`}</div></div>`);
+      parts.push(`<div class="biz ${g.level < B.license.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🏦</span><div><b>${t('Kendi bankan')}</b><small>${t('Lisans al, sermaye koy: halka kredi verip faiz kazan')}</small></div></div>
+        <div class="biz-btns">${g.level < B.license.level ? `<span class="lock">🔒 ${lv(B.license.level)}</span>` : `<button class="primary" data-fin="bank" ${m < B.license.price ? 'disabled' : ''}>${t('Lisans ${n}', { n: formatMoney(B.license.price) })}</button>`}</div></div>`);
     } else {
       const b = this.bank;
       const up = (k, label) => {
         const u = B[k];
         if (k === 'branch' ? b.branches >= u.max : b[k]) return '';
-        return g.level < u.level ? `<span class="lock">${label} Sv.${u.level}</span>` : `<button data-up="${k}" ${m < u.price ? 'disabled' : ''}>${label} $${formatMoney(u.price)}</button>`;
+        return g.level < u.level ? `<span class="lock">${label} ${lv(u.level)}</span>` : `<button data-up="${k}" ${m < u.price ? 'disabled' : ''}>${label} $${formatMoney(u.price)}</button>`;
       };
-      parts.push(`<div class="biz owned"><div class="biz-head"><span class="biz-e">🏦</span><div><b>${g.marketName} Bankası${b.center ? ' · 🏙️ Finans merkezi' : ''}</b><small>Günlük gelir ~$${formatMoney(this.bankIncome)} · şube ${b.branches}/${B.branch.max}${b.card ? ' · 💳' : ''}${b.insurance ? ' · 🛡️' : ''}</small></div></div>
-        <div class="biz-row"><span>💰 Sermaye</span><b>$${formatMoney(b.capital)}</b><small>günlük %${(B.rate * 100).toFixed(0)} faiz geliri</small></div>
-        <div class="bank-group"><span>Sermaye</span><button data-cap="10000" ${m < 10000 ? 'disabled' : ''}>+$10K</button><button data-cap="100000" ${m < 100000 ? 'disabled' : ''}>+$100K</button><button data-cap="-10000" ${b.capital < 10000 ? 'disabled' : ''}>−$10K</button></div>
-        <div class="biz-btns">${up('branch', '🏦 Şube')}${up('card', '💳 Kredi kartı')}${up('insurance', '🛡️ Sigorta')}${up('center', '🏙️ Finans merkezi')}</div></div>`);
+      parts.push(`<div class="biz owned"><div class="biz-head"><span class="biz-e">🏦</span><div><b>${this.bankName}${b.center ? ` · 🏙️ ${t('Finans merkezi')}` : ''}</b><small>${t('Günlük gelir ~${n} · şube {b}/{max}', { n: formatMoney(this.bankIncome), b: b.branches, max: B.branch.max })}${b.card ? ' · 💳' : ''}${b.insurance ? ' · 🛡️' : ''}</small></div></div>
+        <div class="biz-row"><span>💰 ${t('Sermaye')}</span><b>$${formatMoney(b.capital)}</b><small>${t('günlük %{n} faiz geliri', { n: (B.rate * 100).toFixed(0) })}</small></div>
+        <div class="bank-group"><span>${t('Sermaye')}</span><button data-cap="10000" ${m < 10000 ? 'disabled' : ''}>+$10K</button><button data-cap="100000" ${m < 100000 ? 'disabled' : ''}>+$100K</button><button data-cap="-10000" ${b.capital < 10000 ? 'disabled' : ''}>−$10K</button></div>
+        <div class="biz-btns">${up('branch', `🏦 ${t('Şube')}`)}${up('card', `💳 ${t('Kredi kartı')}`)}${up('insurance', `🛡️ ${t('Sigorta')}`)}${up('center', `🏙️ ${t('Finans merkezi')}`)}</div></div>`);
     }
     // Halka arz
     const I = FINANCE.ipo;
-    parts.push(`<div class="biz ${this.ipo ? 'owned' : g.level < I.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🔔</span><div><b>Halka arz</b><small>${this.ipo ? 'Holding borsada' : `Şirketin %${Math.round(I.share * 100)}'ini sat: ~$${formatMoney(this.companyValue * I.share)} nakit`}</small></div></div>
-      ${this.ipo ? '' : `<div class="biz-btns">${g.level < I.level ? `<span class="lock">🔒 Sv.${I.level}</span>` : '<button class="primary" data-fin="ipo">Halka arz et</button>'}</div>`}</div>`);
+    parts.push(`<div class="biz ${this.ipo ? 'owned' : g.level < I.level ? 'locked' : ''}"><div class="biz-head"><span class="biz-e">🔔</span><div><b>${t('Halka arz')}</b><small>${this.ipo ? t('Holding borsada') : t('Şirketin %{pct}\'ini sat: ~${n} nakit', { pct: Math.round(I.share * 100), n: formatMoney(this.companyValue * I.share) })}</small></div></div>
+      ${this.ipo ? '' : `<div class="biz-btns">${g.level < I.level ? `<span class="lock">🔒 ${lv(I.level)}</span>` : `<button class="primary" data-fin="ipo">${t('Halka arz et')}</button>`}</div>`}</div>`);
     const fx = [];
-    if (this.customerFactor > 1) fx.push(`müşteri ×${this.customerFactor}`);
-    if (this.electricityFactor < 1) fx.push('elektrik −%50');
-    if (this.interestFactor < 1) fx.push(this.interestFactor === 0 ? 'kredi faizi yok' : 'kredi faizi −%50');
-    if (fx.length) parts.push(`<p class="note">🏆 Etkiler: ${fx.join(' · ')}</p>`);
+    if (this.customerFactor > 1) fx.push(t('müşteri ×{n}', { n: this.customerFactor }));
+    if (this.electricityFactor < 1) fx.push(t('elektrik −%50'));
+    if (this.interestFactor < 1) fx.push(this.interestFactor === 0 ? t('kredi faizi yok') : t('kredi faizi −%50'));
+    if (fx.length) parts.push(`<p class="note">🏆 ${t('Etkiler: {list}', { list: fx.join(' · ') })}</p>`);
     return parts.join('');
+  }
+
+  /** "<market> Bankası" (varsayılan ad çevrilir). */
+  get bankName() {
+    const g = this.game;
+    return t('{name} Bankası', { name: g.marketName === 'Kasaba' ? t('Kasaba') : g.marketName });
   }
 
   onClick(d) {

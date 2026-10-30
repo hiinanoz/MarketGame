@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { DECOR, PREMIUM } from './config.js';
 import { prop } from './assets.js';
 
@@ -37,7 +38,7 @@ export class Decor {
     const d = list.find((x) => x.id === id);
     if (!d) return false;
     if (d.premium && !g.premium) {
-      g.hud.toast('👑 Bu desen Premium\'a özel');
+      g.hud.toast(t('👑 Bu desen Premium\'a özel'));
       g.audio.play('error');
       return false;
     }
@@ -60,7 +61,7 @@ export class Decor {
     this.items.push(id);
     this.placeItems();
     g.audio.play('unlock');
-    g.hud.toast(`${d.emoji} ${d.name} yerleştirildi · müşteri +%${Math.round((this.customerFactor - 1) * 100)}`);
+    g.hud.toast(`${d.emoji} ${t('{name} yerleştirildi', { name: d.name })} · ${t('müşteri +%{n}', { n: Math.round((this.customerFactor - 1) * 100) })}`);
     g.save();
     return true;
   }

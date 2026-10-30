@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { Character } from './character.js';
 import { POLITICS, HOUSING } from './config.js';
 import { formatMoney } from './hud.js';
@@ -107,7 +108,7 @@ export class Politics {
   dateText(day = this.game.day.day) {
     const y = Math.floor((day - 1) / YEAR) + 1;
     const m = Math.floor(((day - 1) % YEAR) / M) + 1;
-    return `${y}. yıl ${m}. ay`;
+    return t('{y}. yıl {m}. ay', { y, m });
   }
 
   get daysLeft() {
@@ -116,11 +117,11 @@ export class Politics {
 
   leftText() {
     const d = this.daysLeft;
-    if (d === 0) return 'bugün';
+    if (d === 0) return t('bugün');
     const months = Math.ceil(d / M);
     const y = Math.floor(months / 12);
     const mo = months % 12;
-    return [y ? `${y} yıl` : '', mo ? `${mo} ay` : ''].filter(Boolean).join(' ');
+    return [y ? t('{n} yıl', { n: y }) : '', mo ? t('{n} ay', { n: mo }) : ''].filter(Boolean).join(' ');
   }
 
   get campaignTime() {
@@ -136,7 +137,7 @@ export class Politics {
     const pts = amount / (POLITICS.donationPerPoint + g.level * 20);
     this.temp += pts;
     this.donated += amount;
-    g.hud.toast(`🤝 $${formatMoney(amount)} bağış: nüfuz +${pts.toFixed(1)}`);
+    g.hud.toast(`🤝 ${t('${n} bağış: nüfuz +{pts}', { n: formatMoney(amount), pts: pts.toFixed(1) })}`);
     g.save();
     return true;
   }
@@ -148,7 +149,7 @@ export class Politics {
     g.spend(b.cost);
     this.buildings[k] = true;
     g.gainXp(Math.floor(b.cost / 100));
-    g.hud.toast(`${b.emoji} ${b.name} şehre bağışlandı: kalıcı nüfuz +${b.influence}`);
+    g.hud.toast(`${b.emoji} ${t('{name} şehre bağışlandı: kalıcı nüfuz +{n}', { name: b.name, n: b.influence })}`);
     g.audio.play('unlock');
     this.buildCity();
     g.save();
@@ -162,7 +163,7 @@ export class Politics {
     g.spend(cost);
     this.rallyDay = g.day.day;
     this.temp += POLITICS.rallyPoints;
-    g.hud.toast(`📣 Miting yapıldı: nüfuz +${POLITICS.rallyPoints}`);
+    g.hud.toast(`📣 ${t('Miting yapıldı: nüfuz +{n}', { n: POLITICS.rallyPoints })}`);
     g.save();
     return true;
   }
@@ -179,7 +180,7 @@ export class Politics {
     g.spend(POLITICS.zoningCost);
     this.zoned = true;
     g.housing.openZoned();
-    g.hud.toast('🗺️ İmar izni verildi: doğu mahallesinde 4 yeni arsa açıldı');
+    g.hud.toast(t('🗺️ İmar izni verildi: doğu mahallesinde 4 yeni arsa açıldı'));
     g.save();
     return true;
   }
@@ -191,7 +192,7 @@ export class Politics {
     g.spend(p.cost);
     this.projects[k] = true;
     g.gainXp(Math.floor(p.cost / 100));
-    g.hud.toast(`${p.emoji} ${p.name} ihalesi senin: inşa edildi`);
+    g.hud.toast(`${p.emoji} ${t('{name} ihalesi senin: inşa edildi', { name: p.name })}`);
     g.audio.play('unlock');
     this.buildCity();
     g.save();
@@ -203,7 +204,7 @@ export class Politics {
     this.autocracy = true;
     this.lowDays = 0;
     this.removeWalkers();
-    this.game.hud.toast('👑 Otokrasi: artık seçim yok — kralsın! Halkı memnun tut.');
+    this.game.hud.toast(t('👑 Otokrasi: artık seçim yok — kralsın! Halkı memnun tut.'));
     this.game.save();
     return true;
   }
@@ -227,9 +228,9 @@ export class Politics {
       this.started = true;
       this.nextElection = g.day.day + POLITICS.termYears * YEAR;
       this.makeRivals();
-      g.hud.toast(`🗳️ Siyaset açıldı! Seçime ${this.leftText()} var — nüfuzunu artır`);
+      g.hud.toast(`🗳️ ${t('Siyaset açıldı! Seçime {left} var — nüfuzunu artır', { left: this.leftText() })}`);
     }
-    const txt = this.autocracy ? '👑 Kral' : `🗳️ Seçime ${this.leftText()} · %${this.popularity}`;
+    const txt = this.autocracy ? `👑 ${t('Kral')}` : `🗳️ ${t('Seçime {left}', { left: this.leftText() })} · %${this.popularity}`;
     if (txt !== this.pillText) {
       this.pillText = txt;
       this.pill.textContent = txt;
@@ -261,7 +262,7 @@ export class Politics {
         info.sponsor = c;
       } else {
         this.sponsor = false;
-        g.hud.toast('⚽ Sponsorluk ödenemedi, bitti');
+        g.hud.toast(t('⚽ Sponsorluk ödenemedi, bitti'));
       }
     }
     if (this.mayor) {
@@ -285,7 +286,7 @@ export class Politics {
         this.wins = 0;
         this.nextElection = g.day.day + POLITICS.campaignMonths * M;
         info.revolt = true;
-        g.hud.toast('📢 Halk memnun değil: seçimler geri geldi!');
+        g.hud.toast(t('📢 Halk memnun değil: seçimler geri geldi!'));
       }
     } else if (g.day.day >= this.nextElection) {
       info.election = this.holdElection();
@@ -316,7 +317,7 @@ export class Politics {
     this.nextElection = g.day.day + POLITICS.termYears * YEAR;
     this.makeRivals();
     this.removeWalkers();
-    g.hud.toast(won ? `🎉 Seçimi kazandın (%${me})! Belediye başkanısın` : `😞 Seçimi ${p.mainName} kazandı (%${main}). Sen %${me}`);
+    g.hud.toast(won ? `🎉 ${t('Seçimi kazandın (%{me})! Belediye başkanısın', { me })}` : `😞 ${t('Seçimi {name} kazandı (%{main}). Sen %{me}', { name: p.mainName, main, me })}`);
     if (won) g.gainXp(POLITICS.winXp);
     return res;
   }
@@ -377,48 +378,50 @@ export class Politics {
     const p = this.poll();
     const bar = (label, v, cls = '') => `<div class="poll-row ${cls}"><span>${label}</span><div class="progress"><i style="width:${v}%"></i></div><b>%${v}</b></div>`;
     const parts = [];
+    const office = this.autocracy ? t('Kral') : this.mayor ? (this.wins ? t('Belediye başkanı ({n}. dönem)', { n: this.wins }) : t('Belediye başkanı')) : t('yok');
     parts.push(`<div class="stats">
-      <div><span>📅 Bugün</span><b>${this.dateText()}</b></div>
-      <div><span>${this.autocracy ? '👑 Yönetim' : '🗳️ Seçime kalan'}</span><b>${this.autocracy ? 'Otokrasi' : this.leftText()}</b></div>
-      <div><span>⭐ Popülerlik (nüfuz)</span><b>%${this.popularity}</b></div>
-      <div><span>😊 Halk memnuniyeti</span><b>%${this.satisfaction}</b></div>
-      <div><span>🏛️ Makam</span><b>${this.autocracy ? 'Kral' : this.mayor ? (this.wins ? `Belediye başkanı (${this.wins}. dönem)` : 'Belediye başkanı') : 'yok'}</b></div>
+      <div><span>📅 ${t('Bugün')}</span><b>${this.dateText()}</b></div>
+      <div><span>${this.autocracy ? `👑 ${t('Yönetim')}` : `🗳️ ${t('Seçime kalan')}`}</span><b>${this.autocracy ? t('Otokrasi') : this.leftText()}</b></div>
+      <div><span>⭐ ${t('Popülerlik (nüfuz)')}</span><b>%${this.popularity}</b></div>
+      <div><span>😊 ${t('Halk memnuniyeti')}</span><b>%${this.satisfaction}</b></div>
+      <div><span>🏛️ ${t('Makam')}</span><b>${office}</b></div>
     </div>`);
     if (!this.autocracy) {
-      parts.push(`<p class="note"><b>Anket</b> — popülerliğin yüksekse seçimi kazanırsın.</p>
-        ${bar(`🙋 Sen`, p.me, 'me')}${bar(`🟥 ${p.mainName}`, p.main)}${p.minors.map((r) => bar(`▫️ ${r.name}`, r.share)).join('')}`);
+      parts.push(`<p class="note">${t('<b>Anket</b> — popülerliğin yüksekse seçimi kazanırsın.')}</p>
+        ${bar(`🙋 ${t('Sen')}`, p.me, 'me')}${bar(`🟥 ${p.mainName}`, p.main)}${p.minors.map((r) => bar(`▫️ ${r.name}`, r.share)).join('')}`);
     } else if (this.lowDays) {
-      parts.push(`<p class="note warn">⚠️ Memnuniyet ${this.lowDays} gündür %50'nin altında. ${POLITICS.revoltYears * YEAR - this.lowDays} gün daha sürerse seçimler geri gelir.</p>`);
+      parts.push(`<p class="note warn">⚠️ ${t('Memnuniyet {n} gündür %50\'nin altında. {left} gün daha sürerse seçimler geri gelir.', { n: this.lowDays, left: POLITICS.revoltYears * YEAR - this.lowDays })}</p>`);
     }
     // Nüfuz kaynakları
-    parts.push(`<p class="note"><b>Nüfuz kaynakları</b> · kalıcı ${this.permanent} + geçici ${this.temp.toFixed(1)} (geçici puan her gün %${Math.round(POLITICS.decay * 100)} azalır)</p>
-      <div class="biz-row"><span>👥 İstihdam</span><b>${g.totalStaff} çalışan</b><small>${this.jobsInfluence ? `+${this.jobsInfluence} nüfuz` : `${POLITICS.jobs.min}+ çalışanda nüfuz verir`}</small></div>
-      <div class="bank-group"><span>🤝 Bağış</span>${POLITICS.donations.map((n) => `<button data-donate="${n}" ${m < n ? 'disabled' : ''}>$${formatMoney(n)}</button>`).join('')}</div>
-      <div class="biz-row"><span>⚽ Spor kulübü sponsorluğu</span><b>${this.sponsor ? 'var' : 'yok'}</b><button data-sponsor>${this.sponsor ? 'Bitir' : `Başla $${formatMoney(POLITICS.sponsorCost + g.level * 20)}/gün`}</button></div>
-      ${this.campaignTime ? `<div class="biz-row"><span>📣 Miting</span><b>+${POLITICS.rallyPoints} nüfuz</b><button data-rally ${this.rallyDay === g.day.day || m < POLITICS.rallyCost + g.level * 60 ? 'disabled' : ''}>${this.rallyDay === g.day.day ? 'bugün yapıldı' : `Yap $${formatMoney(POLITICS.rallyCost + g.level * 60)}`}</button></div>` : ''}`);
-    parts.push(`<p class="note"><b>Kamu binası bağışla</b> (şehir merkezi, kalıcı nüfuz)</p>${Object.entries(POLITICS.buildings).map(([k, b]) => `<div class="biz-row"><span>${b.emoji} ${b.name}</span><b>${this.buildings[k] ? 'yapıldı' : `+${b.influence} nüfuz`}</b>${this.buildings[k] ? '' : `<button data-build="${k}" ${m < b.cost ? 'disabled' : ''}>$${formatMoney(b.cost)}</button>`}</div>`).join('')}`);
+    const rallyCost = POLITICS.rallyCost + g.level * 60;
+    parts.push(`<p class="note">${t('<b>Nüfuz kaynakları</b> · kalıcı {perm} + geçici {temp} (geçici puan her gün %{n} azalır)', { perm: this.permanent, temp: this.temp.toFixed(1), n: Math.round(POLITICS.decay * 100) })}</p>
+      <div class="biz-row"><span>👥 ${t('İstihdam')}</span><b>${t('{n} çalışan', { n: g.totalStaff })}</b><small>${this.jobsInfluence ? t('+{n} nüfuz', { n: this.jobsInfluence }) : t('{n}+ çalışanda nüfuz verir', { n: POLITICS.jobs.min })}</small></div>
+      <div class="bank-group"><span>🤝 ${t('Bağış')}</span>${POLITICS.donations.map((n) => `<button data-donate="${n}" ${m < n ? 'disabled' : ''}>$${formatMoney(n)}</button>`).join('')}</div>
+      <div class="biz-row"><span>⚽ ${t('Spor kulübü sponsorluğu')}</span><b>${this.sponsor ? t('var') : t('yok')}</b><button data-sponsor>${this.sponsor ? t('Bitir') : t('Başla ${n}/gün', { n: formatMoney(POLITICS.sponsorCost + g.level * 20) })}</button></div>
+      ${this.campaignTime ? `<div class="biz-row"><span>📣 ${t('Miting')}</span><b>${t('+{n} nüfuz', { n: POLITICS.rallyPoints })}</b><button data-rally ${this.rallyDay === g.day.day || m < rallyCost ? 'disabled' : ''}>${this.rallyDay === g.day.day ? t('bugün yapıldı') : t('Yap ${n}', { n: formatMoney(rallyCost) })}</button></div>` : ''}`);
+    parts.push(`<p class="note">${t('<b>Kamu binası bağışla</b> (şehir merkezi, kalıcı nüfuz)')}</p>${Object.entries(POLITICS.buildings).map(([k, b]) => `<div class="biz-row"><span>${b.emoji} ${b.name}</span><b>${this.buildings[k] ? t('yapıldı') : t('+{n} nüfuz', { n: b.influence })}</b>${this.buildings[k] ? '' : `<button data-build="${k}" ${m < b.cost ? 'disabled' : ''}>$${formatMoney(b.cost)}</button>`}</div>`).join('')}`);
     if (this.mayor) {
-      parts.push(`<p class="note"><b>Başkanlık</b> · belediye cezası kesilmez</p>
-        <div class="bank-group"><span>💰 Vergi %${this.taxRate}</span>${[0, 5, 10, 15, 20, 30].map((r) => `<button data-tax="${r}" ${r === this.taxRate ? 'class="primary"' : ''}>%${r}</button>`).join('')}</div>
-        <p class="note">Vergi her gün gelir getirir ama %5'in üstü halk memnuniyetini düşürür.</p>
-        <div class="biz-row"><span>🗺️ İmar izni</span><b>${this.zoned ? 'verildi' : '+4 arsa'}</b>${this.zoned ? '' : `<button data-zone ${m < POLITICS.zoningCost ? 'disabled' : ''}>$${formatMoney(POLITICS.zoningCost)}</button>`}</div>
-        ${Object.entries(POLITICS.projects).map(([k, pr]) => `<div class="biz-row"><span>${pr.emoji} ${pr.name}</span><b>${this.projects[k] ? `+$${formatMoney(pr.income)}/gün` : pr.desc}</b>${this.projects[k] ? '' : `<button data-project="${k}" ${m < pr.cost ? 'disabled' : ''}>İhale $${formatMoney(pr.cost)}</button>`}</div>`).join('')}`);
+      parts.push(`<p class="note">${t('<b>Başkanlık</b> · belediye cezası kesilmez')}</p>
+        <div class="bank-group"><span>💰 ${t('Vergi %{n}', { n: this.taxRate })}</span>${[0, 5, 10, 15, 20, 30].map((r) => `<button data-tax="${r}" ${r === this.taxRate ? 'class="primary"' : ''}>%${r}</button>`).join('')}</div>
+        <p class="note">${t('Vergi her gün gelir getirir ama %5\'in üstü halk memnuniyetini düşürür.')}</p>
+        <div class="biz-row"><span>🗺️ ${t('İmar izni')}</span><b>${this.zoned ? t('verildi') : t('+4 arsa')}</b>${this.zoned ? '' : `<button data-zone ${m < POLITICS.zoningCost ? 'disabled' : ''}>$${formatMoney(POLITICS.zoningCost)}</button>`}</div>
+        ${Object.entries(POLITICS.projects).map(([k, pr]) => `<div class="biz-row"><span>${pr.emoji} ${pr.name}</span><b>${this.projects[k] ? t('+${n}/gün', { n: formatMoney(pr.income) }) : pr.desc}</b>${this.projects[k] ? '' : `<button data-project="${k}" ${m < pr.cost ? 'disabled' : ''}>${t('İhale ${n}', { n: formatMoney(pr.cost) })}</button>`}</div>`).join('')}`);
     }
     if (this.wins >= POLITICS.autocracyWins && !this.autocracy) {
-      parts.push(`<div class="biz-btns"><button class="primary" data-autocracy>👑 Otokrasiye geç (seçimler kalkar)</button></div>`);
+      parts.push(`<div class="biz-btns"><button class="primary" data-autocracy>${t('👑 Otokrasiye geç (seçimler kalkar)')}</button></div>`);
     } else if (!this.autocracy) {
-      parts.push(`<p class="note">Üst üste ${POLITICS.autocracyWins} seçim kazanırsan otokrasiye geçebilirsin (şu an ${this.wins}).</p>`);
+      parts.push(`<p class="note">${t('Üst üste {n} seçim kazanırsan otokrasiye geçebilirsin (şu an {wins}).', { n: POLITICS.autocracyWins, wins: this.wins })}</p>`);
     }
     if (this.history.length) {
-      parts.push(`<p class="note"><b>Geçmiş seçimler</b><br>${this.history.slice(-4).reverse().map((h) => `${this.dateText(h.day)}: ${h.won ? '✅ kazandın' : `❌ ${h.mainName} kazandı`} (sen %${h.me}, rakip %${h.main})`).join('<br>')}</p>`);
+      parts.push(`<p class="note"><b>${t('Geçmiş seçimler')}</b><br>${this.history.slice(-4).reverse().map((h) => `${this.dateText(h.day)}: ${h.won ? `✅ ${t('kazandın')}` : `❌ ${t('{name} kazandı', { name: h.mainName })}`} (${t('sen %{me}, rakip %{main}', { me: h.me, main: h.main })})`).join('<br>')}</p>`);
     }
     this.body.innerHTML = parts.join('');
   }
 
   onClick(e) {
-    const t = e.target.closest('button');
-    if (!t || t.disabled) return;
-    const d = t.dataset;
+    const btn = e.target.closest('button');
+    if (!btn || btn.disabled) return;
+    const d = btn.dataset;
     if (d.donate) this.donate(Number(d.donate));
     if (d.sponsor !== undefined) this.sponsor = !this.sponsor;
     if (d.rally !== undefined) this.rally();
@@ -499,7 +502,7 @@ class Candidate extends Character {
     b.font = 'bold 44px "Trebuchet MS", sans-serif';
     b.textAlign = 'center';
     b.textBaseline = 'middle';
-    b.fillText('📣 MİTİNG', 128, 50);
+    b.fillText(`📣 ${t('MİTİNG')}`, 128, 50);
     const btex = new THREE.CanvasTexture(bc);
     btex.colorSpace = THREE.SRGBColorSpace;
     this.bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: btex, transparent: true, depthTest: false }));
