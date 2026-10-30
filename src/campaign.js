@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { Shelf, QUEUE_COLS, QUEUE_ROWS, QUEUE_DX, QUEUE_DZ } from './stations.js';
 import { Customer, workerBadge } from './actors.js';
 import { Character } from './character.js';
@@ -65,8 +66,8 @@ export class Campaign {
     this.game.spend(total);
     this.scheduled.push({ product, qty, paid: total, by, extra: extra ?? this.rollExtra(), staff });
     if (by === 'player') this.game.goals?.event('campaign');
-    const who = by === 'accountant' ? '🧾 Muhasebeci: ' : '';
-    this.game.hud.toast(`${who}📢 Yarın ${PRODUCTS[product].emoji} ${PRODUCTS[product].name} kampanyası!`);
+    const who = by === 'accountant' ? `🧾 ${t('Muhasebeci')}: ` : '';
+    this.game.hud.toast(`${who}📢 ${t('Yarın {product} kampanyası!', { product: `${PRODUCTS[product].emoji} ${PRODUCTS[product].name}` })}`);
     this.game.audio.play('unlock');
     this.game.save();
     return true;
@@ -79,7 +80,7 @@ export class Campaign {
     const [s] = this.scheduled.splice(i, 1);
     this.game.money += s.paid ?? 0;
     this.game.hud.setMoney(this.game.money);
-    this.game.hud.toast(`❌ ${PRODUCTS[product].name} kampanyası iptal (+$${s.paid ?? 0} iade)`);
+    this.game.hud.toast(`❌ ${t('{product} kampanyası iptal (+${n} iade)', { product: PRODUCTS[product].name, n: s.paid ?? 0 })}`);
     for (const c of this.doorQueue.filter((c) => c.shelf.product === product)) c.leaveQuietly();
     this.doorQueue = this.doorQueue.filter((c) => c.shelf.product !== product);
     this.game.save();
@@ -139,7 +140,7 @@ export class Campaign {
     });
     this.scheduled = [];
     const names = this.active.map((a) => PRODUCTS[a.product].emoji).join(' ');
-    this.game.hud.toast(`📢 Kampanya günü ${names} — kapıda kuyruk var!`);
+    this.game.hud.toast(`📢 ${t('Kampanya günü {names} — kapıda kuyruk var!', { names })}`);
     this.doorQueue.forEach((c, i) => this.game.later.push({ t: i * 0.3, fn: () => c.release() }));
     this.doorQueue = [];
   }
@@ -218,7 +219,7 @@ export class Campaign {
           if (c.carrying > 0) c.leaveShelf();
           else c.leaveSoldOut(a.staff);
         }
-        this.game.hud.toast(`📢 ${PRODUCTS[a.product].emoji} kampanya ürünü bitti${a.staff ? ' — personel sıradakilerden özür diledi' : ''}`);
+        this.game.hud.toast(`📢 ${PRODUCTS[a.product].emoji} ${a.staff ? t('kampanya ürünü bitti — personel sıradakilerden özür diledi') : t('kampanya ürünü bitti')}`);
       }
     }
     const remaining = Math.max(5, this.game.day.remaining);
@@ -314,7 +315,7 @@ export class Campaign {
     a.timer = 0;
     a.stand.setPromo?.(true);
     const p = PRODUCTS[product];
-    this.game.hud.toast(`🏷️ ${by === 'accountant' ? 'Muhasebeci: ' : ''}${p.emoji} ${p.name} %${Math.round((1 - CAMPAIGN_PROMO.price) * 100)} ek indirimde — ${left} kasa kaldı`);
+    this.game.hud.toast(`🏷️ ${by === 'accountant' ? `${t('Muhasebeci')}: ` : ''}${t('{product} %{pct} ek indirimde — {left} kasa kaldı', { product: `${p.emoji} ${p.name}`, pct: Math.round((1 - CAMPAIGN_PROMO.price) * 100), left })}`);
     return true;
   }
 

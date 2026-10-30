@@ -1,4 +1,5 @@
 import { BANK, START_LOAN, PREMIUM } from './config.js';
+import { t } from './i18n.js';
 import { formatMoney } from './hud.js';
 
 // Banka: kredi (günlük faizli borç) ve mevduat (günlük faiz getiren birikim).
@@ -47,7 +48,7 @@ export class Bank {
     if (n <= 0) return 0;
     this.debt += n;
     this.game.money += n;
-    this.changed(`🏦 $${n} kredi çekildi · toplam borç $${this.debt}`);
+    this.changed(`🏦 ${t('${n} kredi çekildi · toplam borç ${debt}', { n, debt: this.debt })}`);
     return n;
   }
 
@@ -60,7 +61,7 @@ export class Bank {
     this.startDebt -= n - a;
     this.game.money -= n;
     const left = this.totalDebt;
-    this.changed(left === 0 ? `✅ $${n} ödendi · borç kapandı` : `🏦 $${n} ödendi · kalan borç $${left}`);
+    this.changed(left === 0 ? `✅ ${t('${n} ödendi · borç kapandı', { n })}` : `🏦 ${t('${n} ödendi · kalan borç ${left}', { n, left })}`);
     return n;
   }
 
@@ -69,7 +70,7 @@ export class Bank {
     if (n <= 0) return 0;
     this.deposit += n;
     this.game.money -= n;
-    this.changed(`🏦 $${n} yatırıldı · mevduat $${this.deposit}`);
+    this.changed(`🏦 ${t('${n} yatırıldı · mevduat ${deposit}', { n, deposit: this.deposit })}`);
     return n;
   }
 
@@ -78,7 +79,7 @@ export class Bank {
     if (n <= 0) return 0;
     this.deposit -= n;
     this.game.money += n;
-    this.changed(`🏦 $${n} çekildi · mevduat $${this.deposit}`);
+    this.changed(`🏦 ${t('${n} çekildi · mevduat ${deposit}', { n, deposit: this.deposit })}`);
     return n;
   }
 
@@ -128,7 +129,7 @@ export class Bank {
         this.missed = 0;
       } else today.seizeNone = true;
     } else if (unpaid > 0) {
-      g.hud.toast(`⚠️ Kredi faizi ödenemedi (${this.missed}/${BANK.missLimit}) — ${BANK.missLimit}. günde banka bir işletmene el koyar`);
+      g.hud.toast(`⚠️ ${t('Kredi faizi ödenemedi ({n}/{max}) — {max}. günde banka bir işletmene el koyar', { n: this.missed, max: BANK.missLimit })}`);
     }
   }
 
@@ -148,7 +149,7 @@ export class Bank {
     this.startDebt -= d2;
     left -= d2;
     if (left > 0) g.money += left; // borçtan artan para sana kalır
-    g.hud.toast(`🏦 Banka ${biz.def.emoji} ${biz.name} işletmesine el koydu (−$${formatMoney(price)} borç)`);
+    g.hud.toast(`🏦 ${t('Banka {name} işletmesine el koydu (−${n} borç)', { name: `${biz.def.emoji} ${biz.name}`, n: formatMoney(price) })}`);
     return { name: biz.name, emoji: biz.def.emoji, price, change: left };
   }
 

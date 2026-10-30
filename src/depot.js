@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { Pallet } from './stations.js';
 import { PRODUCTS, PALLETS, SPECIAL_PALLET, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z, LOGISTICS } from './config.js';
 
@@ -62,7 +63,7 @@ export class Depot {
   /** Yolda olan (henüz indirilmemiş) kasa sayısı. */
   incoming(product) {
     let n = 0;
-    for (const t of this.trucks) for (const c of t.cargo) if (c === product) n++;
+    for (const tr of this.trucks) for (const c of tr.cargo) if (c === product) n++;
     return n;
   }
 
@@ -98,7 +99,7 @@ export class Depot {
       for (const p of new Set(cargo)) this.game.supply.ordered(p, cargo.filter((c) => c === p).length);
     }
     // Yolda gelen kamyon varsa ona yükle, yoksa yeni kamyon
-    let truck = this.trucks.find((t) => t.state === 'arriving' && t.cargo.length < TRUCK_CAPACITY);
+    let truck = this.trucks.find((tr) => tr.state === 'arriving' && tr.cargo.length < TRUCK_CAPACITY);
     while (cargo.length) {
       if (!truck || truck.cargo.length >= TRUCK_CAPACITY) {
         truck = new Truck(this.game, this, this.trucks.length * -14);
@@ -111,7 +112,7 @@ export class Depot {
   }
 
   update(dt) {
-    for (const t of [...this.trucks]) t.update(dt);
+    for (const tr of [...this.trucks]) tr.update(dt);
 
     // Otomatik sipariş (depo yükseltmesi): stoğu %30'un altına düşen paletleri doldur
     if (this.autoOrder && this.level > 0 && !this.game.accountant?.settings.order) {
@@ -137,8 +138,8 @@ export class Depot {
     }
   }
 
-  removeTruck(t) {
-    this.trucks.splice(this.trucks.indexOf(t), 1);
+  removeTruck(truck) {
+    this.trucks.splice(this.trucks.indexOf(truck), 1);
   }
 
   totalStock() {
@@ -305,9 +306,9 @@ class OrderPanel {
   }
 
   total() {
-    let t = 0;
-    for (const [p, n] of Object.entries(this.qty)) t += n * this.game.supply.costOf(p);
-    return t;
+    let sum = 0;
+    for (const [p, n] of Object.entries(this.qty)) sum += n * this.game.supply.costOf(p);
+    return sum;
   }
 
   render() {
@@ -321,9 +322,9 @@ class OrderPanel {
         <div class="order-row">
           <span class="o-emoji">${info.emoji}</span>
           <span class="o-name">${info.name}<small>${pallet.stock}${inc ? ` +${inc}` : ''} / ${pallet.capacity} · <span class="${crisis === product ? 'o-crisis' : ''}">$${this.game.supply.costOf(product)}${crisis === product ? ' ⚠️' : ''}</span></small></span>
-          <button data-p="${product}" data-d="-5" aria-label="${info.name} azalt">−</button>
+          <button data-p="${product}" data-d="-5" aria-label="${t('{product} azalt', { product: info.name })}">−</button>
           <span class="o-qty">${q}</span>
-          <button data-p="${product}" data-d="5" aria-label="${info.name} artır">+</button>
+          <button data-p="${product}" data-d="5" aria-label="${t('{product} artır', { product: info.name })}">+</button>
         </div>`);
     }
     this.list.innerHTML = rows.join('');
@@ -337,7 +338,7 @@ class OrderPanel {
   buy() {
     const spent = this.depot.order(this.qty);
     if (spent) {
-      this.game.hud.toast('🚚 Sipariş verildi');
+      this.game.hud.toast(t('🚚 Sipariş verildi'));
       this.qty = {};
       this.render();
     }

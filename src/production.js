@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { PRODUCTS, PRODUCERS, CRISIS, WHOLESALER_DISCOUNT } from './config.js';
 
 // İleri seviye ekonomi: üretimhaneler, toptancı indirimi ve tedarik krizleri.
@@ -48,10 +49,10 @@ export class Supply {
     this.crisis = { product, type, left: CRISIS.shortageLimit };
     const info = PRODUCTS[product];
     const text = type === 'price'
-      ? `${info.emoji} ${info.name} zamlandı (+%${Math.round((CRISIS.priceMult - 1) * 100)})`
-      : `${info.emoji} ${info.name} kıtlığı: bugün en fazla ${CRISIS.shortageLimit} kasa`;
+      ? `${info.emoji} ${t('{product} zamlandı (+%{n})', { product: info.name, n: Math.round((CRISIS.priceMult - 1) * 100) })}`
+      : `${info.emoji} ${t('{product} kıtlığı: bugün en fazla {n} kasa', { product: info.name, n: CRISIS.shortageLimit })}`;
     g.hud.setCrisis(`⚠️ ${text}`);
-    g.later.push({ t: 1.9, fn: () => g.hud.toast(`⚠️ Tedarik sorunu: ${info.name}`) });
+    g.later.push({ t: 1.9, fn: () => g.hud.toast(`⚠️ ${t('Tedarik sorunu: {product}', { product: info.name })}`) });
   }
 
   serialize() {
@@ -64,8 +65,8 @@ export class Supply {
     if (this.crisis) {
       const info = PRODUCTS[this.crisis.product];
       this.game.hud.setCrisis(this.crisis.type === 'price'
-        ? `⚠️ ${info.emoji} ${info.name} zamlandı (+%${Math.round((CRISIS.priceMult - 1) * 100)})`
-        : `⚠️ ${info.emoji} ${info.name} kıtlığı: kalan ${this.crisis.left} kasa`);
+        ? `⚠️ ${info.emoji} ${t('{product} zamlandı (+%{n})', { product: info.name, n: Math.round((CRISIS.priceMult - 1) * 100) })}`
+        : `⚠️ ${info.emoji} ${t('{product} kıtlığı: kalan {n} kasa', { product: info.name, n: this.crisis.left })}`);
     }
   }
 }

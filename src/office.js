@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { prop } from './assets.js';
 import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
 import { formatMoney } from './hud.js';
@@ -182,24 +183,24 @@ class OfficePanel {
     const other = a.expert ? 'junior' : 'expert';
     sec.innerHTML = `
       <div class="acc-tier">
-        <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · günlük $${a.wage}
-        <small>${a.expert ? 'Pazar araştırması yapar: kampanya talebini doğru bilir (az mağdur müşteri, az kalan stok), maaşı karşılanmayacak personeli almaz, akşam ödemelerine göre yedek tutar, tam ihtiyaç kadar kredi çeker.' : 'Ucuz ama tecrübesiz: kampanya stoğunu son kampanyaya bakarak tahmin eder (talep her gün değişir, sık yanılır), personeli parası yettikçe alır, kredi çekerken fazla çeker.'}</small>
-        <button data-tier="${other}" ${other === 'expert' && (this.game.money < T.expert.hire || !this.game.premium) ? 'disabled' : ''}>${other === 'expert' ? `${this.game.premium ? '' : '👑 '}🎓 Tecrübeli muhasebeciyle değiştir ($${T.expert.hire} · $${T.expert.wage}/gün)` : `🧑‍💼 Stajyere dön ($${T.junior.wage}/gün)`}</button>
+        <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · ${t('günlük ${n}', { n: a.wage })}
+        <small>${a.expert ? t('Pazar araştırması yapar: kampanya talebini doğru bilir (az mağdur müşteri, az kalan stok), maaşı karşılanmayacak personeli almaz, akşam ödemelerine göre yedek tutar, tam ihtiyaç kadar kredi çeker.') : t('Ucuz ama tecrübesiz: kampanya stoğunu son kampanyaya bakarak tahmin eder (talep her gün değişir, sık yanılır), personeli parası yettikçe alır, kredi çekerken fazla çeker.')}</small>
+        <button data-tier="${other}" ${other === 'expert' && (this.game.money < T.expert.hire || !this.game.premium) ? 'disabled' : ''}>${other === 'expert' ? `${this.game.premium ? '' : '👑 '}🎓 ${t('Tecrübeli muhasebeciyle değiştir (${hire} · ${wage}/gün)', { hire: T.expert.hire, wage: T.expert.wage })}` : `🧑‍💼 ${t('Stajyere dön (${wage}/gün)', { wage: T.junior.wage })}`}</button>
       </div>
-      <p class="note"><b>Yetkiler</b> — kapattığın işi sen yaparsın.</p>
-      ${opt('order', '🚚 Siparişler', 'Paletler %45 altına inince %85\'e tamamlar')}
-      ${opt('campaign', '📢 Kampanya seçimi', 'Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar')}
-      ${opt('online', '🌐 Online sipariş', `Sv.${25}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır`)}
-      ${opt('ads', '📣 Reklam', 'Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)')}
-      <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>Reklam kanalı</span><select data-set="adChannel">
-        <option value="auto" ${a.settings.adChannel === 'auto' ? 'selected' : ''}>Otomatik (bütçeye göre)</option>
-        ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (Sv.${ad.level})` : ` · $${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
+      <p class="note">${t('<b>Yetkiler</b> — kapattığın işi sen yaparsın.')}</p>
+      ${opt('order', t('🚚 Siparişler'), t('Paletler %45 altına inince %85\'e tamamlar'))}
+      ${opt('campaign', t('📢 Kampanya seçimi'), t('Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar'))}
+      ${opt('online', t('🌐 Online sipariş'), t('Sv.{n}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır', { n: 25 }))}
+      ${opt('ads', t('📣 Reklam'), t('Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)'))}
+      <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>${t('Reklam kanalı')}</span><select data-set="adChannel">
+        <option value="auto" ${a.settings.adChannel === 'auto' ? 'selected' : ''}>${t('Otomatik (bütçeye göre)')}</option>
+        ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (${t('Sv.{n}', { n: ad.level })})` : ` · $${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
       </select></label>
-      ${opt('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
-      ${opt('hire', '👥 Personel alımı', 'Kasiyer, reyon görevlisi, temizlik görevlisi, güvenlik… işe alır')}
-      ${opt('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
-      <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)} · bu akşamki ödemeler $${formatMoney(this.game.dueTonight)}</p>
-      <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : '<div>Henüz karar yok.</div>'}</div>`;
+      ${opt('invest', t('🏗️ Alan yatırımları'), t('Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır'))}
+      ${opt('hire', t('👥 Personel alımı'), t('Kasiyer, reyon görevlisi, temizlik görevlisi, güvenlik… işe alır'))}
+      ${opt('credit', t('🏦 Ödemeler için kredi'), t('Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin'))}
+      <p class="note">${t('<b>Kasada bırakılan en az para:</b> ${reserve} · bu akşamki ödemeler ${due}', { reserve: formatMoney(a.reserve), due: formatMoney(this.game.dueTonight) })}</p>
+      <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : `<div>${t('Henüz karar yok.')}</div>`}</div>`;
   }
 
   // ---- Banka ----
@@ -210,32 +211,32 @@ class OfficePanel {
     const row = (label, value, cls = '') => `<div class="${cls}"><span>${label}</span><b>$${formatMoney(Math.round(value))}</b></div>`;
     document.getElementById('bank-sec').innerHTML = `
       <div class="stats">
-        ${row('Nakit', m)}
-        ${row('Mevduat (+%2/gün)', b.deposit)}
-        ${row('Kredi borcu (%4/gün)', b.debt, b.debt ? 'warn' : '')}
-        ${b.startDebt ? row('Kuruluş kredisi (%1/gün)', b.startDebt, 'warn') : ''}
-        ${row('Kullanılabilir kredi', b.available)}
+        ${row(t('Nakit'), m)}
+        ${row(t('Mevduat (+%2/gün)'), b.deposit)}
+        ${row(t('Kredi borcu (%4/gün)'), b.debt, b.debt ? 'warn' : '')}
+        ${b.startDebt ? row(t('Kuruluş kredisi (%1/gün)'), b.startDebt, 'warn') : ''}
+        ${row(t('Kullanılabilir kredi'), b.available)}
       </div>
-      ${row('Günlük faiz (gün sonu nakitten)', b.debt * 0.04 + b.startDebt * 0.01, b.missed ? 'warn' : '')}
-      ${row('Günlük maaşlar (gün sonu)', this.game.dailyPayroll)}
-      ${b.missed ? `<p class="note warn">⚠️ Faiz ${b.missed} gündür ödenemedi. ${3 - b.missed} gün daha ödenmezse banka en değersiz işletmene el koyar.</p>` : ''}
-      ${this.game.holding.businesses.some((x) => x.seized) ? `<p class="note">🏦 Bankaya geçen işletmeler borcun tamamen kapanınca 💼 tabletten geri alınabilir.</p>` : ''}
+      ${row(t('Günlük faiz (gün sonu nakitten)'), b.debt * 0.04 + b.startDebt * 0.01, b.missed ? 'warn' : '')}
+      ${row(t('Günlük maaşlar (gün sonu)'), this.game.dailyPayroll)}
+      ${b.missed ? `<p class="note warn">⚠️ ${t('Faiz {n} gündür ödenemedi. {left} gün daha ödenmezse banka en değersiz işletmene el koyar.', { n: b.missed, left: 3 - b.missed })}</p>` : ''}
+      ${this.game.holding.businesses.some((x) => x.seized) ? `<p class="note">🏦 ${t('Bankaya geçen işletmeler borcun tamamen kapanınca 💼 tabletten geri alınabilir.')}</p>` : ''}
       ${this.renderRent()}
-      <p class="note">Kredi limiti $${formatMoney(b.limit)} = seviye $${formatMoney(b.limitParts.base)} + işletmeler $${formatMoney(b.limitParts.assets)} + kazanç $${formatMoney(b.limitParts.income)}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.</p>
-      <div class="bank-group"><span>Kredi çek</span>
+      <p class="note">${t('Kredi limiti ${limit} = seviye ${base} + işletmeler ${assets} + kazanç ${income}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.', { limit: formatMoney(b.limit), base: formatMoney(b.limitParts.base), assets: formatMoney(b.limitParts.assets), income: formatMoney(b.limitParts.income) })}</p>
+      <div class="bank-group"><span>${t('Kredi çek')}</span>
         ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
       </div>
-      <div class="bank-group"><span>Borç öde</span>
+      <div class="bank-group"><span>${t('Borç öde')}</span>
         <button data-act="repay" data-n="500" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(500, b.totalDebt, Math.max(0, Math.floor(m))))}</button>
-        <button data-act="repay" data-n="all" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>${m >= b.totalDebt ? 'Borcun tamamı' : 'Elimdekini öde'} ($${formatMoney(Math.min(b.totalDebt, Math.max(0, Math.floor(m))))})</button>
+        <button data-act="repay" data-n="all" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>${m >= b.totalDebt ? t('Borcun tamamı') : t('Elimdekini öde')} ($${formatMoney(Math.min(b.totalDebt, Math.max(0, Math.floor(m))))})</button>
       </div>
-      <div class="bank-group"><span>Para yatır</span>
+      <div class="bank-group"><span>${t('Para yatır')}</span>
         <button data-act="put" data-n="500" ${m < 1 ? 'disabled' : ''}>$500</button>
-        <button data-act="put" data-n="half" ${m < 2 ? 'disabled' : ''}>Yarısı</button>
+        <button data-act="put" data-n="half" ${m < 2 ? 'disabled' : ''}>${t('Yarısı')}</button>
       </div>
-      <div class="bank-group"><span>Para çek</span>
+      <div class="bank-group"><span>${t('Para çek')}</span>
         <button data-act="withdraw" data-n="500" ${!b.deposit ? 'disabled' : ''}>$500</button>
-        <button data-act="withdraw" data-n="all" ${!b.deposit ? 'disabled' : ''}>Tümünü çek</button>
+        <button data-act="withdraw" data-n="all" ${!b.deposit ? 'disabled' : ''}>${t('Tümünü çek')}</button>
       </div>
       ${b.lastLog ? `<p class="note bank-log">${b.lastLog}</p>` : ''}`;
   }
@@ -245,16 +246,16 @@ class OfficePanel {
     const g = this.game;
     const r = g.rent;
     const left = r.daysLeft;
-    const when = left === 0 ? 'bu akşam' : `${left} gün sonra`;
+    const when = left === 0 ? t('bu akşam') : t('{n} gün sonra', { n: left });
     const lines = [];
-    if (r.marketOwned) lines.push(`<p class="note">🏪 <b>${g.marketTitle}</b> binası senin.</p>`);
+    if (r.marketOwned) lines.push(`<p class="note">🏪 ${t('<b>{name}</b> binası senin.', { name: g.marketTitle })}</p>`);
     else {
-      lines.push(`<p class="note">🔑 <b>${g.marketTitle}</b> kiralık: haftalık <b>$${formatMoney(r.marketRent)}</b> (dükkân büyüdükçe artar).</p>`);
+      lines.push(`<p class="note">🔑 ${t('<b>{name}</b> kiralık: haftalık <b>${rent}</b> (dükkân büyüdükçe artar).', { name: g.marketTitle, rent: formatMoney(r.marketRent) })}</p>`);
       lines.push(r.canBuyMarket
-        ? `<div class="bank-group"><span>Binayı satın al</span><button class="primary" data-act="buymarket" ${g.money < r.marketPrice ? 'disabled' : ''}>$${formatMoney(r.marketPrice)}</button></div>`
-        : `<p class="note">Binayı satın alma seçeneği Seviye ${RENT.market.buyLevel}'de açılır.</p>`);
+        ? `<div class="bank-group"><span>${t('Binayı satın al')}</span><button class="primary" data-act="buymarket" ${g.money < r.marketPrice ? 'disabled' : ''}>$${formatMoney(r.marketPrice)}</button></div>`
+        : `<p class="note">${t('Binayı satın alma seçeneği Seviye {n}\'de açılır.', { n: RENT.market.buyLevel })}</p>`);
     }
-    if (r.weeklyTotal) lines.push(`<p class="note">Haftalık kira toplamı $${formatMoney(r.weeklyTotal)} · ödeme ${when}.</p>`);
+    if (r.weeklyTotal) lines.push(`<p class="note">${t('Haftalık kira toplamı ${n} · ödeme {when}.', { n: formatMoney(r.weeklyTotal), when })}</p>`);
     return lines.join('');
   }
 
@@ -280,7 +281,7 @@ class OfficePanel {
     const sec = document.getElementById('campaign-sec');
     const parts = [this.renderAds()];
     if (!c.unlocked) {
-      sec.innerHTML = parts.join('') + `<p class="note">Kampanyalar Seviye ${CAMPAIGN.fromLevel}'te açılır.</p>`;
+      sec.innerHTML = parts.join('') + `<p class="note">${t('Kampanyalar Seviye {n}\'te açılır.', { n: CAMPAIGN.fromLevel })}</p>`;
       return;
     }
     if (c.active.length) {
@@ -291,23 +292,23 @@ class OfficePanel {
         const left = c.leftOf(a);
         const slow = c.projectedLeft(a) > a.qty * 0.2;
         let action;
-        if (a.promo) action = `<span class="promo-on">🏷️ −%${pct} indirimde</span>`;
-        else if (a.ended || left <= 0) action = '<span>bitti ✅</span>';
-        else if (this.game.day.hour < CAMPAIGN_PROMO.fromHour) action = `<span class="muted">🏷️ ek promosyon 12:00'de</span>`;
-        else action = `<button data-promo="${a.product}" class="${slow ? 'warn' : ''}">🏷️ −%${pct} ek indirim</button>`;
-        return `<div class="camp-plan"><span>${p.emoji} <b>${a.sold}/${a.qty}</b> satıldı · ${left} kaldı${slow && !a.promo ? ' · <b class="neg">yavaş</b>' : ''}</span>${action}</div>`;
+        if (a.promo) action = `<span class="promo-on">🏷️ ${t('−%{n} indirimde', { n: pct })}</span>`;
+        else if (a.ended || left <= 0) action = `<span>${t('bitti ✅')}</span>`;
+        else if (this.game.day.hour < CAMPAIGN_PROMO.fromHour) action = `<span class="muted">🏷️ ${t('ek promosyon 12:00\'de')}</span>`;
+        else action = `<button data-promo="${a.product}" class="${slow ? 'warn' : ''}">🏷️ ${t('−%{n} ek indirim', { n: pct })}</button>`;
+        return `<div class="camp-plan"><span>${p.emoji} ${t('<b>{sold}/{qty}</b> satıldı · {left} kaldı', { sold: a.sold, qty: a.qty, left })}${slow && !a.promo ? ` · <b class="neg">${t('yavaş')}</b>` : ''}</span>${action}</div>`;
       }).join('');
-      parts.push(`<p class="note"><b>Bugünkü kampanyalar</b> — satılmayan ürüne 12:00'den sonra %${pct} ek indirim yapılabilir; kalan stok kadar ek müşteri gelir.</p>${rows}`);
+      parts.push(`<p class="note">${t('<b>Bugünkü kampanyalar</b> — satılmayan ürüne 12:00\'den sonra %{n} ek indirim yapılabilir; kalan stok kadar ek müşteri gelir.', { n: pct })}</p>${rows}`);
     }
     // Yarın için planlananlar
     for (const sch of c.scheduled) {
       const info = PRODUCTS[sch.product];
-      const who = sch.by === 'accountant' ? ' (muhasebeci)' : '';
-      parts.push(`<div class="camp-plan"><span>${info.emoji} <b>${info.name}</b> · ${sch.qty} kasa${sch.staff ? ' · 👥' : ''}${who}</span>
-        <button data-cancel="${sch.product}">İptal ($${formatMoney(sch.paid ?? 0)} iade)</button></div>`);
+      const who = sch.by === 'accountant' ? ` (${t('muhasebeci')})` : '';
+      parts.push(`<div class="camp-plan"><span>${info.emoji} <b>${info.name}</b> · ${t('{n} kasa', { n: sch.qty })}${sch.staff ? ' · 👥' : ''}${who}</span>
+        <button data-cancel="${sch.product}">${t('İptal (${n} iade)', { n: formatMoney(sch.paid ?? 0) })}</button></div>`);
     }
     if (c.slotsFree <= 0) {
-      parts.push(`<p class="note">Yarın için en fazla ${c.maxCampaigns} kampanya yapılabilir.${this.game.premium ? '' : ' 👑 Premium ile 3 kampanya.'}</p>`);
+      parts.push(`<p class="note">${t('Yarın için en fazla {n} kampanya yapılabilir.', { n: c.maxCampaigns })}${this.game.premium ? '' : ` 👑 ${t('Premium ile 3 kampanya.')}`}</p>`);
       sec.innerHTML = parts.join('');
       return;
     }
@@ -317,20 +318,20 @@ class OfficePanel {
       const p = PRODUCTS[k];
       const last = c.lastResults[k];
       return `<button class="camp-card ${k === this.campaignPick ? 'active' : ''}" data-pick="${k}">
-        <span class="e">${p.emoji}</span><span>${p.name}</span><small>$${p.cost} → $${p.price}${last ? ` · son: ${last.sold}/${last.qty}` : ''}</small></button>`;
+        <span class="e">${p.emoji}</span><span>${p.name}</span><small>$${p.cost} → $${p.price}${last ? ` · ${t('son: {sold}/{qty}', { sold: last.sold, qty: last.qty })}` : ''}</small></button>`;
     }).join('');
     this.campaignStaff ??= false;
     const total = c.costFor(this.campaignPick, this.campaignQty, this.campaignStaff);
     parts.push(`
-      <p class="note">Yarın için özel ürün ve stok seç (${c.scheduled.length}/${c.maxCampaigns}${this.game.premium ? '' : ' · 👑 Premium: 3'}). Her kampanyada <b>${CAMPAIGN.extraMin}–${CAMPAIGN.extraMax}</b> ek müşteri gelir, %${Math.round(CAMPAIGN.extraShopping * 100)}'si başka ürün de alır. Kalan stok gün sonunda zarar yazılır.</p>
+      <p class="note">${t('Yarın için özel ürün ve stok seç ({used}/{max}{prem}). Her kampanyada <b>{min}–{maxExtra}</b> ek müşteri gelir, %{pct}\'si başka ürün de alır. Kalan stok gün sonunda zarar yazılır.', { used: c.scheduled.length, max: c.maxCampaigns, prem: this.game.premium ? '' : ' · 👑 Premium: 3', min: CAMPAIGN.extraMin, maxExtra: CAMPAIGN.extraMax, pct: Math.round(CAMPAIGN.extraShopping * 100) })}</p>
       <div class="camp-cards">${cards}</div>
-      <div class="bank-group"><span>Stok</span>
+      <div class="bank-group"><span>${t('Stok')}</span>
         <button data-q="-100">−100</button><button data-q="-20">−20</button><b class="o-qty">${this.campaignQty}</b><button data-q="20">+20</button><button data-q="100">+100</button>
       </div>
-      <label class="row toggle"><span>👥 Kampanya personeli ($${CAMPAIGN.staffCost}/gün)<small>Standda satış ve ödeme alır, paletten hızlı doldurur: günde ~250 kişiye kadar. Ürün erken biterse sıradakilerden özür diler (memnuniyet az düşer).</small></span><input type="checkbox" id="camp-staff" ${this.campaignStaff ? 'checked' : ''} /></label>
+      <label class="row toggle"><span>👥 ${t('Kampanya personeli (${n}/gün)', { n: CAMPAIGN.staffCost })}<small>${t('Standda satış ve ödeme alır, paletten hızlı doldurur: günde ~250 kişiye kadar. Ürün erken biterse sıradakilerden özür diler (memnuniyet az düşer).')}</small></span><input type="checkbox" id="camp-staff" ${this.campaignStaff ? 'checked' : ''} /></label>
       <div class="sheet-foot">
-        <span class="o-total">Hazırlık $${c.fee()} + stok $${formatMoney(this.campaignQty * PRODUCTS[this.campaignPick].cost)}${this.campaignStaff ? ` + personel $${CAMPAIGN.staffCost}` : ''}</span>
-        <button id="camp-go" class="primary" ${this.game.money < total ? 'disabled' : ''}>Hazırla $${formatMoney(total)}</button>
+        <span class="o-total">${t('Hazırlık ${fee} + stok ${stock}', { fee: c.fee(), stock: formatMoney(this.campaignQty * PRODUCTS[this.campaignPick].cost) })}${this.campaignStaff ? ` + ${t('personel ${n}', { n: CAMPAIGN.staffCost })}` : ''}</span>
+        <button id="camp-go" class="primary" ${this.game.money < total ? 'disabled' : ''}>${t('Hazırla ${n}', { n: formatMoney(total) })}</button>
       </div>`);
     sec.innerHTML = parts.join('');
   }
@@ -340,17 +341,17 @@ class OfficePanel {
     const g = this.game;
     const a = g.ads;
     const tomorrow = a.targetDay !== g.day.day;
-    const btns = Object.entries(AD_TYPES).map(([k, t]) => {
-      if (g.level < t.level) return `<button disabled>${t.emoji} 🔒 Sv.${t.level}</button>`;
+    const btns = Object.entries(AD_TYPES).map(([k, ad]) => {
+      if (g.level < ad.level) return `<button disabled>${ad.emoji} 🔒 ${t('Sv.{n}', { n: ad.level })}</button>`;
       const done = a.has(k);
-      return `<button data-ad="${k}" ${done || g.money < a.cost(k) ? 'disabled' : ''}>${t.emoji} ${t.name}<br><small>${done ? 'verildi' : `$${formatMoney(a.cost(k))} · +%${Math.round(t.boost * 100)}`}</small></button>`;
+      return `<button data-ad="${k}" ${done || g.money < a.cost(k) ? 'disabled' : ''}>${ad.emoji} ${ad.name}<br><small>${done ? t('verildi') : `$${formatMoney(a.cost(k))} · +%${Math.round(ad.boost * 100)}`}</small></button>`;
     }).join('');
     const today = a.todayList;
     const S = SALE_DAY;
     const sale = g.level < S.level ? ''
-      : `<div class="camp-plan sale-row"><span>🏷️ <b>İndirim günü</b><small>Yarın tüm fiyatlar −%${Math.round((1 - S.price) * 100)}, müşteri +%${Math.round(S.boost * 100)}${a.saleToday ? ' · <b>bugün indirim günü</b>' : ''}</small></span>
-        ${a.saleAnnounced ? '<span class="promo-on">yarın ✅</span>' : '<button data-sale>İlan et</button>'}</div>`;
-    return `<p class="note">📣 <b>Reklam ver</b> (${tomorrow ? 'yarın için' : 'bugün için'})${a.mediaOwned ? ' · 📰 medya senin: reklamlar %60 ucuz, müşteri +%15' : ''}${today.length ? ` · bugün yayında: ${today.map((t) => t.emoji).join(' ')}` : ''}</p>
+      : `<div class="camp-plan sale-row"><span>🏷️ <b>${t('İndirim günü')}</b><small>${t('Yarın tüm fiyatlar −%{price}, müşteri +%{boost}', { price: Math.round((1 - S.price) * 100), boost: Math.round(S.boost * 100) })}${a.saleToday ? ` · <b>${t('bugün indirim günü')}</b>` : ''}</small></span>
+        ${a.saleAnnounced ? `<span class="promo-on">${t('yarın ✅')}</span>` : `<button data-sale>${t('İlan et')}</button>`}</div>`;
+    return `<p class="note">📣 <b>${t('Reklam ver')}</b> (${tomorrow ? t('yarın için') : t('bugün için')})${a.mediaOwned ? ` · 📰 ${t('medya senin: reklamlar %60 ucuz, müşteri +%15')}` : ''}${today.length ? ` · ${t('bugün yayında:')} ${today.map((x) => x.emoji).join(' ')}` : ''}</p>
       <div class="ad-btns">${btns}</div>${sale}`;
   }
 
