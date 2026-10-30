@@ -20,9 +20,12 @@ Genel kurallar ve sistemler için önce `CLAUDE.md`, App Store adımları için 
 1. ✅ İlk TestFlight yüklemesi (30 Ekim, derleme 1.0 (22)). Arşiv ad-hoc imzayla, dışa aktarma
    Xcode bulut yönetimli otomatik imzayla (sertifika/profil Apple'da; bkz. `apple/TESTFLIGHT.md` → İmza). Durum: Actions → "iOS TestFlight durumu".
    Sıradaki: App Store Connect → TestFlight → dahili test grubu, iPhone'da dene.
-2. App Store sayfası: ekran görüntüleri (iPhone 6,9" / 6,5", iPad 13"), TR + EN açıklama, anahtar kelimeler,
-   gizlilik bilgileri (veri toplanmıyor), yaş derecelendirmesi, kategori (Games → Simulation / Casual).
-   Kullanıcının daha önce Claude Code ile yazdığı App Store Connect yükleme aracı varsa onu kullan.
+2. App Store sayfası: metinler `fastlane/metadata` (EN + TR; ad, alt başlık, açıklama, anahtar kelimeler, tanıtım metni,
+   adresler, kategori Simulation/Casual) → Actions → "App Store metinleri". Gizlilik/destek sayfaları `site/*.html`,
+   GitHub Pages iş akışı `dist/`'e kopyalar (hiinanoz.github.io/MarketGame/privacy.html, support.html); WordPress
+   `hii.othinks.com/cornershopempire` (+ `/privacy`, `/support`) bunları `[app_doc]` kısayoluyla çeker. İletişim: mobile@othinks.com.
+   Eksik: ekran görüntüleri (iPhone 6,9" / 6,5", iPad 13"), App Privacy ("Data Not Collected") ve yaş derecelendirmesi
+   App Store Connect'te elle. Oyun içi metinler yalnızca Türkçe: EN mağaza sayfası için oyunun İngilizce çevirisi gerekir.
 3. Uygulama içi satın alma (StoreKit 2): Premium tek seferlik 9,99 $ (`PREMIUM`), "Geliştiriciye teşekkür et" 2,99 $
    (`PREMIUM.tips`), satın alımları geri yükle. Şu an `game.premium` localStorage test anahtarıyla açılıyor.
 4. Game Center: başarımlar + skor tablosu kimlikleri App Store Connect'te tanımlanacak (`achievements.js`).

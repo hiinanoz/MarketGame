@@ -1,0 +1,1 @@
+supermarket,store,tycoon,idle,manager,cashier,business,simulator,grocery,mayor,shopkeeper

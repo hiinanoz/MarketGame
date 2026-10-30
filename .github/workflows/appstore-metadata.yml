@@ -1,0 +1,37 @@
+# App Store metinlerini (fastlane/metadata) App Store Connect'e gönderir: ad, alt başlık, açıklama, anahtar kelimeler,
+# tanıtım metni, gizlilik/destek/pazarlama adresleri, kategori. İkili dosya ve ekran görüntüsü göndermez, incelemeye sunmaz.
+# Actions → "App Store metinleri" → Run workflow
+name: App Store metinleri
+
+on:
+  workflow_dispatch:
+
+jobs:
+  metadata:
+    name: Metinleri yükle
+    runs-on: ubuntu-latest
+    env:
+      BUNDLE_ID: ${{ vars.APP_BUNDLE_ID || 'com.othinks.cornershopempire' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: fastlane
+        run: gem install fastlane --no-document
+      - name: API anahtarı
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          test -n "$ASC_KEY_ID" -a -n "$ASC_ISSUER_ID" -a -n "$ASC_PRIVATE_KEY" || { echo "::error::ASC_KEY_ID / ASC_ISSUER_ID / ASC_PRIVATE_KEY gizli değişkenleri eksik"; exit 1; }
+          python3 -c 'import json,os; json.dump({"key_id":os.environ["ASC_KEY_ID"],"issuer_id":os.environ["ASC_ISSUER_ID"],"key":os.environ["ASC_PRIVATE_KEY"],"in_house":False}, open(os.environ["RUNNER_TEMP"]+"/asc_key.json","w"))'
+      - name: Metinleri gönder
+        run: |
+          fastlane deliver --api_key_path "$RUNNER_TEMP/asc_key.json" --app_identifier "$BUNDLE_ID" \
+            --metadata_path fastlane/metadata --skip_binary_upload true --skip_screenshots true \
+            --submit_for_review false --run_precheck_before_submit false --force true
+      - name: Anahtarı sil
+        if: always()
+        run: rm -f "$RUNNER_TEMP/asc_key.json"
