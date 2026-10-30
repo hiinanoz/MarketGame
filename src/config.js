@@ -1,27 +1,28 @@
+import { t } from './i18n.js';
 // Oyun dengesi ve yerleşim — oynanışı ayarlamak için çoğu zaman sadece bu dosyayı değiştirmek yeterli.
 
 // Ürünler: cost = toptancıdan alış fiyatı (kasa başına), price = müşteriye satış fiyatı.
 export const PRODUCTS = {
-  tomato:  { name: 'Domates', emoji: '🍅', crate: 'crate_tomatoes', cost: 2,  price: 6 },
-  carrot:  { name: 'Havuç',   emoji: '🥕', crate: 'crate_carrots',  cost: 3,  price: 9 },
-  cheese:  { name: 'Peynir',  emoji: '🧀', crate: 'crate_cheese',   cost: 5,  price: 14 },
-  lettuce: { name: 'Marul',   emoji: '🥬', crate: 'crate_lettuce',  cost: 7,  price: 18 },
-  onion:   { name: 'Soğan',   emoji: '🧅', crate: 'crate_onions',   cost: 9,  price: 23 },
-  potato:  { name: 'Patates', emoji: '🥔', crate: 'crate_potatoes', cost: 11, price: 28 },
-  bun:     { name: 'Ekmek',   emoji: '🍞', crate: 'crate_buns',     cost: 13, price: 33 },
-  ham:     { name: 'But',     emoji: '🍖', crate: 'crate_ham',      cost: 16, price: 40 },
-  steak:   { name: 'Biftek',  emoji: '🥩', crate: 'crate_steak',    cost: 20, price: 50 },
+  tomato:  { name: t('Domates'), emoji: '🍅', crate: 'crate_tomatoes', cost: 2,  price: 6 },
+  carrot:  { name: t('Havuç'),   emoji: '🥕', crate: 'crate_carrots',  cost: 3,  price: 9 },
+  cheese:  { name: t('Peynir'),  emoji: '🧀', crate: 'crate_cheese',   cost: 5,  price: 14 },
+  lettuce: { name: t('Marul'),   emoji: '🥬', crate: 'crate_lettuce',  cost: 7,  price: 18 },
+  onion:   { name: t('Soğan'),   emoji: '🧅', crate: 'crate_onions',   cost: 9,  price: 23 },
+  potato:  { name: t('Patates'), emoji: '🥔', crate: 'crate_potatoes', cost: 11, price: 28 },
+  bun:     { name: t('Ekmek'),   emoji: '🍞', crate: 'crate_buns',     cost: 13, price: 33 },
+  ham:     { name: t('But'),     emoji: '🍖', crate: 'crate_ham',      cost: 16, price: 40 },
+  steak:   { name: t('Biftek'),  emoji: '🥩', crate: 'crate_steak',    cost: 20, price: 50 },
   // Özel ürünler: yalnızca kampanya günlerinde, kampanya standında satılır
-  burger:  { name: 'Burger',      emoji: '🍔', crate: 'crate', item: 'food_burger', cost: 6, price: 18, special: true },
-  jam:     { name: 'Reçel',       emoji: '🍯', crate: 'crate', item: 'jar_A_large', cost: 4, price: 13, special: true },
-  sauce:   { name: 'Sos seti',    emoji: '🥫', crate: 'crate', item: 'ketchup',     cost: 3, price: 10, special: true },
-  soup:    { name: 'Hazır çorba', emoji: '🍲', crate: 'crate', item: 'stew_bowl',   cost: 5, price: 15, special: true },
-  vegburger: { name: 'Sebze burger', emoji: '🥗', crate: 'crate', item: 'food_vegetableburger', cost: 7, price: 20, special: true },
-  dinner:  { name: 'Akşam menüsü', emoji: '🍽️', crate: 'crate', item: 'food_dinner',  cost: 9, price: 26, special: true },
-  pickle:  { name: 'Turşu',       emoji: '🥒', crate: 'crate', item: 'jar_C_large', cost: 3, price: 11, special: true },
-  olive:   { name: 'Zeytin',      emoji: '🫒', crate: 'crate', item: 'jar_D_large', cost: 4, price: 14, special: true },
-  mustard: { name: 'Hardal',      emoji: '🌭', crate: 'crate', item: 'mustard',     cost: 2, price: 8,  special: true },
-  pan:     { name: 'Tava seti',   emoji: '🍳', crate: 'crate', item: 'pan_A',       cost: 12, price: 34, special: true },
+  burger:  { name: t('Burger'),      emoji: '🍔', crate: 'crate', item: 'food_burger', cost: 6, price: 18, special: true },
+  jam:     { name: t('Reçel'),       emoji: '🍯', crate: 'crate', item: 'jar_A_large', cost: 4, price: 13, special: true },
+  sauce:   { name: t('Sos seti'),    emoji: '🥫', crate: 'crate', item: 'ketchup',     cost: 3, price: 10, special: true },
+  soup:    { name: t('Hazır çorba'), emoji: '🍲', crate: 'crate', item: 'stew_bowl',   cost: 5, price: 15, special: true },
+  vegburger: { name: t('Sebze burger'), emoji: '🥗', crate: 'crate', item: 'food_vegetableburger', cost: 7, price: 20, special: true },
+  dinner:  { name: t('Akşam menüsü'), emoji: '🍽️', crate: 'crate', item: 'food_dinner',  cost: 9, price: 26, special: true },
+  pickle:  { name: t('Turşu'),       emoji: '🥒', crate: 'crate', item: 'jar_C_large', cost: 3, price: 11, special: true },
+  olive:   { name: t('Zeytin'),      emoji: '🫒', crate: 'crate', item: 'jar_D_large', cost: 4, price: 14, special: true },
+  mustard: { name: t('Hardal'),      emoji: '🌭', crate: 'crate', item: 'mustard',     cost: 2, price: 8,  special: true },
+  pan:     { name: t('Tava seti'),   emoji: '🍳', crate: 'crate', item: 'pan_A',       cost: 12, price: 34, special: true },
 };
 export const SPECIALS = Object.keys(PRODUCTS).filter((k) => PRODUCTS[k].special);
 
@@ -248,10 +249,10 @@ export const UNLOCKS = [
 
 // Üretimhaneler: ürettikleri ürünler ve bir kasa üretme süresi (sn). Üretilen mal bedavadır.
 export const PRODUCERS = {
-  greenhouse: { name: 'Sera',   emoji: '🌱', products: ['tomato', 'lettuce', 'carrot', 'potato', 'onion'], interval: 3.5 },
-  dairy:      { name: 'Mandıra', emoji: '🐄', products: ['cheese'], interval: 4 },
-  bakery:     { name: 'Fırın',  emoji: '🥖', products: ['bun'], interval: 4 },
-  butcher:    { name: 'Kasap',  emoji: '🔪', products: ['ham', 'steak'], interval: 5 },
+  greenhouse: { name: t('Sera'),   emoji: '🌱', products: ['tomato', 'lettuce', 'carrot', 'potato', 'onion'], interval: 3.5 },
+  dairy:      { name: t('Mandıra'), emoji: '🐄', products: ['cheese'], interval: 4 },
+  bakery:     { name: t('Fırın'),  emoji: '🥖', products: ['bun'], interval: 4 },
+  butcher:    { name: t('Kasap'),  emoji: '🔪', products: ['ham', 'steak'], interval: 5 },
 };
 
 // Toptancı satın alınınca alış fiyatları düşer. Tedarik krizleri Sv.16'dan itibaren.
@@ -271,7 +272,7 @@ export const PREMIUM = {
   gemFactor: 1.5,       // Premium: görev ve giriş ödülünde elmas 1.5 kat
   // Geliştiriciye teşekkür (App Store'da tekrar alınabilen bahşiş ürünleri)
   price: '9,99 $',       // Premium (tek seferlik)
-  tips: [{ id: 'tip_thanks', name: 'Geliştiriciye teşekkür et', emoji: '💚', price: '2,99 $' }],
+  tips: [{ id: 'tip_thanks', name: t('Geliştiriciye teşekkür et'), emoji: '💚', price: '2,99 $' }],
 };
 
 // ---- Hedefler, ödüller, dekorasyon -------------------------------------------------------------
@@ -299,34 +300,34 @@ export const GOALS = {
 };
 export const DECOR = {
   floors: [
-    { id: 'classic', name: 'Klasik', colors: ['#f4efe4', '#e9e2d3'], gems: 0 },
-    { id: 'mint', name: 'Nane', colors: ['#e3f4ea', '#cfe9da'], gems: 10 },
-    { id: 'sky', name: 'Gökyüzü', colors: ['#e6eefb', '#d2e0f5'], gems: 12 },
-    { id: 'peach', name: 'Şeftali', colors: ['#fbe7da', '#f3d3bf'], gems: 15 },
-    { id: 'checker', name: 'Dama', colors: ['#f5f5f5', '#4a4a4a'], gems: 25 },
-    { id: 'wood', name: 'Ahşap', colors: ['#d9b48a', '#c79c6c'], gems: 30 },
-    { id: 'royal', name: 'Saray', colors: ['#f6e7b0', '#b98c2e'], gems: 20, premium: true },
+    { id: 'classic', name: t('Klasik'), colors: ['#f4efe4', '#e9e2d3'], gems: 0 },
+    { id: 'mint', name: t('Nane'), colors: ['#e3f4ea', '#cfe9da'], gems: 10 },
+    { id: 'sky', name: t('Gökyüzü'), colors: ['#e6eefb', '#d2e0f5'], gems: 12 },
+    { id: 'peach', name: t('Şeftali'), colors: ['#fbe7da', '#f3d3bf'], gems: 15 },
+    { id: 'checker', name: t('Dama'), colors: ['#f5f5f5', '#4a4a4a'], gems: 25 },
+    { id: 'wood', name: t('Ahşap'), colors: ['#d9b48a', '#c79c6c'], gems: 30 },
+    { id: 'royal', name: t('Saray'), colors: ['#f6e7b0', '#b98c2e'], gems: 20, premium: true },
   ],
   signs: [
-    { id: 'green', name: 'Yeşil', color: '#2b8a35', gems: 0 },
-    { id: 'blue', name: 'Mavi', color: '#2a62c9', gems: 6 },
-    { id: 'red', name: 'Kırmızı', color: '#c9302a', gems: 6 },
-    { id: 'purple', name: 'Mor', color: '#7a3cc2', gems: 8 },
-    { id: 'gold', name: 'Altın', color: '#c99a12', gems: 15 },
-    { id: 'black', name: 'Gece', color: '#1e1e28', gems: 12 },
-    { id: 'royal', name: 'Kraliyet', color: '#6a1fa0', gems: 15, premium: true },
+    { id: 'green', name: t('Yeşil'), color: '#2b8a35', gems: 0 },
+    { id: 'blue', name: t('Mavi'), color: '#2a62c9', gems: 6 },
+    { id: 'red', name: t('Kırmızı'), color: '#c9302a', gems: 6 },
+    { id: 'purple', name: t('Mor'), color: '#7a3cc2', gems: 8 },
+    { id: 'gold', name: t('Altın'), color: '#c99a12', gems: 15 },
+    { id: 'black', name: t('Gece'), color: '#1e1e28', gems: 12 },
+    { id: 'royal', name: t('Kraliyet'), color: '#6a1fa0', gems: 15, premium: true },
   ],
   // Mağaza önüne konan süsler: her biri +%1 müşteri (en fazla +%10)
   items: [
-    { id: 'plant', name: 'Saksı kaktüs', emoji: '🌵', model: 'cactus_medium_A', scale: 2.4, gems: 3 },
-    { id: 'bush', name: 'Çalı', emoji: '🌳', model: 'bush', scale: 2.6, gems: 3 },
-    { id: 'barrel', name: 'Çiçekli fıçı', emoji: '🛢️', model: 'barrel', scale: 2.4, gems: 4 },
-    { id: 'bench', name: 'Bank', emoji: '🪑', model: 'bench', scale: 2.6, gems: 5 },
-    { id: 'lamp', name: 'Sokak lambası', emoji: '💡', model: 'streetlight', scale: 2.2, gems: 6 },
-    { id: 'tree', name: 'Ağaç', emoji: '🌲', model: 'trees_B_medium', scale: 1.4, gems: 8 },
+    { id: 'plant', name: t('Saksı kaktüs'), emoji: '🌵', model: 'cactus_medium_A', scale: 2.4, gems: 3 },
+    { id: 'bush', name: t('Çalı'), emoji: '🌳', model: 'bush', scale: 2.6, gems: 3 },
+    { id: 'barrel', name: t('Çiçekli fıçı'), emoji: '🛢️', model: 'barrel', scale: 2.4, gems: 4 },
+    { id: 'bench', name: t('Bank'), emoji: '🪑', model: 'bench', scale: 2.6, gems: 5 },
+    { id: 'lamp', name: t('Sokak lambası'), emoji: '💡', model: 'streetlight', scale: 2.2, gems: 6 },
+    { id: 'tree', name: t('Ağaç'), emoji: '🌲', model: 'trees_B_medium', scale: 1.4, gems: 8 },
   ],
   slots: [[-10.4, 5.1], [-3.6, 5.1], [3.6, 5.1], [10.4, 5.1], [-7, 5.1], [7, 5.1], [13.8, 5.1], [16.8, 5.1], [23.2, 5.1], [26.4, 5.1]],
-  lights: { name: 'Işık zinciri', emoji: '✨', gems: 20 },
+  lights: { name: t('Işık zinciri'), emoji: '✨', gems: 20 },
   bonusPerItem: 0.01,
   bonusMax: 0.1,
 };
@@ -390,21 +391,21 @@ export const VALLEY_FRONT_Z = -37;  // arsaların ön kenarı
 export const MODULE_DEPTH = 10;     // her modülün derinliği
 export const BUSINESSES = {
   farm: {
-    name: 'Yeşil Vadi Çiftliği', emoji: '🌾', owner: 'Hüseyin Bey', kind: 'field',
+    name: t('Yeşil Vadi Çiftliği'), emoji: '🌾', owner: t('Hüseyin Bey'), kind: 'field',
     plot: { x: -15, w: 18 }, price: 12000, level: 22,
     products: ['tomato', 'carrot', 'lettuce', 'potato', 'onion'],
     modules: [{ level: 22 }, { level: 23, cost: 6000 }, { level: 28, cost: 12000 }, { level: 30, cost: 20000 }, { level: 48, cost: 40000 }],
     interval: 2.5, // tam kadroyla bir modülün bir kasa üretme süresi (sn)
   },
   dairy: {
-    name: 'Ak Süt Mandırası', emoji: '🐄', owner: 'Ayşe Hanım', kind: 'barn',
+    name: t('Ak Süt Mandırası'), emoji: '🐄', owner: t('Ayşe Hanım'), kind: 'barn',
     plot: { x: 5, w: 16 }, price: 18000, level: 24,
     products: ['cheese'],
     modules: [{ level: 24 }, { level: 26, cost: 9000 }, { level: 29, cost: 15000 }, { level: 30, cost: 24000 }, { level: 48, cost: 45000 }],
     interval: 3,
   },
   bakery: {
-    name: 'Altın Başak Fırını', emoji: '🥖', owner: 'Mehmet Usta', kind: 'hall',
+    name: t('Altın Başak Fırını'), emoji: '🥖', owner: t('Mehmet Usta'), kind: 'hall',
     moduleModel: { main: 'building_C_withoutBase', alt: 'building_C_withoutBase' },
     plot: { x: 23, w: 14 }, price: 8000, level: 26,
     lease: { weekly: 600, perModule: 250, buyLevel: 38, buyPrice: 30000 }, // kiralık: price = devir bedeli
@@ -413,7 +414,7 @@ export const BUSINESSES = {
     interval: 3,
   },
   meat: {
-    name: 'Kasaba Et Tesisi', emoji: '🥩', owner: 'Kemal Bey', kind: 'hall',
+    name: t('Kasaba Et Tesisi'), emoji: '🥩', owner: t('Kemal Bey'), kind: 'hall',
     moduleModel: { main: 'building_F_withoutBase', alt: 'building_F_withoutBase' },
     plot: { x: -34, w: 14 }, price: 10000, level: 28,
     lease: { weekly: 800, perModule: 300, buyLevel: 42, buyPrice: 40000 },
@@ -423,7 +424,7 @@ export const BUSINESSES = {
   },
   // ---- Enerji tepeleri (Sv.31+) ----
   solar: {
-    name: 'SANİ Güneş Tarlası', emoji: '☀️', owner: 'Sunay Hanım', kind: 'solar', workerName: 'teknisyen',
+    name: t('SANİ Güneş Tarlası'), emoji: '☀️', owner: t('Sunay Hanım'), kind: 'solar', workerName: t('teknisyen'),
     plot: { x: -12, w: 22 }, frontZ: -100, price: 45000, level: 31,
     products: [], energy: 'solar', energyPerModule: 200, workersPerModule: 1,
     staffLevels: { manager: 32, accountant: 35 },
@@ -431,7 +432,7 @@ export const BUSINESSES = {
     modules: [{ level: 31 }, { level: 32, cost: 20000 }, { level: 33, cost: 28000 }, { level: 35, cost: 36000 }, { level: 48, cost: 60000 }],
   },
   wind: {
-    name: 'Üfürük Rüzgâr Santrali', emoji: '🌬️', owner: 'Hacı Nuri', kind: 'wind', workerName: 'teknisyen',
+    name: t('Üfürük Rüzgâr Santrali'), emoji: '🌬️', owner: t('Hacı Nuri'), kind: 'wind', workerName: t('teknisyen'),
     plot: { x: 18, w: 22 }, frontZ: -100, price: 20000, level: 33,
     lease: { weekly: 1500, perModule: 500, buyLevel: 46, buyPrice: 70000 },
     products: [], energy: 'wind', energyPerModule: 320, workersPerModule: 1,
@@ -441,33 +442,33 @@ export const BUSINESSES = {
   // ---- Market şubeleri (Sv.50+): rakip marketi satın al ya da kiralık dükkân tut ----
   // Satın alınınca boş gelir: müdürü ve çalışanları sen atarsın.
   branch1: {
-    name: 'Köşe Bakkal', emoji: '🏪', owner: 'Cemil Efendi', kind: 'shop', workerName: 'çalışan',
+    name: t('Köşe Bakkal'), emoji: '🏪', owner: t('Cemil Efendi'), kind: 'shop', workerName: t('çalışan'),
     plot: { x: 43.5, w: 6 }, building: { model: 'kc-building-c', z: 7.5, scale: 6.4, labelY: 8.4 },
     price: 50000, level: 50, products: [], revenuePerModule: 900, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 50 }, { level: 52, cost: 25000 }, { level: 56, cost: 40000 }],
   },
   branch2: {
-    name: 'Kiralık Dükkân', emoji: '🔑', owner: 'Dümen Emlak', kind: 'shop', workerName: 'çalışan',
+    name: t('Kiralık Dükkân'), emoji: '🔑', owner: t('Dümen Emlak'), kind: 'shop', workerName: t('çalışan'),
     plot: { x: 50, w: 6 }, building: { model: 'kc-building-f', z: 7.5, scale: 6.4, labelY: 13 },
     price: 15000, level: 52, products: [], revenuePerModule: 1000, workersPerModule: 3, startWorkers: 0,
     lease: { weekly: 1500, perModule: 600, buyLevel: 60, buyPrice: 70000 },
     modules: [{ level: 52 }, { level: 54, cost: 25000 }, { level: 58, cost: 40000 }],
   },
   branch3: {
-    name: 'Ucuzcu Kardeşler Market', emoji: '🛍️', owner: 'Ucuzcu A.Ş.', kind: 'shop', workerName: 'çalışan',
+    name: t('Ucuzcu Kardeşler Market'), emoji: '🛍️', owner: t('Ucuzcu A.Ş.'), kind: 'shop', workerName: t('çalışan'),
     plot: { x: 36.5, w: 6 }, building: { model: 'kc-building-c', z: 7.5, scale: 6.4, labelY: 8.4 },
     price: 110000, level: 56, products: [], revenuePerModule: 1400, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 56 }, { level: 58, cost: 45000 }, { level: 62, cost: 70000 }],
   },
   // ---- Medya (Sv.52): reklam harcaması düşer, ciro artar ----
   media: {
-    name: 'Kasaba Gazetesi & Radyo', emoji: '📰', owner: 'Yandaş Basın A.Ş.', kind: 'media', workerName: 'muhabir',
+    name: t('Kasaba Gazetesi & Radyo'), emoji: '📰', owner: t('Yandaş Basın A.Ş.'), kind: 'media', workerName: t('muhabir'),
     plot: { x: -58, w: 6 }, building: { model: 'kc-building-skyscraper-a', z: 7.5, scale: 4.2, labelY: 14.5 },
     price: 80000, level: 52, products: [], revenuePerModule: 700, workersPerModule: 2,
     modules: [{ level: 52 }, { level: 55, cost: 30000 }, { level: 60, cost: 50000 }],
   },
   dam: {
-    name: 'Akçay Barajı', emoji: '💧', owner: 'DSİ', kind: 'hydro', workerName: 'teknisyen',
+    name: t('Akçay Barajı'), emoji: '💧', owner: t('DSİ'), kind: 'hydro', workerName: t('teknisyen'),
     plot: { x: -42, w: 22 }, frontZ: -100, price: 90000, level: 41,
     products: [], energy: 'hydro', energyPerModule: 500, workersPerModule: 1,
     staffLevels: { manager: 41, accountant: 41 },
@@ -475,45 +476,45 @@ export const BUSINESSES = {
   },
   // ---- Liman ve sanayi bölgesi (Sv.68+, ön caddenin güneyi) ----
   hotel: {
-    name: 'Grand Anadolu Otel', emoji: '🏨', owner: 'Anadolu Otelcilik', kind: 'hotel', workerName: 'personel',
+    name: t('Grand Anadolu Otel'), emoji: '🏨', owner: t('Anadolu Otelcilik'), kind: 'hotel', workerName: t('personel'),
     plot: { x: -34, w: 10 }, building: { model: 'building_H_withoutBase', z: 31, scale: 5, facing: -1, labelY: 17 },
     price: 120000, level: 68, products: [], revenuePerModule: 2500, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 68 }, { level: 70, cost: 60000 }, { level: 74, cost: 90000 }],
   },
   restaurant: {
-    name: 'Tombik Restoran', emoji: '🍽️', owner: 'Lezzet A.Ş.', kind: 'restaurant', workerName: 'garson',
+    name: t('Tombik Restoran'), emoji: '🍽️', owner: t('Lezzet A.Ş.'), kind: 'restaurant', workerName: t('garson'),
     plot: { x: -20, w: 10 }, building: { model: 'building_B_withoutBase', z: 31, scale: 5, facing: -1, labelY: 11 },
     price: 70000, level: 68, products: [], revenuePerModule: 1600, workersPerModule: 3, startWorkers: 0,
     modules: [{ level: 68 }, { level: 71, cost: 35000 }, { level: 75, cost: 55000 }],
   },
   port: {
-    name: 'Kasaba Limanı', emoji: '⚓', owner: 'Liman İşletmesi İştiraki', kind: 'port', workerName: 'liman işçisi',
+    name: t('Kasaba Limanı'), emoji: '⚓', owner: t('Liman İşletmesi İştiraki'), kind: 'port', workerName: t('liman işçisi'),
     plot: { x: 26, w: 26 }, building: { procedural: 'port', z: 48, size: [26, 10], facing: -1, labelY: 9 },
     price: 200000, level: 69, products: [], revenuePerModule: 3000, workersPerModule: 4, startWorkers: 0,
     importDiscount: 0.08, // modül başı mal alımında indirim (ithalat)
     modules: [{ level: 69 }, { level: 72, cost: 100000 }, { level: 78, cost: 150000 }],
   },
   factory: {
-    name: 'Sanayi Üretim Fabrikası', emoji: '🏭', owner: 'Sanayi Bölgesi Yatırım Grubu', kind: 'factory', workerName: 'işçi',
+    name: t('Sanayi Üretim Fabrikası'), emoji: '🏭', owner: t('Sanayi Bölgesi Yatırım Grubu'), kind: 'factory', workerName: t('işçi'),
     plot: { x: -30, w: 16 }, building: { procedural: 'factory', z: 46, size: [16, 9], facing: -1, labelY: 9 },
     price: 150000, level: 73, products: [], revenuePerModule: 3500, workersPerModule: 5, startWorkers: 0,
     modules: [{ level: 73 }, { level: 75, cost: 80000 }, { level: 79, cost: 120000 }],
   },
   mall: {
-    name: 'Kasaba Forum AVM', emoji: '🏬', owner: 'AVM Yatırım Grubu', kind: 'mall', workerName: 'çalışan',
+    name: t('Kasaba Forum AVM'), emoji: '🏬', owner: t('AVM Yatırım Grubu'), kind: 'mall', workerName: t('çalışan'),
     plot: { x: -2, w: 12 }, building: { model: 'building_E_withoutBase', z: 31, scale: 6, facing: -1, labelY: 16 },
     price: 300000, level: 75, products: [], revenuePerModule: 6000, workersPerModule: 6, startWorkers: 0, customers: 1.05,
     modules: [{ level: 75 }, { level: 78, cost: 150000 }, { level: 82, cost: 220000 }],
   },
   airport: {
-    name: 'Kasaba Ata Havalimanı', emoji: '✈️', owner: 'Ulaştırma Bakanlığı (ihale)', kind: 'airport', workerName: 'personel',
+    name: t('Kasaba Ata Havalimanı'), emoji: '✈️', owner: t('Ulaştırma Bakanlığı (ihale)'), kind: 'airport', workerName: t('personel'),
     plot: { x: -78, w: 26 }, building: { procedural: 'airport', z: 40, size: [26, 18], facing: -1, labelY: 9 },
     price: 500000, level: 76, products: [], revenuePerModule: 9000, workersPerModule: 8, startWorkers: 0, customers: 1.1,
     modules: [{ level: 76 }, { level: 80, cost: 250000 }, { level: 85, cost: 400000 }],
   },
   // Lojistik firması: tüm tedarikçiler alındıktan sonra satılığa çıkar, kamyon filosunu yönetir.
   logistics: {
-    name: 'Hızlı Nakliyat', emoji: '🚛', owner: 'Rıza Bey', kind: 'garage', workerName: 'şoför',
+    name: t('Hızlı Nakliyat'), emoji: '🚛', owner: t('Rıza Bey'), kind: 'garage', workerName: t('şoför'),
     plot: { x: 38, w: 12 }, price: 40000, level: 29, requiresAll: ['farm', 'dairy', 'bakery', 'meat'],
     products: [],
     modules: [{ level: 29 }, { level: 30, cost: 15000 }, { level: 32, cost: 22000 }, { level: 35, cost: 30000 }, { level: 48, cost: 50000 }],
@@ -542,20 +543,20 @@ export const STAFF = {
 
 // Harita bölgeleri (hızlı geçiş). level: açıldığı seviye.
 export const REGIONS = [
-  { id: 'market', name: 'Market', emoji: '🛒', pos: [0, 1], level: 1 },
-  { id: 'depot', name: 'Arka depo', emoji: '📦', pos: [0, -18.5], level: 1 },
-  { id: 'office', name: 'Muhasebe odası', emoji: '🧾', pos: [8.4, -10.6], level: 1 },
-  { id: 'valley', name: 'KOBİ vadisi', emoji: '🌾', pos: [0, -36.2], level: 22 },
-  { id: 'logistics', name: 'Lojistik merkezi', emoji: '🚛', pos: [38, -35.8], level: 29 },
-  { id: 'energy', name: 'Enerji tepeleri', emoji: '⚡', pos: [3, -97], level: 31 },
-  { id: 'east', name: 'Doğu mahallesi', emoji: '🏘️', pos: [78, 14], level: 36 },
-  { id: 'branches', name: 'Rakip marketler', emoji: '🏪', pos: [43, 12.5], level: 50 },
-  { id: 'center', name: 'Şehir merkezi', emoji: '🏛️', pos: [-66, 12.5], level: 51 },
-  { id: 'port', name: 'Liman ve sanayi', emoji: '⚓', pos: [0, 26], level: 66 },
-  { id: 'bazaar', name: 'Eski Çarşı', emoji: '🏛️', pos: [-86, -40], level: 81 },
-  { id: 'coast', name: 'Sahil Şeridi', emoji: '🏖️', pos: [86, 28], level: 83 },
-  { id: 'campus', name: 'Üniversite', emoji: '🎓', pos: [110, -6], level: 87 },
-  { id: 'villages', name: 'Kuzey Köyleri', emoji: '🌄', pos: [55, -108], level: 89 },
+  { id: 'market', name: t('Market'), emoji: '🛒', pos: [0, 1], level: 1 },
+  { id: 'depot', name: t('Arka depo'), emoji: '📦', pos: [0, -18.5], level: 1 },
+  { id: 'office', name: t('Muhasebe odası'), emoji: '🧾', pos: [8.4, -10.6], level: 1 },
+  { id: 'valley', name: t('KOBİ vadisi'), emoji: '🌾', pos: [0, -36.2], level: 22 },
+  { id: 'logistics', name: t('Lojistik merkezi'), emoji: '🚛', pos: [38, -35.8], level: 29 },
+  { id: 'energy', name: t('Enerji tepeleri'), emoji: '⚡', pos: [3, -97], level: 31 },
+  { id: 'east', name: t('Doğu mahallesi'), emoji: '🏘️', pos: [78, 14], level: 36 },
+  { id: 'branches', name: t('Rakip marketler'), emoji: '🏪', pos: [43, 12.5], level: 50 },
+  { id: 'center', name: t('Şehir merkezi'), emoji: '🏛️', pos: [-66, 12.5], level: 51 },
+  { id: 'port', name: t('Liman ve sanayi'), emoji: '⚓', pos: [0, 26], level: 66 },
+  { id: 'bazaar', name: t('Eski Çarşı'), emoji: '🏛️', pos: [-86, -40], level: 81 },
+  { id: 'coast', name: t('Sahil Şeridi'), emoji: '🏖️', pos: [86, 28], level: 83 },
+  { id: 'campus', name: t('Üniversite'), emoji: '🎓', pos: [110, -6], level: 87 },
+  { id: 'villages', name: t('Kuzey Köyleri'), emoji: '🌄', pos: [55, -108], level: 89 },
 ];
 
 // Başlangıç: banka kuruluş kredisiyle market alınır (yeni oyunlarda)
@@ -586,9 +587,9 @@ export const CUSTOMER_SPEED = 3.6;
 // İşe alım ucuzdur; her çalışana gün sonunda maaş ödenir. Ödenemeyen çalışan işten ayrılır,
 // alanı yeniden belirir ve para kazanınca tekrar işe alınabilir.
 export const ROLE_NAMES = {
-  cashier: '💳 Kasiyer', stocker: '📦 Reyon Görevlisi', cleaner: '🧹 Temizlik Görevlisi', manager: '🟥 Müdür', accountant: '🟦 Muhasebeci',
-  guard: '🛡️ Güvenlik Görevlisi', advertiser: '📣 Reklam Personeli', valet: '🅿️ Otopark Görevlisi',
-  deputy: '🧑‍💻 Müdür yardımcısı', picker: '🧺 Paket Hazırlama Görevlisi', courier: '🛵 Kurye',
+  cashier: t('💳 Kasiyer'), stocker: t('📦 Reyon Görevlisi'), cleaner: t('🧹 Temizlik Görevlisi'), manager: t('🟥 Müdür'), accountant: t('🟦 Muhasebeci'),
+  guard: t('🛡️ Güvenlik Görevlisi'), advertiser: t('📣 Reklam Personeli'), valet: t('🅿️ Otopark Görevlisi'),
+  deputy: t('🧑‍💻 Müdür yardımcısı'), picker: t('🧺 Paket Hazırlama Görevlisi'), courier: t('🛵 Kurye'),
 };
 export const WAGES = {
   cashier: 50, stocker: 50, cleaner: 45, manager: 65, accountant: 70,
@@ -636,10 +637,10 @@ export const HOUSING = {
   plotSize: 10,
   plots: [[61, 4], [73, 4], [85, 4], [97, 4], [61, -10], [73, -10], [85, -10], [97, -10], [61, -24], [73, -24], [85, -24], [97, -24]],
   types: {
-    house: { name: 'Müstakil ev', emoji: '🏠', level: 37, cost: 8000, days: 2, units: 1, rent: 2000, renovation: 800 },
-    apartment: { name: 'Apartman (4 daire)', emoji: '🏢', level: 39, cost: 28000, days: 4, units: 4, rent: 1500, renovation: 600 },
-    site: { name: 'Site (8 daire, havuzlu)', emoji: '🏘️', level: 42, cost: 65000, days: 6, units: 8, rent: 1800, renovation: 700 },
-    villa: { name: 'Lüks villa', emoji: '🏡', level: 47, cost: 45000, days: 4, units: 1, rent: 9000, renovation: 3000 },
+    house: { name: t('Müstakil ev'), emoji: '🏠', level: 37, cost: 8000, days: 2, units: 1, rent: 2000, renovation: 800 },
+    apartment: { name: t('Apartman (4 daire)'), emoji: '🏢', level: 39, cost: 28000, days: 4, units: 4, rent: 1500, renovation: 600 },
+    site: { name: t('Site (8 daire, havuzlu)'), emoji: '🏘️', level: 42, cost: 65000, days: 6, units: 8, rent: 1800, renovation: 700 },
+    villa: { name: t('Lüks villa'), emoji: '🏡', level: 47, cost: 45000, days: 4, units: 1, rent: 9000, renovation: 3000 },
   },
   agent: { level: 37, hire: 200, commission: 0.1 },  // emlakçı: her binaya bir tane, kiradan %10
   tenancyDays: [14, 42],   // kiracının kalma süresi (gün)
@@ -648,8 +649,8 @@ export const HOUSING = {
   company: { level: 38, price: 25000, timeFactor: 0.6, costFactor: 0.85 }, // kendi inşaat şirketin
   accountant: { level: 44, hire: 150 }, // emlak muhasebecisi: emlakçısız binaları yönetir, kirayı her gün tahsil eder
   amenities: {
-    school: { name: 'Okul', emoji: '🏫', level: 45, price: 40000, rentBoost: 0.1, pos: [67, -40] },
-    clinic: { name: 'Sağlık ocağı', emoji: '🏥', level: 45, price: 35000, rentBoost: 0.1, pos: [91, -40] },
+    school: { name: t('Okul'), emoji: '🏫', level: 45, price: 40000, rentBoost: 0.1, pos: [67, -40] },
+    clinic: { name: t('Sağlık ocağı'), emoji: '🏥', level: 45, price: 35000, rentBoost: 0.1, pos: [91, -40] },
   },
   deed: { level: 50, rentBoost: 0.1, xp: 500 },
   zonedPlots: [[61, -54], [73, -54], [85, -54], [97, -54]], // başkanken imar izniyle açılır // tüm arsalar dolunca Doğu Mahallesi tapusu
@@ -660,13 +661,13 @@ export const MUNICIPALITY = {
   minBusinesses: 4,   // işletme sayısı 3'ü geçince denetim başlar
   chance: 0.25,       // her sabah ceza olasılığı
   base: 150, perBusiness: 60,
-  reasons: ['Ruhsat denetimi', 'Kaldırım işgali', 'Gürültü şikâyeti', 'Çevre denetimi', 'Tabela izni', 'Hijyen denetimi', 'İskân eksikliği'],
+  reasons: [t('Ruhsat denetimi'), t('Kaldırım işgali'), t('Gürültü şikâyeti'), t('Çevre denetimi'), t('Tabela izni'), t('Hijyen denetimi'), t('İskân eksikliği')],
 };
 export const AD_TYPES = {
-  flyer: { name: 'El ilanı', emoji: '📄', cost: 80, boost: 0.12, level: 2 },
-  newspaper: { name: 'Gazete ilanı', emoji: '📰', cost: 200, boost: 0.25, level: 6 },
-  radio: { name: 'Radyo reklamı', emoji: '📻', cost: 500, boost: 0.45, level: 12 },
-  tv: { name: 'TV reklamı', emoji: '📺', cost: 1500, boost: 0.8, level: 25 },
+  flyer: { name: t('El ilanı'), emoji: '📄', cost: 80, boost: 0.12, level: 2 },
+  newspaper: { name: t('Gazete ilanı'), emoji: '📰', cost: 200, boost: 0.25, level: 6 },
+  radio: { name: t('Radyo reklamı'), emoji: '📻', cost: 500, boost: 0.45, level: 12 },
+  tv: { name: t('TV reklamı'), emoji: '📺', cost: 1500, boost: 0.8, level: 25 },
 };
 // İndirim günü: ilan edilince ertesi gün fiyatlar %10 düşer, müşteri %30 artar
 export const SALE_DAY = { price: 0.9, boost: 0.3, level: 2 };
@@ -693,9 +694,9 @@ export const POLITICS = {
   amenityInfluence: 4,  // okul / sağlık ocağı
   jobs: { min: 100, base: 8, per: 25, max: 20 }, // 100+ çalışan: +8, her 25 çalışanda +1 (en fazla 20)
   buildings: {
-    park: { name: 'Şehir parkı', emoji: '🌳', cost: 40000, influence: 8, pos: [-60, -6], size: [10, 8] },
-    library: { name: 'Kütüphane', emoji: '📚', cost: 80000, influence: 12, pos: [-60, -18], size: [9, 6] },
-    gym: { name: 'Spor salonu', emoji: '🏟️', cost: 150000, influence: 18, pos: [-76, -6], size: [11, 7] },
+    park: { name: t('Şehir parkı'), emoji: '🌳', cost: 40000, influence: 8, pos: [-60, -6], size: [10, 8] },
+    library: { name: t('Kütüphane'), emoji: '📚', cost: 80000, influence: 12, pos: [-60, -18], size: [9, 6] },
+    gym: { name: t('Spor salonu'), emoji: '🏟️', cost: 150000, influence: 18, pos: [-76, -6], size: [11, 7] },
   },
   autocracyWins: 4,
   revoltYears: 2,       // otokraside memnuniyet bu kadar yıl %50 altında kalırsa seçim gelir
@@ -704,8 +705,8 @@ export const POLITICS = {
   taxBase: 15000,       // + seviye × 100 + arsa başı 300 → vergi oranıyla çarpılır (günlük)
   zoningCost: 20000,    // imar izni: doğu mahallesinde 4 yeni arsa
   projects: {
-    bus: { name: 'Otogar', emoji: '🚌', cost: 80000, income: 1200, customers: 1.05, desc: '+günlük gelir, +%5 müşteri', pos: [-77, 8], size: [12, 8] },
-    stadium: { name: 'Stadyum', emoji: '🏟️', cost: 150000, income: 2000, customers: 1.4, everyDays: 7, desc: 'haftada bir maç günü +%40 müşteri', pos: [-78, -20], size: [20, 14] },
+    bus: { name: t('Otogar'), emoji: '🚌', cost: 80000, income: 1200, customers: 1.05, desc: t('+günlük gelir, +%5 müşteri'), pos: [-77, 8], size: [12, 8] },
+    stadium: { name: t('Stadyum'), emoji: '🏟️', cost: 150000, income: 2000, customers: 1.4, everyDays: 7, desc: t('haftada bir maç günü +%40 müşteri'), pos: [-78, -20], size: [20, 14] },
   },
   names: ['Ahmet Kaya', 'Selin Demir', 'Murat Aksoy', 'Zeynep Yıldız', 'Kemal Şahin', 'Elif Arslan', 'Hasan Çelik', 'Ayşe Koç', 'Burak Öztürk'],
 };
@@ -716,11 +717,11 @@ export const FINANCE = {
   investLicense: { level: 66, price: 60000 },  // yatırım şirketi: hisse alım satımı
   // Borsadaki rakip şirketler. %51 ve üstü hisse = kontrol (etki açılır).
   companies: {
-    ucuzcu: { name: 'Ucuzcu Market Zinciri', emoji: '🛍️', value: 400000, level: 66, effect: 'customers', amount: 1.1, effectText: 'rakip zincir senin: +%10 müşteri' },
-    otel: { name: 'Anadolu Otelcilik', emoji: '🏨', value: 600000, level: 66, effect: 'dividend', amount: 2, effectText: 'temettü ×2' },
-    tekstil: { name: 'Kasaba Tekstil', emoji: '🧵', value: 500000, level: 66, effect: 'dividend', amount: 2, effectText: 'temettü ×2' },
-    enerji: { name: 'Kuzey Enerji A.Ş.', emoji: '⚡', value: 900000, level: 74, effect: 'electricity', amount: 0.5, effectText: 'elektrik faturası yarıya iner' },
-    banka: { name: 'Şehir Bankası', emoji: '🏦', value: 1500000, level: 79, effect: 'interest', amount: 0.5, effectText: 'kredi faizin yarıya iner' },
+    ucuzcu: { name: t('Ucuzcu Market Zinciri'), emoji: '🛍️', value: 400000, level: 66, effect: 'customers', amount: 1.1, effectText: t('rakip zincir senin: +%10 müşteri') },
+    otel: { name: t('Anadolu Otelcilik'), emoji: '🏨', value: 600000, level: 66, effect: 'dividend', amount: 2, effectText: t('temettü ×2') },
+    tekstil: { name: t('Kasaba Tekstil'), emoji: '🧵', value: 500000, level: 66, effect: 'dividend', amount: 2, effectText: t('temettü ×2') },
+    enerji: { name: t('Kuzey Enerji A.Ş.'), emoji: '⚡', value: 900000, level: 74, effect: 'electricity', amount: 0.5, effectText: t('elektrik faturası yarıya iner') },
+    banka: { name: t('Şehir Bankası'), emoji: '🏦', value: 1500000, level: 79, effect: 'interest', amount: 0.5, effectText: t('kredi faizin yarıya iner') },
   },
   control: 51,
   dividend: 0.004,        // günlük temettü (hisse değerinin)
@@ -748,35 +749,35 @@ export const CITY = {
   angryRaise: 0.08,         // inatçı sahip: reddedilen her teklifte fiyat artışı
   offers: [0.75, 0.85, 0.95, 1],
   regions: [
-    { id: 'bazaar', name: 'Eski Çarşı', emoji: '🏛️', level: 81, props: [
-      { name: 'Bakırcılar Hanı', owner: 'Hacı Rıza', price: 400000, mood: 'flex', pos: [-92, -47], model: 'building_B_withoutBase' },
-      { name: 'Kapalı Çarşı', owner: 'Esnaf Odası', price: 650000, mood: 'angry', pos: [-80, -47], model: 'building_E_withoutBase' },
-      { name: 'Eski Kahvehane', owner: 'Nuri Usta', price: 250000, mood: 'flex', pos: [-92, -60], model: 'building-small-a' },
-      { name: 'Saat Kulesi Meydanı', owner: 'Vakıf', price: 500000, mood: 'angry', pos: [-80, -60], model: 'building_H_withoutBase' },
+    { id: 'bazaar', name: t('Eski Çarşı'), emoji: '🏛️', level: 81, props: [
+      { name: t('Bakırcılar Hanı'), owner: t('Hacı Rıza'), price: 400000, mood: 'flex', pos: [-92, -47], model: 'building_B_withoutBase' },
+      { name: t('Kapalı Çarşı'), owner: t('Esnaf Odası'), price: 650000, mood: 'angry', pos: [-80, -47], model: 'building_E_withoutBase' },
+      { name: t('Eski Kahvehane'), owner: t('Nuri Usta'), price: 250000, mood: 'flex', pos: [-92, -60], model: 'building-small-a' },
+      { name: t('Saat Kulesi Meydanı'), owner: t('Vakıf'), price: 500000, mood: 'angry', pos: [-80, -60], model: 'building_H_withoutBase' },
     ] },
-    { id: 'coast', name: 'Sahil Şeridi', emoji: '🏖️', level: 83, props: [
-      { name: 'Martı Pansiyon', owner: 'Gül Hanım', price: 450000, mood: 'flex', pos: [66, 34], model: 'building-small-c', facing: -1 },
-      { name: 'Deniz Kafe', owner: 'Kaptan Ali', price: 350000, mood: 'angry', pos: [78, 34], model: 'building_B_withoutBase', facing: -1 },
-      { name: 'Yat Kulübü', owner: 'Yat İş A.Ş.', price: 900000, mood: 'flex', pos: [92, 36], model: 'building_E_withoutBase', facing: -1 },
-      { name: 'Balıkçı Barınağı', owner: 'Balbar Kooperatif', price: 300000, mood: 'flex', pos: [106, 34], model: 'building-small-a', facing: -1 },
+    { id: 'coast', name: t('Sahil Şeridi'), emoji: '🏖️', level: 83, props: [
+      { name: t('Martı Pansiyon'), owner: t('Gül Hanım'), price: 450000, mood: 'flex', pos: [66, 34], model: 'building-small-c', facing: -1 },
+      { name: t('Deniz Kafe'), owner: t('Kaptan Ali'), price: 350000, mood: 'angry', pos: [78, 34], model: 'building_B_withoutBase', facing: -1 },
+      { name: t('Yat Kulübü'), owner: t('Yat İş A.Ş.'), price: 900000, mood: 'flex', pos: [92, 36], model: 'building_E_withoutBase', facing: -1 },
+      { name: t('Balıkçı Barınağı'), owner: t('Balbar Kooperatif'), price: 300000, mood: 'flex', pos: [106, 34], model: 'building-small-a', facing: -1 },
     ] },
-    { id: 'industry', name: 'Sanayi Bölgesi', emoji: '🏗️', level: 85, props: [
-      { name: 'Çimento Fabrikası', owner: 'Demir Holding', price: 1200000, mood: 'angry', pos: [-56, 34], procedural: 'factory', facing: -1 },
-      { name: 'Un Değirmeni', owner: 'Değirmenci Halil', price: 600000, mood: 'flex', pos: [-56, 47], model: 'building-garage', facing: -1 },
-      { name: 'Oto Sanayi Sitesi', owner: 'Esnaf Birliği', price: 800000, mood: 'flex', pos: [-46, 47], model: 'building-garage', facing: -1 },
+    { id: 'industry', name: t('Sanayi Bölgesi'), emoji: '🏗️', level: 85, props: [
+      { name: t('Çimento Fabrikası'), owner: t('Demir Holding'), price: 1200000, mood: 'angry', pos: [-56, 34], procedural: 'factory', facing: -1 },
+      { name: t('Un Değirmeni'), owner: t('Değirmenci Halil'), price: 600000, mood: 'flex', pos: [-56, 47], model: 'building-garage', facing: -1 },
+      { name: t('Oto Sanayi Sitesi'), owner: t('Esnaf Birliği'), price: 800000, mood: 'flex', pos: [-46, 47], model: 'building-garage', facing: -1 },
     ] },
-    { id: 'campus', name: 'Üniversite Yerleşkesi', emoji: '🎓', level: 87, props: [
-      { name: 'Rektörlük', owner: 'Mütevelli Heyeti', price: 1500000, mood: 'angry', pos: [118, -4], model: 'building_H_withoutBase' },
-      { name: 'Fakülte Binası', owner: 'Vakıf Üniversitesi', price: 1100000, mood: 'flex', pos: [118, -18], model: 'building_E_withoutBase' },
-      { name: 'Öğrenci Yurdu', owner: 'Yurt A.Ş.', price: 700000, mood: 'flex', pos: [118, 8], model: 'building_G_withoutBase' },
+    { id: 'campus', name: t('Üniversite Yerleşkesi'), emoji: '🎓', level: 87, props: [
+      { name: t('Rektörlük'), owner: t('Mütevelli Heyeti'), price: 1500000, mood: 'angry', pos: [118, -4], model: 'building_H_withoutBase' },
+      { name: t('Fakülte Binası'), owner: t('Vakıf Üniversitesi'), price: 1100000, mood: 'flex', pos: [118, -18], model: 'building_E_withoutBase' },
+      { name: t('Öğrenci Yurdu'), owner: t('Yurt A.Ş.'), price: 700000, mood: 'flex', pos: [118, 8], model: 'building_G_withoutBase' },
     ] },
-    { id: 'villages', name: 'Kuzey Köyleri', emoji: '🌄', level: 89, props: [
-      { name: 'Çamlıca Köyü', owner: 'Muhtar Osman', price: 500000, mood: 'flex', pos: [48, -116], model: 'building_windmill_green' },
-      { name: 'Yayla Mandırası', owner: 'Fatma Nene', price: 450000, mood: 'angry', pos: [62, -116], model: 'building_grain' },
-      { name: 'Göl Kenarı Arazisi', owner: 'Orman İşletmesi', price: 800000, mood: 'flex', pos: [55, -132], model: 'trees_A_large' },
+    { id: 'villages', name: t('Kuzey Köyleri'), emoji: '🌄', level: 89, props: [
+      { name: t('Çamlıca Köyü'), owner: t('Muhtar Osman'), price: 500000, mood: 'flex', pos: [48, -116], model: 'building_windmill_green' },
+      { name: t('Yayla Mandırası'), owner: t('Fatma Nene'), price: 450000, mood: 'angry', pos: [62, -116], model: 'building_grain' },
+      { name: t('Göl Kenarı Arazisi'), owner: t('Orman İşletmesi'), price: 800000, mood: 'flex', pos: [55, -132], model: 'trees_A_large' },
     ] },
-    { id: 'hall', name: 'Belediye Meydanı', emoji: '🏙️', level: 95, props: [
-      { name: 'Eski Belediye Sarayı', owner: 'Hazine', price: 3000000, mood: 'angry', pos: [-86, -74], model: 'building_G_withoutBase' },
+    { id: 'hall', name: t('Belediye Meydanı'), emoji: '🏙️', level: 95, props: [
+      { name: t('Eski Belediye Sarayı'), owner: t('Hazine'), price: 3000000, mood: 'angry', pos: [-86, -74], model: 'building_G_withoutBase' },
     ] },
   ],
   grades: [[200, 'S'], [300, 'A'], [420, 'B'], [600, 'C'], [Infinity, 'D']], // oyun gününe göre
@@ -796,6 +797,6 @@ export const LIFE = {
 // Tecrübeli muhasebeci pazar araştırması yapar: kampanya talebini doğru bilir, personeli
 // ancak maaşı karşılanabilirse alır, gün sonu ödemelerine göre yedek tutar.
 export const ACCOUNTANT_TIERS = {
-  junior: { name: 'Stajyer muhasebeci', emoji: '🧑‍💼', wage: 70 },
-  expert: { name: 'Tecrübeli muhasebeci', emoji: '🎓', wage: 140, hire: 600 },
+  junior: { name: t('Stajyer muhasebeci'), emoji: '🧑‍💼', wage: 70 },
+  expert: { name: t('Tecrübeli muhasebeci'), emoji: '🎓', wage: 140, hire: 600 },
 };
