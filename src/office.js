@@ -196,7 +196,7 @@ class OfficePanel {
         ${Object.entries(AD_TYPES).map(([k, ad]) => `<option value="${k}" ${a.settings.adChannel === k ? 'selected' : ''} ${this.game.level < ad.level ? 'disabled' : ''}>${ad.emoji} ${ad.name}${this.game.level < ad.level ? ` (Sv.${ad.level})` : ` · $${formatMoney(this.game.ads.cost(k))}`}</option>`).join('')}
       </select></label>
       ${t('invest', '🏗️ Alan yatırımları', 'Reyon, raf, genişleme, otopark gibi alanları yedek bırakarak alır')}
-      ${t('hire', '👥 Personel alımı', 'Kasiyer, taşıyıcı, temizlikçi, güvenlik… işe alır')}
+      ${t('hire', '👥 Personel alımı', 'Kasiyer, reyon görevlisi, temizlik görevlisi, güvenlik… işe alır')}
       ${t('credit', '🏦 Ödemeler için kredi', 'Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin')}
       <p class="note"><b>Kasada bırakılan en az para:</b> $${formatMoney(a.reserve)} · bu akşamki ödemeler $${formatMoney(this.game.dueTonight)}</p>
       <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : '<div>Henüz karar yok.</div>'}</div>`;
