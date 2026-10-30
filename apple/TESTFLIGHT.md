@@ -4,7 +4,7 @@ Derleme ve yükleme GitHub'ın macOS sunucularında yapılır; Mac gerekmez. Bir
 
 1. **Uygulama kaydı** — App Store Connect → Uygulamalar → ➕ Yeni uygulama
    - Platform: iOS · Ad: Market Krallığı · Birincil dil: Türkçe (sonra English (U.S.) yerelleştirmesi ekle → ad: Corner Shop Empire)
-   - Paket kimliği (Bundle ID): `com.uyelikposya.cornershopempire` (listede yoksa developer.apple.com → Identifiers → ➕ ile oluştur;
+   - Paket kimliği (Bundle ID): `com.othinks.cornershopempire` (listede yoksa developer.apple.com → Identifiers → ➕ ile oluştur;
      orada **Game Center** ve **iCloud** yeteneklerini işaretle)
    - SKU: `cornershopempire`
 2. **API anahtarı** — App Store Connect → Kullanıcılar ve Erişim → Entegrasyonlar → App Store Connect API → Takım anahtarları → ➕
@@ -28,7 +28,7 @@ iç test için App Store Connect → TestFlight → Dahili test grubu → kendin
 
 ## Sorun giderme
 
-- *No profiles for 'com.uyelikposya.cornershopempire'* → Bundle ID bu takımda kayıtlı değil (adım 1).
+- *No profiles for 'com.othinks.cornershopempire'* → Bundle ID bu takımda kayıtlı değil (adım 1).
 - *Missing app record* → App Store Connect'te uygulama kaydı yok (adım 1).
 - *Cloud signing permission error* → API anahtarı Admin değil (adım 2).
 - *The bundle version must be higher* → normalde olmaz; elle yüklenen bir derleme varsa Actions'ı bir kez daha çalıştır.
