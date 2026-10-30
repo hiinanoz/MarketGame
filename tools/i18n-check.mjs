@@ -14,6 +14,13 @@ const add = (s) => { s = s.trim().replace(/\s+/g, ' '); if (hasLetter(s)) keys.a
 const unq = (q, s) => (q === '`' ? s : s.replace(new RegExp(`\\\\${q}`, 'g'), q).replace(/\\n/g, '\n'));
 for (const f of readdirSync(join(root, 'src')).filter((f) => f.endsWith('.js') && f !== 'i18n.js')) {
   const src = readFileSync(join(root, 'src', f), 'utf8');
+  // t() kullanan dosyada `t` adlı yerel değişken/parametre çeviriyi gölgeler
+  if (/import \{[^}]*\bt\b[^}]*\} from '\.\/i18n\.js'/.test(src)) {
+    src.split('\n').forEach((line, i) => {
+      if (/^\s*\/\//.test(line)) return;
+      if (/\b(const|let|var)\s+t\s*=|\(\s*t\s*\)\s*=>|\bt\s*=>|\(\s*t\s*,|,\s*t\s*\)\s*=>|\[\s*\w+\s*,\s*t\s*\]|for \((const|let) t\b/.test(line)) console.warn(`! ${f}:${i + 1}: yerel 't' çeviriyi gölgeliyor: ${line.trim().slice(0, 80)}`);
+    });
+  }
   for (const m of src.matchAll(/\bt\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g)) {
     if (m[1] === '`' && m[2].includes('${')) { console.warn(`! ${f}: t(\`…\${}…\`) — {ad} kullan: ${m[2].slice(0, 60)}`); continue; }
     keys.add(unq(m[1], m[2]));

@@ -1,4 +1,5 @@
 import { RENT } from './config.js';
+import { t } from './i18n.js';
 import { formatMoney } from './hud.js';
 
 // Kiralar: market Sv.20'ye kadar kiralıktır (büyüdükçe kira artar), sonra muhasebe odasından
@@ -37,7 +38,7 @@ export class Rent {
     this.marketOwned = true;
     this.boughtPrice = price;
     g.gainXp(Math.floor(price / 100));
-    g.hud.toast(`🏪 ${g.marketTitle} binası artık senin — kira bitti!`);
+    g.hud.toast(`🏪 ${t('{name} binası artık senin — kira bitti!', { name: g.marketTitle })}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -81,7 +82,7 @@ export class Rent {
   }
 
   label() {
-    return this.marketOwned ? 'Bina senin' : `Kiralık · haftalık $${formatMoney(this.marketRent)}`;
+    return this.marketOwned ? t('Bina senin') : t('Kiralık · haftalık ${n}', { n: formatMoney(this.marketRent) });
   }
 
   serialize() {

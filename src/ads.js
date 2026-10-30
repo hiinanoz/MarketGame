@@ -1,4 +1,5 @@
 import { AD_TYPES, MEDIA, MUNICIPALITY, SALE_DAY } from './config.js';
+import { t } from './i18n.js';
 import { formatMoney } from './hud.js';
 
 // Reklam: istediğin gün ücretini ödeyip reklam verirsin (o gün açıksa hemen, kapalıysa ertesi gün).
@@ -30,7 +31,7 @@ export class Ads {
     const g = this.game;
     if (g.level < SALE_DAY.level || this.saleAnnounced) return false;
     this.saleDays.push(this.saleTarget);
-    g.hud.toast(`🏷️ İndirim günü ilan edildi: yarın fiyatlar −%${Math.round((1 - SALE_DAY.price) * 100)}, müşteri +%${Math.round(SALE_DAY.boost * 100)}`);
+    g.hud.toast(`🏷️ ${t('İndirim günü ilan edildi: yarın fiyatlar −%{price}, müşteri +%{boost}', { price: Math.round((1 - SALE_DAY.price) * 100), boost: Math.round(SALE_DAY.boost * 100) })}`);
     g.save();
     return true;
   }
@@ -40,8 +41,8 @@ export class Ads {
   }
 
   cost(type) {
-    const t = AD_TYPES[type];
-    return Math.round(t.cost * (1 + this.game.level * 0.03) * (this.mediaOwned ? 1 - MEDIA.adDiscount : 1));
+    const ty = AD_TYPES[type];
+    return Math.round(ty.cost * (1 + this.game.level * 0.03) * (this.mediaOwned ? 1 - MEDIA.adDiscount : 1));
   }
 
   /** Reklamın geçerli olacağı gün: dükkân açıksa bugün, değilse yarın. */
@@ -56,12 +57,12 @@ export class Ads {
 
   buy(type) {
     const g = this.game;
-    const t = AD_TYPES[type];
+    const ty = AD_TYPES[type];
     const c = this.cost(type);
-    if (!t || g.level < t.level || this.has(type) || g.money < c) return false;
+    if (!ty || g.level < ty.level || this.has(type) || g.money < c) return false;
     g.spend(c);
     this.bought.push({ type, day: this.targetDay });
-    g.hud.toast(`${t.emoji} ${t.name} ${this.targetDay === g.day.day ? 'yayında' : 'yarın yayında'} (+%${Math.round(t.boost * 100)} müşteri)`);
+    g.hud.toast(`${ty.emoji} ${ty.name} ${this.targetDay === g.day.day ? t('yayında') : t('yarın yayında')} (${t('müşteri +%{n}', { n: Math.round(ty.boost * 100) })})`);
     g.save();
     return true;
   }
@@ -86,7 +87,7 @@ export class Ads {
     const g = this.game;
     this.bought = this.bought.filter((b) => b.day >= g.day.day);
     this.saleDays = this.saleDays.filter((d) => d >= g.day.day);
-    if (this.saleToday) g.hud.toast(`🏷️ Bugün indirim günü! Fiyatlar −%${Math.round((1 - SALE_DAY.price) * 100)}, müşteri +%${Math.round(SALE_DAY.boost * 100)}`);
+    if (this.saleToday) g.hud.toast(`🏷️ ${t('Bugün indirim günü! Fiyatlar −%{price}, müşteri +%{boost}', { price: Math.round((1 - SALE_DAY.price) * 100), boost: Math.round(SALE_DAY.boost * 100) })}`);
     const count = g.holding.owned.length;
     if (g.isMayor || count < MUNICIPALITY.minBusinesses) return;
     if (Math.random() >= MUNICIPALITY.chance) return;
@@ -98,7 +99,7 @@ export class Ads {
     if (amount > pay) g.bank.debt += amount - pay;
     g.day.today.fine = { amount, reason };
     g.hud.setMoney(g.money);
-    g.hud.toast(`🏛️ Belediye cezası: ${reason} −$${formatMoney(amount)}`);
+    g.hud.toast(`🏛️ ${t('Belediye cezası: {reason}', { reason })} −$${formatMoney(amount)}`);
   }
 
   serialize() {

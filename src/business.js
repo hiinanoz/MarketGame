@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t, num } from './i18n.js';
 import { Character, makeCrate } from './character.js';
 import { textTexture } from './fx.js';
 import { PRODUCTS, BUSINESSES, STAFF, VALLEY_FRONT_Z, MODULE_DEPTH, XP_PER_PROFIT, XP_PER_PURCHASE, LOGISTICS, DAY, MEDIA } from './config.js';
@@ -162,8 +163,8 @@ export class Business {
     this.rebuildStaff();
     if (this.isLogistics) g.depot.refreshFleet?.();
     g.gainXp(Math.floor(this.def.price / XP_PER_PURCHASE));
-    g.hud.toast(this.leased ? `🔑 ${this.def.emoji} ${this.name} kiralandı (haftalık $${this.weeklyRent})` : `🤝 ${this.def.emoji} ${this.name} artık senin!`);
-    if (this.isBuilding && !this.workers) g.later.push({ t: 1.8, fn: () => g.hud.toast('👥 Şimdi müdür ve çalışan ata (💼 tablet)') });
+    g.hud.toast(this.leased ? `🔑 ${this.def.emoji} ${t('{name} kiralandı (haftalık ${n})', { name: this.name, n: this.weeklyRent })}` : `🤝 ${this.def.emoji} ${t('{name} artık senin!', { name: this.name })}`);
+    if (this.isBuilding && !this.workers) g.later.push({ t: 1.8, fn: () => g.hud.toast(t('👥 Şimdi müdür ve çalışan ata (💼 tablet)')) });
     g.audio.play('unlock');
     g.save();
     return true;
@@ -192,7 +193,7 @@ export class Business {
     this.workers = Math.min(this.perModule, this.workerSlots);
     this.rebuild();
     this.rebuildStaff();
-    g.hud.toast(`🤝 ${this.def.emoji} ${this.name} bankadan geri alındı`);
+    g.hud.toast(`🤝 ${this.def.emoji} ${t('{name} bankadan geri alındı', { name: this.name })}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -205,8 +206,8 @@ export class Business {
     const out = [];
     const self = this;
     const lbl = `${this.def.emoji} ${this.name}`;
-    const wn = this.def.workerName ?? 'işçi';
-    if (this.manager) out.push({ wage: W.manager, label: `${lbl} müdürü`, biz: this, fire() { self.manager = false; self.rebuildStaff(); } });
+    const wn = this.def.workerName ?? t('işçi');
+    if (this.manager) out.push({ wage: W.manager, label: t('{name} müdürü', { name: lbl }), biz: this, fire() { self.manager = false; self.rebuildStaff(); } });
     for (let i = 0; i < this.workers; i++) out.push({ wage: W.worker, label: `${lbl} ${wn}`, biz: this, fire() { self.workers = Math.max(0, self.workers - 1); self.rebuildStaff(); } });
     return out;
   }
@@ -220,7 +221,7 @@ export class Business {
     this.battery = true;
     this.rebuild();
     g.gainXp(Math.floor(b.cost / XP_PER_PURCHASE));
-    g.hud.toast(`🔋 ${this.name}: batarya deposu kuruldu`);
+    g.hud.toast(`🔋 ${t('{name}: batarya deposu kuruldu', { name: this.name })}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -234,7 +235,7 @@ export class Business {
     g.spend(price);
     this.leased = false;
     g.gainXp(Math.floor(price / XP_PER_PURCHASE));
-    g.hud.toast(`🤝 ${this.def.emoji} ${this.name} satın alındı, kira bitti`);
+    g.hud.toast(`🤝 ${this.def.emoji} ${t('{name} satın alındı, kira bitti', { name: this.name })}`);
     g.audio.play('unlock');
     this.updateLabel(true);
     g.save();
@@ -255,7 +256,7 @@ export class Business {
     this.modules++;
     this.rebuild();
     g.gainXp(Math.floor(m.cost / XP_PER_PURCHASE));
-    g.hud.toast(`🏗️ ${this.name}: ${this.modules}. modül eklendi`);
+    g.hud.toast(`🏗️ ${t('{name}: {n}. modül eklendi', { name: this.name, n: this.modules })}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -543,11 +544,11 @@ export class Business {
     const g = this.game;
     let text;
     if (this.owned) text = `${this.def.emoji} ${this.name}${this.leased ? ' 🔑' : ''} · ${this.modules}/${this.maxModules}`;
-    else if (this.seized) text = `${this.def.emoji} 🏦 Bankaya ait`;
-    else if (g.level < this.def.level) text = `${this.def.emoji} ${this.def.owner} · 🔒 Sv.${this.def.level}`;
-    else if (this.missingReq.length) text = `${this.def.emoji} ${this.def.owner} · 🔒 önce tedarikçiler`;
-    else if (this.def.lease) text = `${this.def.emoji} KİRALIK · devir $${this.def.price.toLocaleString('tr-TR')}`;
-    else text = `${this.def.emoji} SATILIK $${this.def.price.toLocaleString('tr-TR')}`;
+    else if (this.seized) text = `${this.def.emoji} 🏦 ${t('Bankaya ait')}`;
+    else if (g.level < this.def.level) text = `${this.def.emoji} ${this.def.owner} · 🔒 ${t('Sv.{n}', { n: this.def.level })}`;
+    else if (this.missingReq.length) text = `${this.def.emoji} ${this.def.owner} · 🔒 ${t('önce tedarikçiler')}`;
+    else if (this.def.lease) text = `${this.def.emoji} ${t('KİRALIK · devir ${n}', { n: num(this.def.price) })}`;
+    else text = `${this.def.emoji} ${t('SATILIK ${n}', { n: num(this.def.price) })}`;
     if (!force && text === this.labelText) return;
     this.labelText = text;
     this.label.material.map?.dispose();
@@ -791,11 +792,11 @@ function moduleMesh(kind, w, d, x, z, alpha, index, model = null) {
     g.add(pad);
     if (alpha >= 1) {
       for (const side of [-1, 1]) {
-        const t = prop(index % 2 ? 'windturbine_low' : 'windturbine_tall');
-        t.scale.setScalar(4.2);
-        t.position.set(side * w / 4, 0, 0);
-        t.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-        g.add(t);
+        const ty = prop(index % 2 ? 'windturbine_low' : 'windturbine_tall');
+        ty.scale.setScalar(4.2);
+        ty.position.set(side * w / 4, 0, 0);
+        ty.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+        g.add(ty);
       }
     }
   } else if (kind === 'garage') {
@@ -814,12 +815,12 @@ function moduleMesh(kind, w, d, x, z, alpha, index, model = null) {
     }
     if (alpha >= 1) {
       for (const [i, side] of [[0, -1], [1, 1]]) {
-        const t = prop(i % 2 ? 'vehicle-truck-red' : 'vehicle-truck-green');
-        t.scale.setScalar(2.2);
-        t.position.set(side * w / 4, 0, 0);
-        t.rotation.y = (index + i) % 2 ? Math.PI : 0;
-        t.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-        g.add(t);
+        const ty = prop(i % 2 ? 'vehicle-truck-red' : 'vehicle-truck-green');
+        ty.scale.setScalar(2.2);
+        ty.position.set(side * w / 4, 0, 0);
+        ty.rotation.y = (index + i) % 2 ? Math.PI : 0;
+        ty.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+        g.add(ty);
       }
     }
   } else {

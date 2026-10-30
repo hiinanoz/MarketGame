@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { Character, makeCrate, CRATE_HEIGHT } from './character.js';
 import { workerBadge } from './actors.js';
 import { prop } from './assets.js';
@@ -122,7 +123,7 @@ export class Online {
     world.addFloor({ minX: A.minX, maxX: A.maxX + 3, minZ: A.minZ - 3.2, maxZ: A.minZ }, s, ['#9aa0a6', '#9aa0a6']);
     g.nav.rebuild();
     this.syncCars();
-    if (!silent) g.hud.toast('🌐 Online sipariş bölümü açıldı — müdür yardımcısı, toplayıcı ve kurye al');
+    if (!silent) g.hud.toast(t('🌐 Online sipariş bölümü açıldı — müdür yardımcısı, toplayıcı ve kurye al'));
   }
 
   /** Kurye sayısı kadar araba. */
@@ -229,7 +230,7 @@ export class Online {
     const el = document.createElement('div');
     el.className = 'overlay sheet-overlay hidden';
     el.id = 'online-panel';
-    el.innerHTML = '<div class="panel holding"><div class="sheet-head"><b>🌐 Online sipariş</b><button class="x" data-close aria-label="Kapat">✕</button></div><div class="online-body"></div></div>';
+    el.innerHTML = `<div class="panel holding"><div class="sheet-head"><b>${t('🌐 Online sipariş')}</b><button class="x" data-close aria-label="${t('Kapat')}">✕</button></div><div class="online-body"></div></div>`;
     el.addEventListener('pointerdown', (e) => e.stopPropagation());
     el.addEventListener('click', (e) => this.onClick(e));
     document.body.appendChild(el);
@@ -254,7 +255,7 @@ export class Online {
     if (e.target.closest('[data-close]')) return this.closePanel(true);
     if (e.target.closest('[data-toggle]')) {
       this.enabled = !this.enabled;
-      g.hud.toast(this.enabled ? '🌐 Online siparişler açıldı' : '🌐 Online siparişler durduruldu');
+      g.hud.toast(this.enabled ? t('🌐 Online siparişler açıldı') : t('🌐 Online siparişler durduruldu'));
     }
     const gd = e.target.closest('[data-guard]');
     if (gd) this.guard = Number(gd.dataset.guard);
@@ -269,28 +270,28 @@ export class Online {
     const body = this.el.querySelector('.online-body');
     const pct = Math.round(this.share * 100);
     const need = [];
-    if (!this.deputy) need.push('🧑‍💻 müdür yardımcısı');
-    if (!this.pickers.length) need.push('🧺 toplayıcı');
-    if (!this.couriers.length) need.push('🛵 kurye');
+    if (!this.deputy) need.push(`🧑‍💻 ${t('müdür yardımcısı')}`);
+    if (!this.pickers.length) need.push(`🧺 ${t('toplayıcı')}`);
+    if (!this.couriers.length) need.push(`🛵 ${t('kurye')}`);
     const pads = [...g.pads.values()].filter((p) => p.def.type.startsWith('online') && p.def.type !== 'online');
     const padRows = pads.map((p) => {
       const l = g.padLabel(p.def);
-      return `<div class="biz-row"><span>${l.emoji} ${l.title}</span>${p.premiumLock ? '<span class="lock">👑 Premium</span>' : p.locked ? `<span class="lock">Sv.${p.def.level}</span>` : `<button data-hire="${p.def.id}" ${g.money < p.remaining ? 'disabled' : ''}>Al $${formatMoney(Math.ceil(p.remaining))}</button>`}</div>`;
+      return `<div class="biz-row"><span>${l.emoji} ${l.title}</span>${p.premiumLock ? `<span class="lock">👑 ${t('Premium')}</span>` : p.locked ? `<span class="lock">${t('Sv.{n}', { n: p.def.level })}</span>` : `<button data-hire="${p.def.id}" ${g.money < p.remaining ? 'disabled' : ''}>${t('Al ${n}', { n: formatMoney(Math.ceil(p.remaining)) })}</button>`}</div>`;
     }).join('');
     const y = this.yesterday;
-    const t = this.today;
+    const td = this.today;
     body.innerHTML = `
-      <div class="biz-row"><span>Durum</span><b>${this.operating ? '🟢 Sipariş alıyor' : this.enabled ? '🔴 Personel eksik' : '⏸️ Durduruldu'}</b><button data-toggle>${this.enabled ? 'Durdur' : 'Başlat'}</button></div>
-      ${need.length ? `<p class="note">Çalışması için en az: ${need.join(', ')}</p>` : ''}
-      <div class="biz-row"><span>👥 Personel</span><b>${this.staffCount}/${ONLINE.fullStaff}</b><small>🧑‍💻 ${this.deputy ? 1 : 0} · 🧺 ${this.pickers.length} · 🛵 ${this.couriers.length}</small></div>
-      <div class="biz-row"><span>📈 Kapasite</span><b>marketin %${pct}'i</b><small>günlük hedef ~${this.target} kasa (market ~${this.refCrates})</small></div>
+      <div class="biz-row"><span>${t('Durum')}</span><b>${this.operating ? t('🟢 Sipariş alıyor') : this.enabled ? t('🔴 Personel eksik') : t('⏸️ Durduruldu')}</b><button data-toggle>${this.enabled ? t('Durdur') : t('Başlat')}</button></div>
+      ${need.length ? `<p class="note">${t('Çalışması için en az: {list}', { list: need.join(', ') })}</p>` : ''}
+      <div class="biz-row"><span>👥 ${t('Personel')}</span><b>${this.staffCount}/${ONLINE.fullStaff}</b><small>🧑‍💻 ${this.deputy ? 1 : 0} · 🧺 ${this.pickers.length} · 🛵 ${this.couriers.length}</small></div>
+      <div class="biz-row"><span>📈 ${t('Kapasite')}</span><b>${t('marketin %{n}\'i', { n: pct })}</b><small>${t('günlük hedef ~{n} kasa (market ~{ref})', { n: this.target, ref: this.refCrates })}</small></div>
       <div class="online-bar"><i style="width:${pct}%"></i></div>
-      <div class="biz-row"><span>📦 Bugün</span><b>${t.orders} sipariş · $${formatMoney(t.revenue)}</b><small>${t.crates} kasa · rafta ${this.rack?.count ?? 0}</small></div>
-      ${y ? `<div class="biz-row"><span>💵 Dün</span><b>$${formatMoney(y.revenue)}</b><small>${y.orders} sipariş</small></div>` : ''}
-      <div class="biz-row"><span>🛡️ Mağazaya bırak</span><span class="seg">${ONLINE.guards.map((v) => `<button data-guard="${v}" class="${v === this.guard ? 'on' : ''}">%${Math.round(v * 100)}</button>`).join('')}</span></div>
-      <p class="note">Toplayıcılar paletlerde bu orandan az stok kalınca o ürünü almaz; market rafları boş kalmaz. Online satılan ürünler depodan düşer.</p>
-      <p class="note"><b>Personel</b> — alanlar bu odanın yanında, Sv.26'dan itibaren her seviyede bir yeni kişi. 10 kişide online ciro marketle aynı.</p>
-      ${padRows || '<p class="note">Şu an alınabilecek personel yok.</p>'}`;
+      <div class="biz-row"><span>📦 ${t('Bugün')}</span><b>${t('{n} sipariş', { n: td.orders })} · $${formatMoney(td.revenue)}</b><small>${t('{n} kasa', { n: td.crates })} · ${t('rafta {n}', { n: this.rack?.count ?? 0 })}</small></div>
+      ${y ? `<div class="biz-row"><span>💵 ${t('Dün')}</span><b>$${formatMoney(y.revenue)}</b><small>${t('{n} sipariş', { n: y.orders })}</small></div>` : ''}
+      <div class="biz-row"><span>🛡️ ${t('Mağazaya bırak')}</span><span class="seg">${ONLINE.guards.map((v) => `<button data-guard="${v}" class="${v === this.guard ? 'on' : ''}">%${Math.round(v * 100)}</button>`).join('')}</span></div>
+      <p class="note">${t('Toplayıcılar paletlerde bu orandan az stok kalınca o ürünü almaz; market rafları boş kalmaz. Online satılan ürünler depodan düşer.')}</p>
+      <p class="note">${t('<b>Personel</b> — alanlar bu odanın yanında, Sv.26\'dan itibaren her seviyede bir yeni kişi. 10 kişide online ciro marketle aynı.')}</p>
+      ${padRows || `<p class="note">${t('Şu an alınabilecek personel yok.')}</p>`}`;
   }
 
   serialize() {
@@ -564,16 +565,16 @@ class Courier extends Character {
         // Araba yolda: kapıdan uzaklaşır, bir süre sonra döner
         const car = this.car;
         const half = ONLINE.away / 2;
-        const t = this.timer;
-        const dist = t < 3 ? t / 3 : t > ONLINE.away - 3 ? Math.max(0, (ONLINE.away - t) / 3) : 1;
+        const ty = this.timer;
+        const dist = ty < 3 ? ty / 3 : ty > ONLINE.away - 3 ? Math.max(0, (ONLINE.away - ty) / 3) : 1;
         car.mesh.position.x = car.home + dist * 40;
         car.mesh.visible = dist < 0.98;
-        if (t >= half && !this.paid) {
+        if (ty >= half && !this.paid) {
           this.paid = true;
           o.delivered(this.order, new THREE.Vector3(ONLINE.gateX, 2.5, A.minZ));
           this.order = [];
         }
-        if (t >= ONLINE.away) {
+        if (ty >= ONLINE.away) {
           car.mesh.position.x = car.home;
           car.mesh.visible = true;
           car.busy = null;

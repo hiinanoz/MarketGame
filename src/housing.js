@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { prop } from './assets.js';
 import { HOUSING, DAY, RENT, XP_PER_PURCHASE, PREMIUM } from './config.js';
 import { textTexture } from './fx.js';
@@ -10,10 +11,10 @@ import { formatMoney } from './hud.js';
 // Kira gelirleri günlük birikir, her 7. günün sonunda kasaya geçer.
 
 const STAGES = [
-  [0, '🧱 Temel'],
-  [0.25, '🏗️ Kaba inşaat'],
-  [0.8, '🏠 Çatı ve boya'],
-  [1, '✅ Bitti'],
+  [0, t('🧱 Temel')],
+  [0.25, t('🏗️ Kaba inşaat')],
+  [0.8, t('🏠 Çatı ve boya')],
+  [1, t('✅ Bitti')],
 ];
 const COLORS = [0xf4d6a0, 0xd9e8f5, 0xf5c6c6, 0xd6efc7, 0xe8dcf5, 0xfbe3b0];
 
@@ -132,7 +133,7 @@ export class Housing {
     g.spend(a.price);
     this.amenities[k] = true;
     g.gainXp(Math.floor(a.price / XP_PER_PURCHASE));
-    g.hud.toast(`${a.emoji} ${a.name} açıldı: kiralar +%${Math.round(a.rentBoost * 100)}`);
+    g.hud.toast(`${a.emoji} ${t('{name} açıldı: kiralar +%{n}', { name: a.name, n: Math.round(a.rentBoost * 100) })}`);
     g.audio.play('unlock');
     this.buildAmenities();
     g.save();
@@ -145,7 +146,7 @@ export class Housing {
     if (this.accountant || g.level < A.level || g.money < A.hire) return false;
     g.spend(A.hire);
     this.accountant = true;
-    g.hud.toast('🟦 Emlak muhasebecisi işe başladı: kiraları her gün tahsil eder, emlakçısız binaları yönetir');
+    g.hud.toast(t('🟦 Emlak muhasebecisi işe başladı: kiraları her gün tahsil eder, emlakçısız binaları yönetir'));
     for (const p of this.plots) this.manage(p);
     g.save();
     return true;
@@ -174,7 +175,7 @@ export class Housing {
     if (this.deed || g.level < HOUSING.deed.level || !this.plots.filter((p) => !p.zoned).every((p) => p.built)) return;
     this.deed = true;
     g.gainXp(HOUSING.deed.xp);
-    g.hud.toast(`📜 Doğu Mahallesi tapusu senin! Kiralar +%${Math.round(HOUSING.deed.rentBoost * 100)}`);
+    g.hud.toast(`📜 ${t('Doğu Mahallesi tapusu senin! Kiralar +%{n}', { n: Math.round(HOUSING.deed.rentBoost * 100) })}`);
     g.audio.play('unlock');
   }
 
@@ -205,7 +206,7 @@ export class Housing {
     g.spend(HOUSING.plotPrice);
     p.owned = true;
     g.gainXp(Math.floor(HOUSING.plotPrice / XP_PER_PURCHASE));
-    g.hud.toast(`📜 Arsa ${i + 1} senin — ev tipini seç`);
+    g.hud.toast(`📜 ${t('Arsa {n} senin — ev tipini seç', { n: i + 1 })}`);
     g.audio.play('unlock');
     this.rebuild(p);
     g.save();
@@ -215,20 +216,20 @@ export class Housing {
   build(i, typeId) {
     const g = this.game;
     const p = this.plots[i];
-    const t = HOUSING.types[typeId];
+    const ty = HOUSING.types[typeId];
     const cost = this.costOf(typeId);
-    if (!p.owned || p.type || !t || g.level < t.level || g.money < cost) return false;
+    if (!p.owned || p.type || !ty || g.level < ty.level || g.money < cost) return false;
     if (!this.canStartBuild) {
-      g.hud.toast(`👑 Aynı anda en fazla ${PREMIUM.builds} inşaat — Premium'da sınırsız`);
+      g.hud.toast(t('👑 Aynı anda en fazla {n} inşaat — Premium\'da sınırsız', { n: PREMIUM.builds }));
       g.audio.play('error');
       return false;
     }
     g.spend(cost);
     p.type = typeId;
     p.progress = 0;
-    p.units = Array.from({ length: t.units }, () => ({ state: 'empty', t: 0 }));
+    p.units = Array.from({ length: ty.units }, () => ({ state: 'empty', t: 0 }));
     g.gainXp(Math.floor(cost / XP_PER_PURCHASE));
-    g.hud.toast(`🏗️ ${t.name} inşaatı başladı (~${Math.ceil(this.buildDays(typeId))} gün)`);
+    g.hud.toast(`🏗️ ${t('{name} inşaatı başladı (~{n} gün)', { name: ty.name, n: Math.ceil(this.buildDays(typeId)) })}`);
     g.audio.play('unlock');
     this.rebuild(p);
     g.save();
@@ -242,7 +243,7 @@ export class Housing {
     g.spend(c.price);
     this.company = true;
     g.gainXp(Math.floor(c.price / XP_PER_PURCHASE));
-    g.hud.toast('🏗️ İnşaat şirketin kuruldu: inşaatlar daha hızlı ve ucuz');
+    g.hud.toast(t('🏗️ İnşaat şirketin kuruldu: inşaatlar daha hızlı ve ucuz'));
     g.audio.play('unlock');
     g.save();
     return true;
@@ -255,7 +256,7 @@ export class Housing {
     if (!p.built || p.agent || g.level < a.level || g.money < a.hire) return false;
     g.spend(a.hire);
     p.agent = true;
-    g.hud.toast('🧑‍💼 Emlakçı işe başladı: kiracı ve tadilatla o ilgilenir (%10 komisyon)');
+    g.hud.toast(t('🧑‍💼 Emlakçı işe başladı: kiracı ve tadilatla o ilgilenir (%10 komisyon)'));
     this.manage(p);
     this.rebuild(p);
     g.save();
@@ -281,7 +282,7 @@ export class Housing {
       u.t = rand(...(p.agent ? HOUSING.agentSearchDays : HOUSING.searchDays));
       n++;
     }
-    if (n) this.game.hud.toast(`📋 ${n} daire kiraya verildi — kiracı aranıyor`);
+    if (n) this.game.hud.toast(`📋 ${t('{n} daire kiraya verildi — kiracı aranıyor', { n })}`);
     this.settleInstant(p);
     this.game.save();
     return n;
@@ -291,17 +292,17 @@ export class Housing {
   renovate(i) {
     const g = this.game;
     const p = this.plots[i];
-    const t = this.type(p);
+    const ty = this.type(p);
     let n = 0;
     for (const u of p.units) {
       if (u.state !== 'dirty') continue;
-      if (g.money < t.renovation) break;
-      g.spend(t.renovation);
+      if (g.money < ty.renovation) break;
+      g.spend(ty.renovation);
       u.state = 'renovating';
       u.t = 1;
       n++;
     }
-    if (n) g.hud.toast(`🔧 ${n} dairede tadilat başladı`);
+    if (n) g.hud.toast(`🔧 ${t('{n} dairede tadilat başladı', { n })}`);
     g.save();
     return n;
   }
@@ -320,11 +321,11 @@ export class Housing {
   agentWork(p, byAccountant = false) {
     if ((!p.agent && !byAccountant) || !p.built) return;
     const g = this.game;
-    const t = this.type(p);
+    const ty = this.type(p);
     for (const u of p.units) {
-      if (u.state === 'dirty' && g.money >= t.renovation) {
-        g.money -= t.renovation;
-        this.today.renovation = (this.today.renovation ?? 0) + t.renovation;
+      if (u.state === 'dirty' && g.money >= ty.renovation) {
+        g.money -= ty.renovation;
+        this.today.renovation = (this.today.renovation ?? 0) + ty.renovation;
         u.state = 'renovating';
         u.t = 1;
       }
@@ -360,7 +361,7 @@ export class Housing {
       p.progress = Math.min(1, p.progress + dt / (this.buildDays(p.type) * DAY.length));
       if (p.progress >= 1) {
         p.built = true;
-        this.game.hud.toast(`🎉 ${this.type(p).emoji} ${this.type(p).name} bitti — kiraya verebilirsin`);
+        this.game.hud.toast(`🎉 ${this.type(p).emoji} ${t('{name} bitti — kiraya verebilirsin', { name: this.type(p).name })}`);
         this.game.audio.play('unlock');
         this.game.gainXp(20);
         this.manage(p);
@@ -379,7 +380,7 @@ export class Housing {
     let left = 0;
     for (const p of this.plots) {
       if (!p.built) continue;
-      const t = this.type(p);
+      const ty = this.type(p);
       for (const u of p.units) {
         if (u.state === 'rented') {
           p.accrued += this.rentOf(p) / RENT.week;
@@ -427,7 +428,7 @@ export class Housing {
     }
     this._today = {};
     if (Object.keys(info).length) today.housing = info;
-    if (left) g.hud.toast(`🚪 ${left} kiracı çıktı — daire tadilat bekliyor`);
+    if (left) g.hud.toast(`🚪 ${t('{n} kiracı çıktı — daire tadilat bekliyor', { n: left })}`);
   }
 
   // ---- Görsel ----
@@ -467,12 +468,12 @@ export class Housing {
   }
 
   labelText(p) {
-    if (!p.owned) return this.game.level < HOUSING.fromLevel ? `🔒 Sv.${HOUSING.fromLevel}` : `📜 $${formatMoney(HOUSING.plotPrice)}`;
-    if (!p.type) return `📜 Arsa ${p.i + 1}`;
-    const t = this.type(p);
-    if (!p.built) return `${t.emoji} 🏗️ %${Math.floor(p.progress * 100)}`;
+    if (!p.owned) return this.game.level < HOUSING.fromLevel ? `🔒 ${t('Sv.{n}', { n: HOUSING.fromLevel })}` : `📜 $${formatMoney(HOUSING.plotPrice)}`;
+    if (!p.type) return `📜 ${t('Arsa {n}', { n: p.i + 1 })}`;
+    const ty = this.type(p);
+    if (!p.built) return `${ty.emoji} 🏗️ %${Math.floor(p.progress * 100)}`;
     const rented = p.units.filter((u) => u.state === 'rented').length;
-    return `${t.emoji} ${rented}/${p.units.length} kirada${p.agent ? ' 🧑‍💼' : ''}`;
+    return `${ty.emoji} ${t('{n}/{max} kirada', { n: rented, max: p.units.length })}${p.agent ? ' 🧑‍💼' : ''}`;
   }
 
   serialize() {
@@ -564,10 +565,10 @@ function houseMesh(type, progress, color) {
     m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     g.add(m);
     // Bahçe süsleri: ağaç ve saksı
-    const t = prop('ks-tree-large');
-    t.scale.setScalar(5);
-    t.position.set(-3.6, 0.1, 3.2);
-    g.add(t);
+    const ty = prop('ks-tree-large');
+    ty.scale.setScalar(5);
+    ty.position.set(-3.6, 0.1, 3.2);
+    g.add(ty);
     const pl = prop('ks-planter');
     pl.scale.setScalar(4);
     pl.position.set(3.2, 0.1, 3.4);
