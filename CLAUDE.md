@@ -1,5 +1,7 @@
 # Market Krallığı (EN: Corner Shop Empire) — geliştirici notları
 
+
+> Kaldığımız yer ve sıradaki işler: `docs/DEVAM.md`.
 - Three.js + Vite, saf JavaScript (ES modülleri), derleme adımı dışında framework yok.
 - Kullanıcıyla Türkçe konuşulur; oyun içi metinler ve kod yorumları Türkçe.
 - Oyun dengesi ve yerleşim `src/config.js` içinde; konum değiştirirken `UnlockPad`, raf alanı (1.75 yarıçap) ve depo alanlarının üst üste binmemesine dikkat et.
