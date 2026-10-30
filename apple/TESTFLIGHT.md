@@ -28,32 +28,21 @@ iç test için App Store Connect → TestFlight → Dahili test grubu → kendin
 
 ## İmza
 
-Otomatik imza arşivde geliştirme profili ister, o da takımda kayıtlı cihaz ister. Bu yüzden iş akışı manuel imza kullanır
-(`apple/ci/asc_signing.py`): App ID'de Game Center ve iCloud yeteneklerini açar, her çalıştırmada geçici bir **App Store**
-profili oluşturup sonunda siler (cihaz gerekmez). Sertifika:
+Xcode'un **bulut yönetimli** otomatik imzası kullanılır; sertifika ve profili Apple yönetir, hiçbir şey oluşturulup
+iptal edilmez ("revoked" e-postası gelmez):
 
-- `SIGN_P12_BASE64` gizli değişkeni varsa **kalıcı** sertifika kullanılır (önerilen).
-- Yoksa her çalıştırmada geçici sertifika açılır ve iptal edilir; Apple her seferinde "null null has revoked your certificate"
-  e-postası gönderir (zararsız, yüklenen derlemeyi etkilemez).
+1. **Arşivle** — geçici (ad-hoc) imzayla: `CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" AD_HOC_CODE_SIGNING_ALLOWED=YES
+   PROVISIONING_PROFILE_SPECIFIER="" DEVELOPMENT_TEAM=<takım>`. (Otomatik imza arşivde geliştirme profili ister, o da kayıtlı cihaz ister.)
+2. **Dışa aktar + yükle** — `xcodebuild -exportArchive` ile `apple/ci/ExportOptions.plist` (`method=app-store-connect`,
+   `destination=upload`, `signingStyle=automatic`) ve `-allowProvisioningUpdates` + API anahtarı bayrakları. Gerçek imza burada:
+   bulut dağıtım sertifikası + otomatik App Store profili.
 
-### Kalıcı imza sertifikası (bir kez, sonra yılda bir)
-
-1. GitHub → Settings → Secrets and variables → Actions → New repository secret
-   → `SIGN_P12_PASSWORD`: uzun, rastgele bir parola (bir yere not etmen gerekmez)
-2. Actions → **iOS imza sertifikası** → Run workflow
-3. Bitince çalıştırmanın sayfasının altındaki **Artifacts** → `dist-cert` indir (zip), içindeki `dist-cert.txt` dosyasını aç
-4. New repository secret → `SIGN_P12_BASE64`: `dist-cert.txt` içeriğinin tamamı
-5. Artifact'i sil (çöp kutusu simgesi; zaten 1 gün sonra kendiliğinden silinir) ve indirilen dosyaları sil
-
-Sertifika 1 yıl geçerli. Süresi dolunca ya da iptal edilirse TestFlight iş akışı bunu söyler; 2–4. adımları tekrarla.
+Durum kontrolü: Actions → **iOS TestFlight durumu** (derlemelerin işlenme durumu, test grupları, davetler; `apple/ci/asc_status.py`).
 
 ## Sorun giderme
 
-- *Dağıtım sertifikası sınırı dolu* → developer.apple.com → Certificates → kullanılmayan bir "Distribution" sertifikasını iptal et
-  (yarıda kesilen bir çalıştırma geçici sertifikayı silemediyse olabilir). Kalıcı sertifikayı (`SIGN_P12_BASE64`) iptal etme.
-- *SIGN_P12_BASE64 açılamadı* → parola değişmiş ya da metin eksik kopyalanmış; "Kalıcı imza sertifikası" 2–4. adımları tekrarla.
 
 - *No profiles for 'com.othinks.cornershopempire'* → Bundle ID bu takımda kayıtlı değil (adım 1).
 - *Missing app record* → App Store Connect'te uygulama kaydı yok (adım 1).
-- *HTTP 403* (sertifika/profil oluştururken) → API anahtarı Admin değil (adım 2).
+- *Cloud signing permission error* → API anahtarı Admin değil (adım 2).
 - *The bundle version must be higher* → normalde olmaz; elle yüklenen bir derleme varsa Actions'ı bir kez daha çalıştır.

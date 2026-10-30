@@ -7,7 +7,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from asc_signing import call  # noqa: E402
+from asc_api import call  # noqa: E402
 
 
 def safe(path):
