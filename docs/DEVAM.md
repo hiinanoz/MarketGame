@@ -17,7 +17,9 @@ Genel kurallar ve sistemler için önce `CLAUDE.md`, App Store adımları için 
 
 ## Sıradaki işler
 
-1. İlk TestFlight yüklemesi: Actions → iOS → Run workflow → "TestFlight'a yükle". Hata olursa günlüğü oku, düzelt.
+1. ✅ İlk TestFlight yüklemesi (30 Ekim, derleme 1.0 (22)). İmza manuel: `apple/ci/asc_signing.py` her çalıştırmada
+   API ile geçici dağıtım sertifikası + App Store profili açar, sonunda siler (otomatik imza kayıtlı cihaz istiyordu).
+   Sıradaki: App Store Connect → TestFlight → dahili test grubu, iPhone'da dene. Uygulama simgesi hâlâ Capacitor varsayılanı.
 2. App Store sayfası: ekran görüntüleri (iPhone 6,9" / 6,5", iPad 13"), TR + EN açıklama, anahtar kelimeler,
    gizlilik bilgileri (veri toplanmıyor), yaş derecelendirmesi, kategori (Games → Simulation / Casual).
    Kullanıcının daha önce Claude Code ile yazdığı App Store Connect yükleme aracı varsa onu kullan.

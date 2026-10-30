@@ -26,9 +26,19 @@ Ya da bir etiket: `git tag ios-v1.0.0 && git push --tags`.
 Derleme numarası her çalıştırmada artar (`github.run_number`). Yükleme bitince 10–30 dakika içinde TestFlight'ta görünür;
 iç test için App Store Connect → TestFlight → Dahili test grubu → kendini ekle → iPhone'daki TestFlight uygulamasından yükle.
 
+## İmza
+
+Otomatik imza arşivde geliştirme profili ister, o da takımda kayıtlı cihaz ister. Bu yüzden iş akışı manuel imza kullanır:
+`apple/ci/asc_signing.py` API anahtarıyla geçici bir **Apple Distribution** sertifikası ve **App Store** profili oluşturur
+(cihaz gerekmez), App ID'de Game Center ve iCloud yeteneklerini açar, iş bitince sertifikayı iptal edip profili siler.
+Apple her çalıştırmada "sertifika iptal edildi" e-postası gönderebilir; yüklenen derlemeyi etkilemez.
+
 ## Sorun giderme
+
+- *Dağıtım sertifikası sınırı dolu* → developer.apple.com → Certificates → kullanılmayan bir "Apple Distribution" sertifikasını iptal et
+  (yarıda kesilen bir çalıştırma geçici sertifikayı silemediyse olabilir; adı "GitHub Actions").
 
 - *No profiles for 'com.othinks.cornershopempire'* → Bundle ID bu takımda kayıtlı değil (adım 1).
 - *Missing app record* → App Store Connect'te uygulama kaydı yok (adım 1).
-- *Cloud signing permission error* → API anahtarı Admin değil (adım 2).
+- *HTTP 403* (sertifika/profil oluştururken) → API anahtarı Admin değil (adım 2).
 - *The bundle version must be higher* → normalde olmaz; elle yüklenen bir derleme varsa Actions'ı bir kez daha çalıştır.
