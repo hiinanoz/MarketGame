@@ -41,7 +41,6 @@ Durum kontrolü: Actions → **iOS TestFlight durumu** (derlemelerin işlenme du
 
 ## Sorun giderme
 
-
 - *No profiles for 'com.othinks.cornershopempire'* → Bundle ID bu takımda kayıtlı değil (adım 1).
 - *Missing app record* → App Store Connect'te uygulama kaydı yok (adım 1).
 - *Cloud signing permission error* → API anahtarı Admin değil (adım 2).
