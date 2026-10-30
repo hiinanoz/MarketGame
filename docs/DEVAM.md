@@ -17,6 +17,8 @@ Genel kurallar ve sistemler için önce `CLAUDE.md`, App Store adımları için 
 
 ## Sıradaki işler
 
+0. **Çeviri** (en, de, es, fr, it, ko, ja) — `i18n` dalında sürüyor; kurallar ve ilerleme: `docs/I18N.md`.
+
 1. ✅ İlk TestFlight yüklemesi (30 Ekim, derleme 1.0 (22)). Arşiv ad-hoc imzayla, dışa aktarma
    Xcode bulut yönetimli otomatik imzayla (sertifika/profil Apple'da; bkz. `apple/TESTFLIGHT.md` → İmza). Durum: Actions → "iOS TestFlight durumu".
    Sıradaki: App Store Connect → TestFlight → dahili test grubu, iPhone'da dene.

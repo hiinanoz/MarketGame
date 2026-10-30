@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { Nav } from './nav.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
@@ -538,7 +539,8 @@ export class Game {
   /** Tabelalarda görünen ad: "<isim> Market" (isimde zaten market/bakkal geçiyorsa eklenmez). */
   get marketTitle() {
     const n = this.marketName || 'Kasaba';
-    return /market|bakkal|mağaza|süpermarket/i.test(n) ? n : `${n} Market`;
+    if (n === 'Kasaba') return t('Kasaba Market'); // varsayılan ad kayıtta Türkçe kalır, gösterimde çevrilir
+    return /market|bakkal|mağaza|süpermarket|shop|store|laden|tienda|magasin|negozio|マート|마트/i.test(n) ? n : t('{name} Market', { name: n });
   }
 
   setMarketName(name, silent = false) {
@@ -1062,8 +1064,8 @@ export class Game {
     this.guide.visible = !near;
     this.pointer.visible = !near;
     if (target && !near) {
-      const t = performance.now() / 1000;
-      this.guide.position.set(target[0], 2.9 + Math.sin(t * 5) * 0.25, target[1]);
+      const now = performance.now() / 1000;
+      this.guide.position.set(target[0], 2.9 + Math.sin(now * 5) * 0.25, target[1]);
       this.guide.rotation.y += dt * 2;
       const ang = Math.atan2(target[0] - p.position.x, target[1] - p.position.z);
       this.pointer.position.set(p.position.x + Math.sin(ang) * 1.4, 0.06, p.position.z + Math.cos(ang) * 1.4);
@@ -1079,8 +1081,8 @@ export class Game {
     this.camera.aspect = aspect;
     // Dikey ekranda dar yatay açı yüzünden daha geniş FOV + uzaklık gerekir.
     this.camera.fov = aspect < 1 ? 50 : 40;
-    const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    this.camDistance = Math.max(8.5 / (t * aspect), 9.5 / t);
+    const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    this.camDistance = Math.max(8.5 / (tanH * aspect), 9.5 / tanH);
     this.camera.updateProjectionMatrix();
   }
 
@@ -1120,8 +1122,8 @@ export class Game {
       const H = window.innerHeight;
       const panel = document.querySelector('.avatar-panel')?.getBoundingClientRect().height ?? H * 0.5;
       const free = Math.max(0.25, (H - panel - 10) / H);
-      const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-      const dist = Math.max(2.6, 2.7 / (2 * t * free), 1.6 / (2 * t * this.camera.aspect));
+      const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+      const dist = Math.max(2.6, 2.7 / (2 * tanH * free), 1.6 / (2 * tanH * this.camera.aspect));
       this.camera.setViewOffset(W, H, 0, Math.round(panel / 2 + 5), W, H);
       this.cameraTarget.set(p.x, 1.05, p.z);
       this.camera.position.set(p.x, 1.55, p.z + dist);

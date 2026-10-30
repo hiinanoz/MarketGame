@@ -2,7 +2,7 @@ import { loadAssets } from './assets.js';
 import { Game } from './game.js';
 import { platform } from './platform.js';
 import { Menus } from './menus.js';
-import { translateDom } from './i18n.js';
+import { translateDom, t, num, dateTime } from './i18n.js';
 
 translateDom(); // index.html'deki sabit metinler (seçili dil Türkçe değilse)
 
@@ -95,7 +95,7 @@ async function start() {
 
 start().catch((err) => {
   console.error(err);
-  bar.parentElement.insertAdjacentHTML('afterend', `<p style="color:#9b2c2c">Yüklenemedi: ${err.message}</p>`);
+  bar.parentElement.insertAdjacentHTML('afterend', `<p style="color:#9b2c2c">${t('Yüklenemedi: {error}', { error: err.message })}</p>`);
 });
 
 /** İki kayıt arasında seçim kartları (cihaz / iCloud). */
@@ -103,8 +103,8 @@ function chooseSave({ device, cloud }) {
   return new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'overlay';
-    const card = (key, title, m) => `<button class="save-card" data-pick="${key}"><b>${title}</b><span>${m.name} · Gün ${m.day} · Sv.${m.level}</span><small>$${m.money.toLocaleString('tr-TR')} · ${m.savedAt ? new Date(m.savedAt).toLocaleString('tr-TR') : 'tarih yok'}</small></button>`;
-    el.innerHTML = `<div class="panel"><h2>Hangi kayıtla devam?</h2><p class="note">Bu cihazdaki kayıt ile iCloud'daki kayıt farklı.</p>${card('device', '📱 Bu cihaz', device)}${card('cloud', '☁️ iCloud', cloud)}</div>`;
+    const card = (key, title, m) => `<button class="save-card" data-pick="${key}"><b>${title}</b><span>${m.name} · ${t('Gün {n}', { n: m.day })} · ${t('Sv.{n}', { n: m.level })}</span><small>$${num(m.money)} · ${m.savedAt ? dateTime(m.savedAt) : t('tarih yok')}</small></button>`;
+    el.innerHTML = `<div class="panel"><h2>${t('Hangi kayıtla devam?')}</h2><p class="note">${t('Bu cihazdaki kayıt ile iCloud\'daki kayıt farklı.')}</p>${card('device', t('📱 Bu cihaz'), device)}${card('cloud', '☁️ iCloud', cloud)}</div>`;
     el.addEventListener('click', (e) => {
       const b = e.target.closest('[data-pick]');
       if (!b) return;
