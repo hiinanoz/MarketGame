@@ -1,4 +1,5 @@
 import { PRODUCTS, GOALS, DAY, BANK, PREMIUM } from './config.js';
+import { t, num } from './i18n.js';
 import { formatMoney } from './hud.js';
 import { confettiBurst } from './celebrate.js';
 
@@ -25,7 +26,7 @@ export class Goals {
     if (n <= 0) return;
     this.gems += n;
     this.game.hud.setGems?.(this.gems);
-    if (from) this.game.hud.toast(`💎 +${n} elmas · ${from}`);
+    if (from) this.game.hud.toast(t('💎 +{n} elmas · {from}', { n, from }));
   }
 
   spendGems(n) {
@@ -92,12 +93,12 @@ export class Goals {
     g.hud.setMoney(g.money);
     this.addGems(this.gemBonus(q.gems));
     g.audio.play('quest');
-    g.hud.toast(`🎯 Görev tamam: ${questText(q)} · +$${formatMoney(q.money)} 💎${this.gemBonus(q.gems)}`);
+    g.hud.toast(`🎯 ${t('Görev tamam: {quest}', { quest: questText(q) })} · +$${formatMoney(q.money)} 💎${this.gemBonus(q.gems)}`);
     confettiBurst(36);
     if (!this.bonusDone && this.quests.every((x) => x.done)) {
       this.bonusDone = true;
       g.later.push({ t: 1.5, fn: () => {
-        this.addGems(GOALS.allQuestsGems, 'günün tüm görevleri');
+        this.addGems(GOALS.allQuestsGems, t('günün tüm görevleri'));
         confettiBurst(60);
       } });
     }
@@ -177,7 +178,7 @@ export class Goals {
       this.pendingParty = [count, gems];
       return;
     }
-    this.game.party.start(`🎉 ${count.toLocaleString('tr-TR')}. müşteri!`, `Herkes kutluyor · 💎 +${gems}`, GOALS.partySeconds);
+    this.game.party.start(`🎉 ${t('{n}. müşteri!', { n: num(count) })}`, `${t('Herkes kutluyor')} · 💎 +${gems}`, GOALS.partySeconds);
   }
 
   // ---- Çevrimdışı kazanç ----
@@ -254,15 +255,15 @@ export function milestoneAt(i) {
 /** Görevin okunur metni. */
 export function questText(q) {
   switch (q.type) {
-    case 'customers': return `${q.target} müşteriye hizmet et`;
-    case 'revenue': return `Bugün $${formatMoney(q.target)} ciro yap`;
-    case 'cash': return `Kasadan ${q.target} kez para topla`;
-    case 'buy': return 'Yeni bir alan satın al';
-    case 'sell': return `${q.target} kasa ${PRODUCTS[q.product].emoji} ${PRODUCTS[q.product].name} sat`;
-    case 'stock': return `Rafa kendin ${q.target} kasa koy`;
-    case 'campaign': return 'Yarın için kampanya hazırla';
-    case 'online': return `${q.target} online sipariş teslim et`;
-    case 'rating': return 'Memnuniyeti 4.5 yıldıza çıkar';
+    case 'customers': return t('{n} müşteriye hizmet et', { n: q.target });
+    case 'revenue': return t('Bugün ${n} ciro yap', { n: formatMoney(q.target) });
+    case 'cash': return t('Kasadan {n} kez para topla', { n: q.target });
+    case 'buy': return t('Yeni bir alan satın al');
+    case 'sell': return t('{n} kasa {product} sat', { n: q.target, product: `${PRODUCTS[q.product].emoji} ${PRODUCTS[q.product].name}` });
+    case 'stock': return t('Rafa kendin {n} kasa koy', { n: q.target });
+    case 'campaign': return t('Yarın için kampanya hazırla');
+    case 'online': return t('{n} online sipariş teslim et', { n: q.target });
+    case 'rating': return t('Memnuniyeti 4.5 yıldıza çıkar');
     default: return q.type;
   }
 }

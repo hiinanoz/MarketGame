@@ -68,7 +68,7 @@ export class Hud {
         const b = e.target.closest('button');
         if (!b) return;
         if (key === 'speed' && !game.speedAllowed(parse(b.dataset.v))) {
-          this.toast(`👑 Sv.${PREMIUM.fastLevel}'den sonra 2× hız Premium'da`);
+          this.toast(t('👑 Sv.{n}\'den sonra 2× hız Premium\'da', { n: PREMIUM.fastLevel }));
           game.audio.play('error');
           return;
         }
@@ -162,11 +162,11 @@ export class Hud {
     if (!this.game.speedAllowed(sp)) sp = 1.5;
     this.speedBtn.classList.toggle('on', sp > 1);
     this.speedBtn.textContent = `${sp}×`;
-    this.speedBtn.title = `Oyun hızı ${sp}× (dokun: değiştir)`;
+    this.speedBtn.title = t('Oyun hızı {n}× (dokun: değiştir)', { n: sp });
   }
 
   syncPaused() {
-    document.getElementById('menu-paused').textContent = this.game.options.background ? '▶️ Oyun arka planda devam ediyor' : '⏸️ Oyun duraklatıldı';
+    document.getElementById('menu-paused').textContent = this.game.options.background ? t('▶️ Oyun arka planda devam ediyor') : t('⏸️ Oyun duraklatıldı');
   }
 
   /** Sv.21+: toplam çalışan sayısı (null: gizle). */
@@ -192,16 +192,16 @@ export class Hud {
   }
 
   setClock(day, time, phase) {
-    const d = `Gün ${day}`;
+    const d = t('Gün {n}', { n: day });
     if (this.clockDay.textContent !== d) this.clockDay.textContent = d;
-    const t = phase === 'open' ? time : phase === 'closing' ? 'Kapanıyor' : `🌙 ${time}`;
-    if (this.clockTime.textContent !== t) this.clockTime.textContent = t;
+    const tm = phase === 'open' ? time : phase === 'closing' ? t('Kapanıyor') : `🌙 ${time}`;
+    if (this.clockTime.textContent !== tm) this.clockTime.textContent = tm;
     this.clockEl.classList.toggle('closed', phase !== 'open');
     this.skipBtn.classList.toggle('hidden', phase !== 'night' || this.summaryOpen);
   }
 
   showSummary(day, st) {
-    document.getElementById('summary-title').textContent = `Gün ${day} bitti`;
+    document.getElementById('summary-title').textContent = t('Gün {n} bitti', { n: day });
     document.getElementById('sum-revenue').textContent = `$${formatMoney(st.revenue)}`;
     document.getElementById('sum-customers').textContent = st.customers;
     document.getElementById('sum-crates').textContent = st.crates;
@@ -209,63 +209,63 @@ export class Hud {
     document.getElementById('sum-angry').textContent = st.angry;
     document.getElementById('sum-stolen').textContent = st.stolen ?? 0;
     const extra = [];
-    if (st.interestPaid) extra.push(`<div class="bad"><span>🏦 Kredi faizi (ödendi)</span><b>−$${formatMoney(st.interestPaid)}</b></div>`);
-    if (st.interestUnpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen faiz borca eklendi (${st.missed}/3)</span><b>$${formatMoney(st.interestUnpaid)}</b></div>`);
-    if (st.seized) extra.push(`<div class="bad"><span>🏦 Banka el koydu: ${st.seized.emoji} ${st.seized.name} (borç kapanınca 💼 tabletten geri al)</span><b>−$${formatMoney(st.seized.price)} borç</b></div>`);
-    if (st.seizeNone) extra.push(`<div class="bad"><span>⚠️ Faiz 3 gündür ödenmiyor — borcunu azalt!</span><b></b></div>`);
-    if (st.online) extra.push(`<div><span>🌐 Online: ${st.online.orders} sipariş · ${st.online.crates} kasa</span><b>+$${formatMoney(st.online.revenue)}</b></div>`);
-    if (st.fine) extra.push(`<div class="bad"><span>🏛️ Belediye cezası: ${st.fine.reason}</span><b>−$${formatMoney(st.fine.amount)}</b></div>`);
+    if (st.interestPaid) extra.push(`<div class="bad"><span>🏦 ${t('Kredi faizi (ödendi)')}</span><b>−$${formatMoney(st.interestPaid)}</b></div>`);
+    if (st.interestUnpaid) extra.push(`<div class="bad"><span>⚠️ ${t('Ödenemeyen faiz borca eklendi ({n}/3)', { n: st.missed })}</span><b>$${formatMoney(st.interestUnpaid)}</b></div>`);
+    if (st.seized) extra.push(`<div class="bad"><span>🏦 ${t('Banka el koydu: {name} (borç kapanınca 💼 tabletten geri al)', { name: `${st.seized.emoji} ${st.seized.name}` })}</span><b>${t('−${n} borç', { n: formatMoney(st.seized.price) })}</b></div>`);
+    if (st.seizeNone) extra.push(`<div class="bad"><span>⚠️ ${t('Faiz 3 gündür ödenmiyor — borcunu azalt!')}</span><b></b></div>`);
+    if (st.online) extra.push(`<div><span>🌐 ${t('Online: {orders} sipariş · {crates} kasa', { orders: st.online.orders, crates: st.online.crates })}</span><b>+$${formatMoney(st.online.revenue)}</b></div>`);
+    if (st.fine) extra.push(`<div class="bad"><span>🏛️ ${t('Belediye cezası: {reason}', { reason: st.fine.reason })}</span><b>−$${formatMoney(st.fine.amount)}</b></div>`);
     if (st.rent) {
-      if (st.rent.market) extra.push(`<div class="bad"><span>🔑 Market kirası (haftalık)</span><b>−$${formatMoney(st.rent.market)}</b></div>`);
-      if (st.rent.biz) extra.push(`<div class="bad"><span>🔑 Kiralık işletmelerin kirası (haftalık)</span><b>−$${formatMoney(st.rent.biz)}</b></div>`);
-      if (st.rent.unpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen kira krediye yazıldı</span><b>$${formatMoney(st.rent.unpaid)}</b></div>`);
+      if (st.rent.market) extra.push(`<div class="bad"><span>🔑 ${t('Market kirası (haftalık)')}</span><b>−$${formatMoney(st.rent.market)}</b></div>`);
+      if (st.rent.biz) extra.push(`<div class="bad"><span>🔑 ${t('Kiralık işletmelerin kirası (haftalık)')}</span><b>−$${formatMoney(st.rent.biz)}</b></div>`);
+      if (st.rent.unpaid) extra.push(`<div class="bad"><span>⚠️ ${t('Ödenemeyen kira krediye yazıldı')}</span><b>$${formatMoney(st.rent.unpaid)}</b></div>`);
     }
     if (st.housing) {
       const h = st.housing;
-      if (h.rent) extra.push(`<div class="good"><span>🏘️ ${h.daily ? 'Kira geliri (muhasebeci günlük tahsil eder)' : 'Haftalık kira geliri'}${h.commission ? ` (emlakçı %10: −$${formatMoney(h.commission)})` : ''}</span><b>+$${formatMoney(h.rent - (h.commission ?? 0))}</b></div>`);
-      if (h.left) extra.push(`<div class="bad"><span>🚪 Kiracısı çıkan daire (tadilat gerekli)</span><b>${h.left}</b></div>`);
-      if (h.renovation) extra.push(`<div class="bad"><span>🔧 Emlakçının yaptırdığı tadilat</span><b>−$${formatMoney(h.renovation)}</b></div>`);
+      if (h.rent) extra.push(`<div class="good"><span>🏘️ ${h.daily ? t('Kira geliri (muhasebeci günlük tahsil eder)') : t('Haftalık kira geliri')}${h.commission ? ` ${t('(emlakçı %10: −${n})', { n: formatMoney(h.commission) })}` : ''}</span><b>+$${formatMoney(h.rent - (h.commission ?? 0))}</b></div>`);
+      if (h.left) extra.push(`<div class="bad"><span>🚪 ${t('Kiracısı çıkan daire (tadilat gerekli)')}</span><b>${h.left}</b></div>`);
+      if (h.renovation) extra.push(`<div class="bad"><span>🔧 ${t('Emlakçının yaptırdığı tadilat')}</span><b>−$${formatMoney(h.renovation)}</b></div>`);
     }
     if (st.finance) {
-      if (st.finance.dividend) extra.push(`<div class="good"><span>📈 Hisse temettüsü</span><b>+$${formatMoney(st.finance.dividend)}</b></div>`);
-      if (st.finance.bank) extra.push(`<div class="good"><span>🏦 Bankanın faiz geliri</span><b>+$${formatMoney(st.finance.bank)}</b></div>`);
+      if (st.finance.dividend) extra.push(`<div class="good"><span>📈 ${t('Hisse temettüsü')}</span><b>+$${formatMoney(st.finance.dividend)}</b></div>`);
+      if (st.finance.bank) extra.push(`<div class="good"><span>🏦 ${t('Bankanın faiz geliri')}</span><b>+$${formatMoney(st.finance.bank)}</b></div>`);
     }
     if (st.politics) {
       const p = st.politics;
-      if (p.sponsor) extra.push(`<div class="bad"><span>⚽ Sponsorluk</span><b>−$${formatMoney(p.sponsor)}</b></div>`);
-      if (p.tax) extra.push(`<div class="good"><span>💰 Belediye vergi geliri</span><b>+$${formatMoney(p.tax)}</b></div>`);
-      if (p.projects) extra.push(`<div class="good"><span>🚌 Şehir projeleri geliri</span><b>+$${formatMoney(p.projects)}</b></div>`);
-      if (p.election) extra.push(`<div class="${p.election.won ? 'good' : 'bad'}"><span>🗳️ Seçim: ${p.election.won ? 'KAZANDIN, belediye başkanısın' : `${p.election.mainName} kazandı`}</span><b>%${p.election.me} – %${p.election.main}</b></div>`);
-      if (p.revolt) extra.push(`<div class="bad"><span>📢 Halk memnun değil: seçimler geri geldi</span><b></b></div>`);
+      if (p.sponsor) extra.push(`<div class="bad"><span>⚽ ${t('Sponsorluk')}</span><b>−$${formatMoney(p.sponsor)}</b></div>`);
+      if (p.tax) extra.push(`<div class="good"><span>💰 ${t('Belediye vergi geliri')}</span><b>+$${formatMoney(p.tax)}</b></div>`);
+      if (p.projects) extra.push(`<div class="good"><span>🚌 ${t('Şehir projeleri geliri')}</span><b>+$${formatMoney(p.projects)}</b></div>`);
+      if (p.election) extra.push(`<div class="${p.election.won ? 'good' : 'bad'}"><span>🗳️ ${p.election.won ? t('Seçim: KAZANDIN, belediye başkanısın') : t('Seçim: {name} kazandı', { name: p.election.mainName })}</span><b>%${p.election.me} – %${p.election.main}</b></div>`);
+      if (p.revolt) extra.push(`<div class="bad"><span>📢 ${t('Halk memnun değil: seçimler geri geldi')}</span><b></b></div>`);
     }
-    if (st.marketWages) extra.push(`<div class="bad"><span>👥 Market çalışanlarının maaşı</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
-    if (st.quit?.length) extra.push(`<div class="bad"><span>😞 Maaşı ödenemeyip ayrılan: ${summarize(st.quit)}</span><b>${st.quit.length}</b></div>`);
-    if (st.interestEarned) extra.push(`<div class="good"><span>🏦 Mevduat faizi</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);
+    if (st.marketWages) extra.push(`<div class="bad"><span>👥 ${t('Market çalışanlarının maaşı')}</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
+    if (st.quit?.length) extra.push(`<div class="bad"><span>😞 ${t('Maaşı ödenemeyip ayrılan: {names}', { names: summarize(st.quit) })}</span><b>${st.quit.length}</b></div>`);
+    if (st.interestEarned) extra.push(`<div class="good"><span>🏦 ${t('Mevduat faizi')}</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);
     for (const c of st.campaigns ?? []) {
       const info = PRODUCTS[c.product];
-      extra.push(`<div><span>📢 ${info.emoji} ${info.name}: satılan / stok</span><b>${c.sold} / ${c.qty}</b></div>`);
-      if (c.unhappy) extra.push(`<div class="bad"><span>😠 ${info.emoji} ürün bulamayan</span><b>${c.unhappy}</b></div>`);
-      if (c.left) extra.push(`<div class="bad"><span>📦 ${info.emoji} kalan stok zararı (${c.left} kasa)</span><b>−$${formatMoney(c.loss)}</b></div>`);
+      extra.push(`<div><span>📢 ${t('{product}: satılan / stok', { product: `${info.emoji} ${info.name}` })}</span><b>${c.sold} / ${c.qty}</b></div>`);
+      if (c.unhappy) extra.push(`<div class="bad"><span>😠 ${t('{product} ürün bulamayan', { product: info.emoji })}</span><b>${c.unhappy}</b></div>`);
+      if (c.left) extra.push(`<div class="bad"><span>📦 ${t('{product} kalan stok zararı ({n} kasa)', { product: info.emoji, n: c.left })}</span><b>−$${formatMoney(c.loss)}</b></div>`);
     }
     if (st.electricity) {
       const e = st.electricity;
-      extra.push(`<div class="${e.bill ? 'bad' : 'good'}"><span>⚡ Elektrik: tüketim ${formatMoney(e.consumption)}, kendi üretimin ${formatMoney(e.own)}</span><b>${e.bill ? `−$${formatMoney(e.bill)}` : 'bedava'}</b></div>`);
-      if (e.unpaid) extra.push(`<div class="bad"><span>⚠️ Ödenemeyen fatura krediye yazıldı</span><b>$${formatMoney(e.unpaid)}</b></div>`);
-      if (e.gridIncome) extra.push(`<div class="good"><span>🔌 Şebekeye satış (${formatMoney(e.surplus)} birim)</span><b>+$${formatMoney(e.gridIncome)}</b></div>`);
-      else if (e.surplus > 0) extra.push(`<div><span>🔌 ${formatMoney(e.surplus)} birim fazla elektrik boşa gitti (santrale muhasebeci al, Sv.35)</span><b></b></div>`);
+      extra.push(`<div class="${e.bill ? 'bad' : 'good'}"><span>⚡ ${t('Elektrik: tüketim {use}, kendi üretimin {own}', { use: formatMoney(e.consumption), own: formatMoney(e.own) })}</span><b>${e.bill ? `−$${formatMoney(e.bill)}` : t('bedava')}</b></div>`);
+      if (e.unpaid) extra.push(`<div class="bad"><span>⚠️ ${t('Ödenemeyen fatura krediye yazıldı')}</span><b>$${formatMoney(e.unpaid)}</b></div>`);
+      if (e.gridIncome) extra.push(`<div class="good"><span>🔌 ${t('Şebekeye satış ({n} birim)', { n: formatMoney(e.surplus) })}</span><b>+$${formatMoney(e.gridIncome)}</b></div>`);
+      else if (e.surplus > 0) extra.push(`<div><span>🔌 ${t('{n} birim fazla elektrik boşa gitti (santrale muhasebeci al, Sv.35)', { n: formatMoney(e.surplus) })}</span><b></b></div>`);
     }
     if (st.holding) {
       const h = st.holding;
-      if (h.freight) extra.push(`<div class="bad"><span>🚚 Dış nakliye (lojistik firman yok)</span><b>−$${formatMoney(h.freight)}</b></div>`);
-      extra.push(`<div class="${h.profit >= 0 ? 'good' : 'bad'}"><span>💼 ${h.count} işletme kârı (maaş $${formatMoney(h.wages)}${h.freight ? ', nakliye' : ''} dahil)</span><b>${h.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(h.profit))}</b></div>`);
+      if (h.freight) extra.push(`<div class="bad"><span>🚚 ${t('Dış nakliye (lojistik firman yok)')}</span><b>−$${formatMoney(h.freight)}</b></div>`);
+      extra.push(`<div class="${h.profit >= 0 ? 'good' : 'bad'}"><span>💼 ${h.freight ? t('{n} işletme kârı (maaş ${wages}, nakliye dahil)', { n: h.count, wages: formatMoney(h.wages) }) : t('{n} işletme kârı (maaş ${wages} dahil)', { n: h.count, wages: formatMoney(h.wages) })}</span><b>${h.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(h.profit))}</b></div>`);
     }
     document.getElementById('sum-extra').innerHTML = extra.join('');
     // Gece çalışmak isteyen çalışanlara ek mesai ödenir
     const ot = this.game.planOvertime();
     const btn = document.getElementById('sum-night');
-    btn.textContent = ot.people ? `🌙 Ek mesai: ${ot.people} çalışan gece çalışsın ($${formatMoney(ot.cost)})` : '🌙 Gece kendin çalış (raf doldur)';
+    btn.textContent = ot.people ? t('🌙 Ek mesai: {n} çalışan gece çalışsın (${cost})', { n: ot.people, cost: formatMoney(ot.cost) }) : t('🌙 Gece kendin çalış (raf doldur)');
     btn.disabled = ot.cost > this.game.money;
-    if (btn.disabled) btn.textContent = `🌙 Ek mesai için para yetmiyor ($${formatMoney(ot.cost)})`;
+    if (btn.disabled) btn.textContent = t('🌙 Ek mesai için para yetmiyor (${cost})', { cost: formatMoney(ot.cost) });
     this.summary.classList.remove('hidden');
     this.summaryOpen = true;
   }
@@ -288,9 +288,9 @@ export class Hud {
   showLevelPop(level, features) {
     const pop = this.lvlPop;
     document.getElementById('lvl-num').textContent = level;
-    document.getElementById('lvl-sub').textContent = level >= 99 ? 'Kasabanın en güçlü ismi oldun!' : `Seviye ${level}'e ulaştın`;
+    document.getElementById('lvl-sub').textContent = level >= 99 ? t('Kasabanın en güçlü ismi oldun!') : t('Seviye {n}\'e ulaştın', { n: level });
     document.getElementById('lvl-list').innerHTML = features.length
-      ? `<b>Yeni açılanlar</b>${features.slice(0, 8).map((f) => `<span>✨ ${f}</span>`).join('')}`
+      ? `<b>${t('Yeni açılanlar')}</b>${features.slice(0, 8).map((f) => `<span>✨ ${f}</span>`).join('')}`
       : '';
     pop.classList.remove('hidden');
     this.game.audio.play('levelup', 1.2);

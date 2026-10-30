@@ -1,4 +1,5 @@
 import { platform, LEADERBOARDS } from './platform.js';
+import { t } from './i18n.js';
 import * as THREE from 'three';
 import { DAY, rushFactor } from './config.js';
 
@@ -61,7 +62,7 @@ export class DayCycle {
       if (this.t >= DAY.length) {
         this.phase = 'closing';
         this.closingT = 0;
-        this.game.hud.toast('🔒 Mağaza kapandı');
+        this.game.hud.toast(t('🔒 Mağaza kapandı'));
       }
     } else if (this.phase === 'closing') {
       // Rafta bekleyenler: elinde ürün varsa kasaya, yoksa çıkışa. Kasadakiler ödeyip çıkar.
@@ -119,7 +120,7 @@ export class DayCycle {
     this.t = 0;
     this.phase = 'open';
     this.today = blankStats();
-    this.game.hud.toast(`☀️ Gün ${this.day} başladı`);
+    this.game.hud.toast(t('☀️ Gün {n} başladı', { n: this.day }));
     this.game.audio.play('bell', 0.7); // dükkân açıldı
     this.game.supply.rollCrisis();
     this.game.ads.startDay();         // reklamlar, belediye denetimi

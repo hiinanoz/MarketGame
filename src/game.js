@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { t } from './i18n.js';
+import { t, num } from './i18n.js';
 import { Nav } from './nav.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
@@ -217,7 +217,7 @@ export class Game {
 
   padLabel(def) {
     // İkinci reyonun ürün çeşidi adı
-    const SECOND_SHELF = { tomato: 'ithal', cheese: 'Gurme', lettuce: 'Yerli', bun: 'Ekşi Maya' };
+    const SECOND_SHELF = { tomato: t('ithal'), cheese: t('Gurme'), lettuce: t('Yerli'), bun: t('Ekşi Maya') };
     switch (def.type) {
       case 'shelf': {
         const sh = SHELVES.find((x) => x.id === def.target);
@@ -225,30 +225,30 @@ export class Game {
         return { title: sh.id === sh.product ? info.name : `${info.name} (${SECOND_SHELF[sh.product] ?? '2'})`, emoji: info.emoji };
       }
       // Alan rafın arkasında kalıyor: üstünde yüzen tabela ile görünür olsun
-      case 'shelfStage': return { title: `Raf ${[8, 16, 24][def.value]}`, emoji: '📶', size: 2.0, marker: `📶 Raf ${[8, 16, 24][def.value]}` };
-      case 'stockerCap': return { title: `Reyon Görevlisi - ${def.value}`, emoji: '🛒' };
-      case 'door': return { title: '2. kapı', emoji: '🚪' };
-      case 'depot': return { title: 'Depo Rafı Büyüt', emoji: '🏭' };
-      case 'cleaner': return { title: 'Temizlik Görevlisi', emoji: '🧹' };
-      case 'manager': return { title: 'Müdür', emoji: '💼' };
-      case 'ads': return def.target === 'billboard' ? { title: 'Reklam panosu', emoji: '🪧' } : { title: 'Reklam Personeli', emoji: '📣' };
-      case 'security': return { title: 'Güvenlik Görevlisi', emoji: '👮' };
-      case 'roadboard': return { title: 'Reklam panosu +%5', emoji: '🪧' };
-      case 'wholesaler': return { title: 'Toptancıyla Sözleşme Yap', emoji: '🏢' };
-      case 'room3': return { title: '3. salon', emoji: '🏗️' };
+      case 'shelfStage': return { title: t('Raf {n}', { n: [8, 16, 24][def.value] }), emoji: '📶', size: 2.0, marker: `📶 ${t('Raf {n}', { n: [8, 16, 24][def.value] })}` };
+      case 'stockerCap': return { title: t('Reyon Görevlisi - {n}', { n: def.value }), emoji: '🛒' };
+      case 'door': return { title: t('2. kapı'), emoji: '🚪' };
+      case 'depot': return { title: t('Depo Rafı Büyüt'), emoji: '🏭' };
+      case 'cleaner': return { title: t('Temizlik Görevlisi'), emoji: '🧹' };
+      case 'manager': return { title: t('Müdür'), emoji: '💼' };
+      case 'ads': return def.target === 'billboard' ? { title: t('Reklam panosu'), emoji: '🪧' } : { title: t('Reklam Personeli'), emoji: '📣' };
+      case 'security': return { title: t('Güvenlik Görevlisi'), emoji: '👮' };
+      case 'roadboard': return { title: t('Reklam panosu +%5'), emoji: '🪧' };
+      case 'wholesaler': return { title: t('Toptancıyla Sözleşme Yap'), emoji: '🏢' };
+      case 'room3': return { title: t('3. salon'), emoji: '🏗️' };
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
-      case 'parking': return { title: def.value === 1 ? 'Otopark' : 'Otopark +6', emoji: '🅿️' };
-      case 'valet': return { title: 'Otopark Görevlisi', emoji: '🦺' };
-      case 'online': return { title: 'Online sipariş', emoji: '🌐', size: 3.0 };
-      case 'onlineDeputy': return { title: 'Müdür yardımcısı', emoji: '🧑‍💻' };
-      case 'onlinePicker': return { title: 'Paket Hazırlama Görevlisi', emoji: '🧺' };
-      case 'onlineCourier': return { title: 'Kurye', emoji: '🛵' };
-      case 'accountant': return { title: 'Muhasebeci', emoji: '🧑‍💼' };
-      case 'cashier': return { title: def.value === 2 ? '2. kasiyer' : 'Kasiyer', emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
-      case 'stocker': return { title: 'Reyon Görevlisi', emoji: '📦' };
-      case 'capacity': return { title: `Taşıma Kapasitesi ${def.value}`, emoji: '💪' };
-      case 'expansion': return { title: 'Genişlet', emoji: '🏗️' };
-      case 'checkout': return { title: 'Yeni kasa', emoji: '🛒' };
+      case 'parking': return { title: def.value === 1 ? t('Otopark') : t('Otopark +6'), emoji: '🅿️' };
+      case 'valet': return { title: t('Otopark Görevlisi'), emoji: '🦺' };
+      case 'online': return { title: t('Online sipariş'), emoji: '🌐', size: 3.0 };
+      case 'onlineDeputy': return { title: t('Müdür yardımcısı'), emoji: '🧑‍💻' };
+      case 'onlinePicker': return { title: t('Paket Hazırlama Görevlisi'), emoji: '🧺' };
+      case 'onlineCourier': return { title: t('Kurye'), emoji: '🛵' };
+      case 'accountant': return { title: t('Muhasebeci'), emoji: '🧑‍💼' };
+      case 'cashier': return { title: def.value === 2 ? t('2. kasiyer') : t('Kasiyer'), emoji: '🧑‍💼', size: def.value === 2 ? 2.0 : 2.6 };
+      case 'stocker': return { title: t('Reyon Görevlisi'), emoji: '📦' };
+      case 'capacity': return { title: t('Taşıma Kapasitesi {n}', { n: def.value }), emoji: '💪' };
+      case 'expansion': return { title: t('Genişlet'), emoji: '🏗️' };
+      case 'checkout': return { title: t('Yeni kasa'), emoji: '🛒' };
       default: return { title: def.id, emoji: '⭐' };
     }
   }
@@ -280,7 +280,7 @@ export class Game {
       const label = this.padLabel(def);
       // Personel alanında günlük maaş da yazsın (işe alım ucuz ama her gün maaş ödenir)
       const role = def.type === 'ads' ? (def.target === 'advertiser' ? 'advertiser' : null) : STAFF_ROLE[def.type];
-      if (role && WAGES[role]) label.title = `${label.title} · $${WAGES[role]}/gün`;
+      if (role && WAGES[role]) label.title = `${label.title} · ${t('${n}/gün', { n: WAGES[role] })}`;
       if (def.type === 'roadboard') def.cost = this.roadboardCost();
       const pad = new UnlockPad(this, def, x, z, label);
       pad.setLocked(def.level > this.level, this.premiumLocked(def));
@@ -337,7 +337,7 @@ export class Game {
         this.accountant = new MarketAccountant(this);
         this.workers.push(this.accountant);
         if (this.savedAccountant) this.accountant.restore(this.savedAccountant);
-        if (!silent) this.hud.toast('🧑‍💼 Muhasebeci işe başladı — muhasebe odasından ayarla');
+        if (!silent) this.hud.toast(t('🧑‍💼 Muhasebeci işe başladı — muhasebe odasından ayarla'));
         break;
       case 'online':
         this.online.build(silent);
@@ -412,7 +412,7 @@ export class Game {
       this.goals.event('buy');
       platform.haptic('LIGHT');
       const l = this.padLabel(def);
-      this.hud.toast(`${l.emoji} ${l.title} açıldı!`);
+      this.hud.toast(`${l.emoji} ${t('{name} açıldı!', { name: l.title })}`);
       this.audio.play('unlock');
       this.save();
     }
@@ -469,8 +469,8 @@ export class Game {
     const bar = document.getElementById('sim-bar');
     const hasCashier = this.workers.some((w) => w.role === 'cashier');
     document.getElementById('sim-note').textContent = hasCashier
-      ? 'Çalışanların gün boyu çalışıyor…'
-      : 'Kasiyerin yok: sen kasada olmadığın için bazı müşteriler ödeme yapamadan çıkabilir.';
+      ? t('Çalışanların gün boyu çalışıyor…')
+      : t('Kasiyerin yok: sen kasada olmadığın için bazı müşteriler ödeme yapamadan çıkabilir.');
     el.classList.remove('hidden');
     el.addEventListener('pointerdown', (e) => e.stopPropagation(), { once: true });
     this.simulating = true;
@@ -492,7 +492,7 @@ export class Game {
       const pp = this.goals.pendingParty;
       if (pp) {
         this.goals.pendingParty = null;
-        this.party.start(`🎉 ${pp[0].toLocaleString('tr-TR')}. müşteri!`, `Herkes kutluyor · 💎 +${pp[1]}`, 8);
+        this.party.start(`🎉 ${t('{n}. müşteri!', { n: num(pp[0]) })}`, `${t('Herkes kutluyor')} · 💎 +${pp[1]}`, 8);
       }
       // Simülasyonda seviye atladıysa kutlama özetten sonra
       const lv = this.hud.pendingLevel;
@@ -524,7 +524,7 @@ export class Game {
     this.decor?.placeItems();
     this.hud.syncSpeed();
     this.hud.syncSpeedSeg?.();
-    this.hud.toast(on ? '👑 Premium açık' : 'Standart sürüm');
+    this.hud.toast(on ? t('👑 Premium açık') : t('Standart sürüm'));
   }
 
   saveOptions() {
@@ -577,7 +577,7 @@ export class Game {
     if (!shelvesEmpty || !depotEmpty || carrying || cash >= cheapest * 3) return;
     if (this.stuckWarnedDay === this.day.day) return;
     this.stuckWarnedDay = this.day.day;
-    this.hud.toast(`🏦 Mal kalmadı, para da yetmiyor: muhasebe odası → Banka'dan kredi çekip sipariş ver (limit $${formatMoney(this.bank.available)})`);
+    this.hud.toast(t('🏦 Mal kalmadı, para da yetmiyor: muhasebe odası → Banka\'dan kredi çekip sipariş ver (limit ${n})', { n: formatMoney(this.bank.available) }));
   }
 
   /** Akşam 19:00: kasa gün sonu ödemelerine yetmiyorsa uyar. */
@@ -587,7 +587,7 @@ export class Game {
     this.dueWarnedDay = d.day;
     const due = this.dueTonight;
     const have = this.money + this.bank.deposit + this.checkouts.reduce((a, c) => a + c.cash.value, 0);
-    if (due > 0 && have < due) this.hud.toast(`⚠️ Gün sonu ödemeler $${Math.round(due)}, kasada $${Math.round(have)} — yetmezse çalışanlar ayrılır`);
+    if (due > 0 && have < due) this.hud.toast(t('⚠️ Gün sonu ödemeler ${due}, kasada ${have} — yetmezse çalışanlar ayrılır', { due: Math.round(due), have: Math.round(have) }));
   }
 
   /** Yol kenarı panosu fiyatı: alınan pano sayısı arttıkça (kalan azaldıkça) iki katına çıkar. */
@@ -645,7 +645,7 @@ export class Game {
     today.quit = quit.map((e) => e.label);
     if (quit.length) {
       this.refreshPads();
-      this.hud.toast(`😞 Maaşı ödenemeyen ${quit.length} çalışan işten ayrıldı`);
+      this.hud.toast(t('😞 Maaşı ödenemeyen {n} çalışan işten ayrıldı', { n: quit.length }));
     }
     this.hud.setMoney(this.money);
   }
@@ -706,7 +706,7 @@ export class Game {
     if (ot.cost > 0) {
       this.spend(ot.cost);
       this.day.today.overtime = ot.cost;
-      this.hud.toast(`💼 Ek mesai: ${ot.people} çalışana $${ot.cost} ödendi`);
+      this.hud.toast(t('💼 Ek mesai: {n} çalışana ${cost} ödendi', { n: ot.people, cost: ot.cost }));
     }
     this.overtime = null;
     return true;
@@ -796,7 +796,7 @@ export class Game {
       const now = performance.now();
       if (!this.lastTurnawayToast || now - this.lastTurnawayToast > 45000) {
         this.lastTurnawayToast = now;
-        this.hud.toast(lot.capacity ? '🚗 Otopark dolu — müşteriler geri döndü' : '🚗 Park yeri yok — müşteriler geri döndü');
+        this.hud.toast(lot.capacity ? t('🚗 Otopark dolu — müşteriler geri döndü') : t('🚗 Park yeri yok — müşteriler geri döndü'));
       }
     }
   }
@@ -905,7 +905,7 @@ export class Game {
       const cheapest = Math.min(...this.depot.regularPallets().map(([k]) => this.supply.costOf(k)));
       if (this.money < cheapest * 3 && this.isBroke()) {
         this.depot.order({ tomato: 6 }, { free: true });
-        this.hud.toast('🎁 Toptancıdan hediye domates!');
+        this.hud.toast(t('🎁 Toptancıdan hediye domates!'));
       }
     }
 
@@ -972,7 +972,7 @@ export class Game {
         if (pal.giveTo(p)) this.timers.supply = 0.12;
         else if (pal.stock === 0 && !this.warnedEmpty) {
           this.warnedEmpty = true;
-          this.hud.toast(`${PRODUCTS[pal.product].emoji} stokta yok — sipariş ver 🚚`);
+          this.hud.toast(`${PRODUCTS[pal.product].emoji} ${t('stokta yok — sipariş ver 🚚')}`);
           this.later.push({ t: 3, fn: () => (this.warnedEmpty = false) });
         }
         break;
@@ -1022,26 +1022,26 @@ export class Game {
       const shelf = this.shelves.find((s) => s.product === carried.product && s.space > 0);
       if (shelf && shelf.space > 0) {
         target = [shelf.x, shelf.z];
-        hint = `Kasaları ${PRODUCTS[carried.product].emoji} reyonuna bırak`;
+        hint = t('Kasaları {product} reyonuna bırak', { product: PRODUCTS[carried.product].emoji });
       }
     }
     if (!target && unserved && this.stats.sold < 400) {
       target = unserved.cashierSpot;
-      hint = 'Kasaya geç, müşterilerden ödeme al 💳';
+      hint = t('Kasaya geç, müşterilerden ödeme al 💳');
     }
     if (!target && cash) {
       target = [cash.cash.x, cash.cash.z];
-      hint = 'Paraları topla 💵';
+      hint = t('Paraları topla 💵');
     }
     const hasCleaner = this.workers.some((w) => w instanceof Cleaner);
     if (!target && !hasCleaner && this.dirt.spots.length > DIRT.tolerated) {
       const sp = this.dirt.nearest(p.position.x, p.position.z);
       target = [sp.x, sp.z];
-      hint = 'Kirli zemin müşterileri kaçırıyor — lekenin üstünde dur 🧽';
+      hint = t('Kirli zemin müşterileri kaçırıyor — lekenin üstünde dur 🧽');
     }
     if (!target && affordable) {
       target = [affordable.x, affordable.z];
-      hint = `${affordable.emoji} ${affordable.title} — üzerinde durarak satın al`;
+      hint = `${affordable.emoji} ${t('{name} — üzerinde durarak satın al', { name: affordable.title })}`;
     }
     if (!target && emptyShelf && emptyShelf.count < emptyShelf.capacity / 2 && !p.full) {
       const pal = this.depot.pallets.get(emptyShelf.product);
@@ -1049,14 +1049,14 @@ export class Game {
         // kampanya standı kuruldu ama stoğu henüz gelmedi
       } else if (pal.stock > 0) {
         target = [pal.x, pal.zoneZ];
-        hint = `Arka depodan ${PRODUCTS[emptyShelf.product].emoji} al`;
+        hint = t('Arka depodan {product} al', { product: PRODUCTS[emptyShelf.product].emoji });
       } else if (!this.depot.incoming(emptyShelf.product)) {
         target = [this.depot.kiosk.x, this.depot.kiosk.z];
-        hint = `${PRODUCTS[emptyShelf.product].emoji} bitti — muhasebe odasından sipariş ver 🧾`;
+        hint = `${PRODUCTS[emptyShelf.product].emoji} ${t('bitti — muhasebe odasından sipariş ver 🧾')}`;
       }
     }
 
-    if (!hint && this.stats.sold < 3) hint = 'Ekrana dokunup sürükleyerek yürü 👆';
+    if (!hint && this.stats.sold < 3) hint = t('Ekrana dokunup sürükleyerek yürü 👆');
     // Oyuncu ilerledikçe ipuçlarını kapat
     this.hud.hint(this.xp < 25 || hint.includes('🧽') ? hint : '');
 

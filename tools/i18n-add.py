@@ -3,6 +3,7 @@
 
   python3 tools/i18n-add.py çeviriler.json
 Girdi: { "Türkçe metin": { "en": "…", "de": "…", "es": "…", "fr": "…", "it": "…", "ko": "…", "ja": "…" }, … }
+   ya da kısa biçim: { "Türkçe metin": ["en", "de", "es", "fr", "it", "ko", "ja"], … }
 """
 import json
 import os
@@ -12,6 +13,7 @@ LANGS = ['en', 'de', 'es', 'fr', 'it', 'ko', 'ja']
 DIR = os.path.join(os.path.dirname(__file__), '..', 'src', 'locales')
 
 new = json.load(open(sys.argv[1], encoding='utf-8'))
+new = {k: dict(zip(LANGS, v)) if isinstance(v, list) else v for k, v in new.items()}
 for lang in LANGS:
     path = os.path.join(DIR, f'{lang}.json')
     d = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
