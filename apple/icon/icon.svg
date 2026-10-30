@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Market Krallığı / Corner Shop Empire — uygulama simgesi (kaynak). PNG: node apple/icon/render.mjs -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3fb4ef"/>
+      <stop offset="1" stop-color="#9be0ff"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd16f"/>
+      <stop offset="1" stop-color="#5aa848"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe680"/>
+      <stop offset="0.55" stop-color="#ffc531"/>
+      <stop offset="1" stop-color="#f29d12"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6e0"/>
+      <stop offset="1" stop-color="#f3dfb6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9f3ff"/>
+      <stop offset="1" stop-color="#9fd6f2"/>
+    </linearGradient>
+    <clipPath id="awningClip">
+      <path d="M180 470 H844 V560 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -72 0 a36 36 0 0 1 -76 0 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Gökyüzü ve çimen -->
+  <rect width="1024" height="1024" fill="url(#sky)"/>
+  <circle cx="160" cy="250" r="54" fill="#fff" opacity="0.85"/>
+  <circle cx="220" cy="232" r="70" fill="#fff" opacity="0.85"/>
+  <circle cx="285" cy="258" r="48" fill="#fff" opacity="0.85"/>
+  <circle cx="800" cy="300" r="44" fill="#fff" opacity="0.8"/>
+  <circle cx="852" cy="284" r="58" fill="#fff" opacity="0.8"/>
+  <circle cx="905" cy="306" r="40" fill="#fff" opacity="0.8"/>
+  <path d="M0 800 Q512 740 1024 800 V1024 H0 Z" fill="url(#grass)"/>
+
+  <!-- Dükkân gövdesi -->
+  <ellipse cx="512" cy="880" rx="360" ry="38" fill="#3f7d33" opacity="0.35"/>
+  <rect x="212" y="420" width="600" height="452" rx="18" fill="url(#wall)"/>
+  <rect x="212" y="842" width="600" height="30" rx="8" fill="#c99a62"/>
+  <!-- Çatı kornişi -->
+  <rect x="190" y="396" width="644" height="52" rx="16" fill="#8a4b2c"/>
+  <rect x="190" y="396" width="644" height="18" rx="9" fill="#a8613b"/>
+
+  <!-- Vitrin: raflarda renkli ürünler -->
+  <rect x="252" y="612" width="300" height="200" rx="14" fill="#7a4a2a"/>
+  <rect x="266" y="626" width="272" height="172" rx="8" fill="url(#glass)"/>
+  <rect x="266" y="700" width="272" height="10" fill="#c98b55"/>
+  <rect x="266" y="780" width="272" height="10" fill="#c98b55"/>
+  <!-- üst raf -->
+  <rect x="284" y="652" width="38" height="48" rx="6" fill="#e8483f"/>
+  <rect x="330" y="664" width="38" height="36" rx="6" fill="#ffb627"/>
+  <rect x="376" y="648" width="34" height="52" rx="6" fill="#3f8fe8"/>
+  <circle cx="436" cy="682" r="18" fill="#f07a2a"/>
+  <circle cx="474" cy="684" r="16" fill="#e8483f"/>
+  <circle cx="508" cy="682" r="18" fill="#7cc46a"/>
+  <!-- alt raf -->
+  <rect x="284" y="736" width="56" height="44" rx="6" fill="#8e5cd6"/>
+  <rect x="350" y="726" width="34" height="54" rx="6" fill="#ffffff"/>
+  <rect x="350" y="726" width="34" height="16" rx="6" fill="#3f8fe8"/>
+  <rect x="394" y="740" width="60" height="40" rx="6" fill="#f2c94c"/>
+  <rect x="464" y="732" width="56" height="48" rx="6" fill="#e8483f"/>
+  <!-- cam parlaması -->
+  <path d="M300 626 L350 626 L290 798 L266 798 L266 700 Z" fill="#fff" opacity="0.28"/>
+
+  <!-- Kapı -->
+  <rect x="598" y="604" width="168" height="252" rx="14" fill="#2f7fd1"/>
+  <rect x="616" y="624" width="132" height="120" rx="10" fill="url(#glass)"/>
+  <path d="M630 624 L668 624 L630 700 Z" fill="#fff" opacity="0.35"/>
+  <rect x="616" y="760" width="132" height="76" rx="8" fill="#2569b2"/>
+  <circle cx="734" cy="752" r="9" fill="#ffd34d"/>
+
+  <!-- Çizgili tente -->
+  <g clip-path="url(#awningClip)">
+    <rect x="180" y="470" width="664" height="140" fill="#ffffff"/>
+    <rect x="180" y="470" width="72" height="140" fill="#e8483f"/>
+    <rect x="324" y="470" width="72" height="140" fill="#e8483f"/>
+    <rect x="468" y="470" width="72" height="140" fill="#e8483f"/>
+    <rect x="612" y="470" width="72" height="140" fill="#e8483f"/>
+    <rect x="756" y="470" width="88" height="140" fill="#e8483f"/>
+    <rect x="180" y="470" width="664" height="20" fill="#000" opacity="0.12"/>
+  </g>
+
+  <!-- Taç -->
+  <g transform="translate(512 250)">
+    <path d="M-190 120 L-214 -60 L-104 20 L0 -120 L104 20 L214 -60 L190 120 Z"
+          fill="url(#gold)" stroke="#c97a0a" stroke-width="12" stroke-linejoin="round"/>
+    <rect x="-200" y="104" width="400" height="52" rx="16" fill="url(#gold)" stroke="#c97a0a" stroke-width="12"/>
+    <circle cx="-214" cy="-66" r="26" fill="#ffd84d" stroke="#c97a0a" stroke-width="10"/>
+    <circle cx="0" cy="-128" r="30" fill="#ffd84d" stroke="#c97a0a" stroke-width="10"/>
+    <circle cx="214" cy="-66" r="26" fill="#ffd84d" stroke="#c97a0a" stroke-width="10"/>
+    <!-- mücevherler -->
+    <circle cx="0" cy="130" r="20" fill="#e8483f"/>
+    <circle cx="-110" cy="130" r="15" fill="#3f8fe8"/>
+    <circle cx="110" cy="130" r="15" fill="#3f8fe8"/>
+    <path d="M0 6 L34 50 L0 94 L-34 50 Z" fill="#4fd1a8" stroke="#2a9e7c" stroke-width="6"/>
+    <path d="M-150 -6 L-120 60" stroke="#fff6c2" stroke-width="14" stroke-linecap="round" opacity="0.7"/>
+  </g>
+</svg>
