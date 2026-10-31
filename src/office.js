@@ -109,6 +109,11 @@ class OfficePanel {
     document.getElementById('bank-sec').addEventListener('click', (e) => this.onBank(e));
     document.getElementById('campaign-sec').addEventListener('click', (e) => this.onCampaign(e));
     document.getElementById('acc-sec').addEventListener('click', (e) => {
+      if (e.target.closest('[data-premium]')) {
+        this.hide(true);
+        this.game.menus?.showPremium();
+        return;
+      }
       const b = e.target.closest('[data-tier]');
       if (b && !b.disabled && this.game.accountant) {
         this.game.accountant.setTier(b.dataset.tier);
@@ -185,7 +190,9 @@ class OfficePanel {
       <div class="acc-tier">
         <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · ${t('günlük ${n}', { n: a.wage })}
         <small>${a.expert ? t('Pazar araştırması yapar: kampanya talebini doğru bilir (az mağdur müşteri, az kalan stok), maaşı karşılanmayacak personeli almaz, akşam ödemelerine göre yedek tutar, tam ihtiyaç kadar kredi çeker.') : t('Ucuz ama tecrübesiz: kampanya stoğunu son kampanyaya bakarak tahmin eder (talep her gün değişir, sık yanılır), personeli parası yettikçe alır, kredi çekerken fazla çeker.')}</small>
-        <button data-tier="${other}" ${other === 'expert' && (this.game.money < T.expert.hire || !this.game.premium) ? 'disabled' : ''}>${other === 'expert' ? `${this.game.premium ? '' : '👑 '}🎓 ${t('Tecrübeli muhasebeciyle değiştir (${hire} · ${wage}/gün)', { hire: T.expert.hire, wage: T.expert.wage })}` : `🧑‍💼 ${t('Stajyere dön (${wage}/gün)', { wage: T.junior.wage })}`}</button>
+        ${other !== 'expert' ? `<button data-tier="junior">🧑‍💼 ${t('Stajyere dön (${wage}/gün)', { wage: T.junior.wage })}</button>`
+          : !this.game.premium ? `<button data-premium class="acc-prem"><span>👑 ${t('Tecrübeli muhasebeci Premium\'a özel')}</span><small>${t('İşe alım ${hire} · maaş ${wage}/gün — dokun, Premium\'u gör', { hire: T.expert.hire, wage: T.expert.wage })}</small></button>`
+          : `<button data-tier="expert" ${this.game.money < T.expert.hire ? 'disabled' : ''}><span>🎓 ${t('Tecrübeli muhasebeciyle değiştir')}</span><small>${this.game.money < T.expert.hire ? t('Para yetmiyor: ${n} gerekli', { n: T.expert.hire }) : t('İşe alım ${hire} · maaş ${wage}/gün', { hire: T.expert.hire, wage: T.expert.wage })}</small></button>`}
       </div>
       <p class="note">${t('<b>Yetkiler</b> — kapattığın işi sen yaparsın.')}</p>
       ${opt('order', t('🚚 Siparişler'), t('Paletler %45 altına inince %85\'e tamamlar'))}

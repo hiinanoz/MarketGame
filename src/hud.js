@@ -20,6 +20,7 @@ export class Hud {
       game.menuOpen = true;
       this.syncSpeedSeg?.();
       this.syncPaused();
+      this.syncFinishBtn();
     });
     document.getElementById('close-menu').addEventListener('click', () => {
       this.menu.classList.add('hidden');
@@ -165,6 +166,15 @@ export class Hud {
     this.speedBtn.title = t('Oyun hızı {n}× (dokun: değiştir)', { n: sp });
   }
 
+  /** "Günü tamamla" düğmesi: standart sürümde günlük hak (Premium sınırsız). */
+  syncFinishBtn() {
+    const g = this.game;
+    const btn = document.getElementById('finish-day');
+    const left = g.finishDaysLeft;
+    btn.textContent = left === Infinity ? t('⏭️ Günü tamamla') : left > 0 ? t('⏭️ Günü tamamla (bugün {n} hak)', { n: left }) : t('⏭️ Günü tamamla · 👑 yarın ya da Premium');
+    btn.classList.toggle('locked', left <= 0);
+  }
+
   syncPaused() {
     document.getElementById('menu-paused').textContent = this.game.options.background ? t('▶️ Oyun arka planda devam ediyor') : t('⏸️ Oyun duraklatıldı');
   }
@@ -273,6 +283,11 @@ export class Hud {
   closeSummary() {
     this.summary.classList.add('hidden');
     this.summaryOpen = false;
+    // Özet açıkken kapanan seviye kartının duraklatması özet kapanınca kalkar (yoksa oyun donmuş kalır)
+    if (this.unpauseAfterSummary) {
+      this.unpauseAfterSummary = false;
+      this.game.paused = false;
+    }
   }
 
   /** Seviye atlama: kutlama kartı (oyun durur). Gün sonu özeti açıksa kapanınca gösterilir. */
@@ -317,7 +332,10 @@ export class Hud {
   closeLevelPop() {
     const pop = this.lvlPop;
     pop.classList.add('hidden');
-    if (pop.dataset.paused === 'yes' && !this.summaryOpen) this.game.paused = false;
+    if (pop.dataset.paused === 'yes') {
+      if (this.summaryOpen) this.unpauseAfterSummary = true;
+      else this.game.paused = false;
+    }
     delete pop.dataset.paused;
     document.getElementById('confetti').innerHTML = '';
   }

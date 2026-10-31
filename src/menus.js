@@ -180,6 +180,7 @@ export class Menus {
       ${row('🏗️', t('Aynı anda inşaat'), String(PREMIUM.builds), t('Sınırsız, %25 hızlı'))}
       ${row('🎨', t('Süs yeri + özel desen'), `${PREMIUM.decorSlots}`, t('10 + 👑 set'))}
       ${row('💎', t('Görev/giriş elması'), '1×', `${PREMIUM.gemFactor}×`)}
+      ${row('⏭️', t('Günü tamamla'), t('{n}/gün', { n: PREMIUM.finishDays }), t('Sınırsız'))}
       <p class="note">${t('Durum: <b>{status}</b> · Premium tek seferlik <b>{price}</b>. Satın alma App Store sürümüyle gelecek.', { status: g.premium ? `👑 ${t('Premium')}` : t('Standart'), price: PREMIUM.price })}</p>
       <button data-ptoggle class="${g.premium ? '' : 'primary'}">${g.premium ? t('Standarda dön (test)') : t('Premium\'u dene (test)')}</button>
       <h4 class="tip-h">💚 ${t('Geliştiriciye teşekkür et')}</h4>

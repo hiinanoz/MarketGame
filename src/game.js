@@ -463,8 +463,26 @@ export class Game {
    * Günü tamamla: günün kalanı arka arkaya simüle edilir (çalışanlar çalışır, sen beklersin),
    * kapanış ve gün sonu özeti normal akıştaki gibi gelir. Ekran donmasın diye kare başına parça parça.
    */
+  /** "Günü tamamla" bugün (gerçek takvim günü) kaç kez kullanılabilir? Premium: sınırsız. */
+  get finishDaysLeft() {
+    if (this.premium) return Infinity;
+    const today = new Date().toDateString();
+    const used = this.stats.finishDate === today ? this.stats.finishCount ?? 0 : 0;
+    return Math.max(0, PREMIUM.finishDays - used);
+  }
+
   finishDay() {
     if (this.simulating || this.day.phase === 'night') return;
+    if (this.finishDaysLeft <= 0) {
+      this.hud.toast(t('👑 Günü tamamla standart sürümde günde {n} kez — Premium\'da sınırsız. Yarın tekrar kullanabilirsin.', { n: PREMIUM.finishDays }));
+      this.audio.play('error');
+      return;
+    }
+    if (!this.premium) {
+      const today = new Date().toDateString();
+      this.stats.finishCount = this.stats.finishDate === today ? (this.stats.finishCount ?? 0) + 1 : 1;
+      this.stats.finishDate = today;
+    }
     const el = document.getElementById('sim-day');
     const bar = document.getElementById('sim-bar');
     const hasCashier = this.workers.some((w) => w.role === 'cashier');
@@ -813,12 +831,13 @@ export class Game {
     let door = [DOOR_X, 4];
     if (shelf.x > ROOM2.minX && this.door2Open) door = [DOOR2_X, 4];
     if (shelf.x < ROOM3.maxX) door = [DOOR3_X, 4];
-    const c = new Customer(this, model, shelf, qty, door, slot);
-    // Yoğun saatlerde bazı yaya müşteriler hırsız
+    // Yoğun saatlerde bazı yaya müşteriler hırsız (siyah giyinir, kapüşonlu)
+    let thief = false;
     if (!slot && this.level >= THEFT.fromLevel) {
       const chance = this.day.rush >= 1.2 ? THEFT.chanceRush : THEFT.chanceNormal;
-      if (Math.random() < chance) c.thief = true;
+      thief = Math.random() < chance;
     }
+    const c = new Customer(this, thief ? 'Rogue_Hooded' : model, shelf, qty, door, slot, { thief });
     this.customers.push(c);
     return c;
   }
@@ -990,9 +1009,12 @@ export class Game {
       }
     }
 
-    // Kaçan hırsıza yetiş
+    // Hırsızı yakala: kaçarken yetişince anında, raflardayken yanında kısa bir süre durunca
     for (const c of this.customers) {
-      if (c.state === 'escaping' && Math.hypot(c.position.x - p.position.x, c.position.z - p.position.z) < THEFT.playerRadius) c.caught();
+      if (!c.thief) continue;
+      const near = Math.hypot(c.position.x - p.position.x, c.position.z - p.position.z) < THEFT.playerRadius;
+      c.catchT = near ? (c.catchT ?? 0) + dt : 0;
+      if (near && (c.state === 'escaping' || c.catchT >= THEFT.playerCatchTime)) c.caught();
     }
 
     // Kir lekesinin üstünde durarak temizle

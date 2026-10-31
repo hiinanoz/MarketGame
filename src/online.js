@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { Character, makeCrate, CRATE_HEIGHT } from './character.js';
 import { workerBadge } from './actors.js';
 import { prop } from './assets.js';
-import { ONLINE, PRODUCTS, WORKER_SPEED } from './config.js';
+import { ONLINE, PRODUCTS, WORKER_SPEED, PREMIUM } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Online sipariş bölümü (Sv.25+): salon 2'nin arkasındaki alan.
@@ -253,6 +253,11 @@ export class Online {
   onClick(e) {
     const g = this.game;
     if (e.target.closest('[data-close]')) return this.closePanel(true);
+    if (e.target.closest('[data-premium]')) {
+      this.closePanel(true);
+      g.menus?.showPremium();
+      return;
+    }
     if (e.target.closest('[data-toggle]')) {
       this.enabled = !this.enabled;
       g.hud.toast(this.enabled ? t('🌐 Online siparişler açıldı') : t('🌐 Online siparişler durduruldu'));
@@ -276,14 +281,14 @@ export class Online {
     const pads = [...g.pads.values()].filter((p) => p.def.type.startsWith('online') && p.def.type !== 'online');
     const padRows = pads.map((p) => {
       const l = g.padLabel(p.def);
-      return `<div class="biz-row"><span>${l.emoji} ${l.title}</span>${p.premiumLock ? `<span class="lock">👑 ${t('Premium')}</span>` : p.locked ? `<span class="lock">${t('Sv.{n}', { n: p.def.level })}</span>` : `<button data-hire="${p.def.id}" ${g.money < p.remaining ? 'disabled' : ''}>${t('Al ${n}', { n: formatMoney(Math.ceil(p.remaining)) })}</button>`}</div>`;
+      return `<div class="biz-row"><span>${l.emoji} ${l.title}</span>${p.premiumLock ? `<button data-premium class="prem-cta">👑 ${t('Premium gerekli')}</button>` : p.locked ? `<span class="lock">${t('Sv.{n}', { n: p.def.level })}</span>` : `<button data-hire="${p.def.id}" ${g.money < p.remaining ? 'disabled' : ''}>${t('Al ${n}', { n: formatMoney(Math.ceil(p.remaining)) })}</button>`}</div>`;
     }).join('');
     const y = this.yesterday;
     const td = this.today;
     body.innerHTML = `
       <div class="biz-row"><span>${t('Durum')}</span><b>${this.operating ? t('🟢 Sipariş alıyor') : this.enabled ? t('🔴 Personel eksik') : t('⏸️ Durduruldu')}</b><button data-toggle>${this.enabled ? t('Durdur') : t('Başlat')}</button></div>
       ${need.length ? `<p class="note">${t('Çalışması için en az: {list}', { list: need.join(', ') })}</p>` : ''}
-      <div class="biz-row"><span>👥 ${t('Personel')}</span><b>${this.staffCount}/${ONLINE.fullStaff}</b><small>🧑‍💻 ${this.deputy ? 1 : 0} · 🧺 ${this.pickers.length} · 🛵 ${this.couriers.length}</small></div>
+      <div class="biz-row"><span>👥 ${t('Personel')}</span><b>${this.staffCount}/${g.premium ? ONLINE.fullStaff : PREMIUM.onlineStaff}</b><small>🧑‍💻 ${this.deputy ? 1 : 0} · 🧺 ${this.pickers.length} · 🛵 ${this.couriers.length}</small></div>
       <div class="biz-row"><span>📈 ${t('Kapasite')}</span><b>${t('marketin %{n}\'i', { n: pct })}</b><small>${t('günlük hedef ~{n} kasa (market ~{ref})', { n: this.target, ref: this.refCrates })}</small></div>
       <div class="online-bar"><i style="width:${pct}%"></i></div>
       <div class="biz-row"><span>📦 ${t('Bugün')}</span><b>${t('{n} sipariş', { n: td.orders })} · $${formatMoney(td.revenue)}</b><small>${t('{n} kasa', { n: td.crates })} · ${t('rafta {n}', { n: this.rack?.count ?? 0 })}</small></div>
@@ -291,6 +296,7 @@ export class Online {
       <div class="biz-row"><span>🛡️ ${t('Mağazaya bırak')}</span><span class="seg">${ONLINE.guards.map((v) => `<button data-guard="${v}" class="${v === this.guard ? 'on' : ''}">%${Math.round(v * 100)}</button>`).join('')}</span></div>
       <p class="note">${t('Toplayıcılar paletlerde bu orandan az stok kalınca o ürünü almaz; market rafları boş kalmaz. Online satılan ürünler depodan düşer.')}</p>
       <p class="note">${t('<b>Personel</b> — alanlar bu odanın yanında, Sv.26\'dan itibaren her seviyede bir yeni kişi. 10 kişide online ciro marketle aynı.')}</p>
+      ${g.premium ? '' : `<p class="note prem-note">👑 ${t('Standart sürümde online bölümünde en fazla {n} kişi çalışır (ciro marketin ~%{pct}\'i). {n2}–{max}. kişiler için Premium gerekir; 10 kişide online ciro marketle aynı olur.', { n: PREMIUM.onlineStaff, pct: Math.round(((PREMIUM.onlineStaff - 2) / (ONLINE.fullStaff - 2)) * 100), n2: PREMIUM.onlineStaff + 1, max: ONLINE.fullStaff })} <button data-premium class="prem-cta">👑 ${t('Premium\'u gör')}</button></p>`}
       ${padRows || `<p class="note">${t('Şu an alınabilecek personel yok.')}</p>`}`;
   }
 

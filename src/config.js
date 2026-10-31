@@ -60,7 +60,8 @@ export const THEFT = {
   chanceRush: 0.09,   // yoğun saatte (yoğunluk ≥ 1.2) gelen müşterinin hırsız olma olasılığı
   chanceNormal: 0.025,
   catchRadius: 4.2,   // güvenlik görevlisinin yakalama mesafesi
-  playerRadius: 1.5,  // oyuncu hırsıza bu kadar yaklaşırsa yakalar
+  playerRadius: 2.2,  // oyuncu hırsızın bu kadar yakınında durursa yakalar
+  playerCatchTime: 0.35, // alışveriş yaparken yakalamak için yanında durma süresi (sn); kaçarken anında
   escaped: -5,        // memnuniyet etkisi
   caught: 1,
 };
@@ -268,6 +269,7 @@ export const PREMIUM = {
   onlineStaff: 6,       // standart: online bölümünde en fazla 6 kişi (ciro ≈ marketin %50'si)
   builds: 2,            // standart: aynı anda en fazla 2 inşaat; Premium sınırsız
   buildSpeed: 0.75,     // Premium: inşaat süresi %25 kısa
+  finishDays: 1,        // standart: gerçek günde 1 kez "Günü tamamla"; Premium sınırsız
   decorSlots: 6,        // standart: mağaza önünde 6 süs yeri (Premium 10)
   gemFactor: 1.5,       // Premium: görev ve giriş ödülünde elmas 1.5 kat
   // Geliştiriciye teşekkür (App Store'da tekrar alınabilen bahşiş ürünleri)
@@ -348,7 +350,7 @@ export const ONLINE = {
   gateX: 26,                      // arka duvardaki kapı (kuryeler buradan çıkar)
   carZ: -30.1,
   carXs: [24.5, 19.5, 14.5, 29.5, 9.5],
-  padSpots: [[18.2, -18.6], [21.2, -18.6], [24.2, -18.6]],
+  padSpots: [[17.6, -21.6], [20.8, -21.6], [24, -21.6]], // duvarın (z −16) arkasında kalmasın diye yukarıda
   rackCap: 60,
   away: 13,                       // kuryenin teslimatta geçirdiği süre (sn)
   fullStaff: 10,                  // bu kadar personelle online ciro ≈ market cirosu

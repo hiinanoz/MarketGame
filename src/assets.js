@@ -163,6 +163,9 @@ function variantMaterial(name, base, look) {
         const o = OUTFIT_COLORS[look.outfit] ?? OUTFIT_COLORS[0];
         col.setHSL(o[0], o[1], THREE.MathUtils.clamp(hsl.l * o[2], 0.25, 0.85));
       }
+    } else if (look === 'thief') {
+      // Hırsız: baştan aşağı siyah (deri hariç), ayrıntılar hafifçe seçilsin
+      col.setHSL(hsl.h, 0.06, THREE.MathUtils.clamp(hsl.l * 0.22, 0.03, 0.14));
     } else if (look === 'uniform') {
       if (hsl.s < 0.12 && (hsl.l > 0.85 || hsl.l < 0.15)) continue; // beyaz/siyah ayrıntılar
       if (hueDeg > 5 && hueDeg < 50 && hsl.s > 0.2) continue;        // saç ve deri tonları

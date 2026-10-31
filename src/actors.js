@@ -34,12 +34,13 @@ export function workerBadge(emoji) {
 // Durumlar: toShelf → atShelf (ürün bekler) → toQueue → inQueue → leaving
 
 export class Customer extends Character {
-  constructor(game, modelName, shelf, qty, entry, slot = null, { waitAt = null } = {}) {
+  constructor(game, modelName, shelf, qty, entry, slot = null, { waitAt = null, thief = false } = {}) {
     super(game, modelName, {
       speed: CUSTOMER_SPEED * (0.9 + Math.random() * 0.25),
       capacity: qty,
-      look: Math.floor(Math.random() * CUSTOMER_LOOKS),
+      look: thief ? 'thief' : Math.floor(Math.random() * CUSTOMER_LOOKS),
     });
+    this.thief = thief;
     this.shelf = shelf;
     this.want = qty;
     this.state = 'toShelf';
@@ -255,9 +256,11 @@ export class Customer extends Character {
     this.goVia([[door[0], door[1] - 1], [door[0], door[1] + 2.5]], tx, STREET_Z + 2, () => this.escaped());
   }
 
-  /** Güvenlik ya da oyuncu yakaladı: kasalar rafa döner. */
+  /** Güvenlik ya da oyuncu yakaladı (kaçarken ya da daha raflardayken): kasalar rafa döner. */
   caught() {
-    if (this.state !== 'escaping') return;
+    if (!this.thief || this.state === 'leaving') return;
+    const escaping = this.state === 'escaping';
+    if (!escaping) this.releaseShelfSpot();
     for (const e of this.stack.splice(0)) {
       const shelf = this.game.shelves.find((s) => s.product === e.product);
       if (shelf && shelf.space > 0) {
@@ -273,7 +276,7 @@ export class Customer extends Character {
       }
     }
     this.thief = false;
-    this.speed /= 1.45;
+    if (escaping) this.speed /= 1.45;
     this.setBubble('😳');
     this.game.rating.add(THEFT.caught);
     this.game.hud.toast(t('👮 Hırsız yakalandı!'));

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { t } from './i18n.js';
 import { prop } from './assets.js';
 import { makeCrate, CRATE_HEIGHT } from './character.js';
-import { PRODUCTS, SHELF_STAGES, MANAGER, zoneOf } from './config.js';
+import { PRODUCTS, SHELF_STAGES, MANAGER, zoneOf, PREMIUM } from './config.js';
 import { makeBill, textTexture } from './fx.js';
 
 // ---- Zemin işaretleri --------------------------------------------------------
@@ -614,7 +614,7 @@ export class UnlockPad {
     ctx.fillText(this.title, w / 2, 150, w - 30);
     ctx.font = 'bold 46px "Trebuchet MS", sans-serif';
     ctx.fillStyle = this.locked ? '#e6e6e6' : '#ffe066';
-    ctx.fillText(this.premiumLock ? `👑 ${t('Premium')}` : this.locked ? `🔒 ${t('Sv.{n}', { n: this.def.level })}` : `$${Math.ceil(this.remaining)}`, w / 2, 202, w - 24);
+    ctx.fillText(this.premiumLock ? `👑 ${t('Premium gerekli')}` : this.locked ? `🔒 ${t('Sv.{n}', { n: this.def.level })}` : `$${Math.ceil(this.remaining)}`, w / 2, 202, w - 24);
     if (this.marker) this.drawMarker();
     // Bekleme halkası: dolunca ödeme başlar
     if (this.dwell > 0 && this.dwell < PAD_DWELL && this.paid < this.cost) {
@@ -674,7 +674,11 @@ export class UnlockPad {
   update(dt, player) {
     const pulse = this.locked ? 1 : 1 + Math.sin(performance.now() / 260) * 0.03;
     this.mesh.scale.set(pulse, pulse, 1);
-    if (this.locked || !this.playerInRange(player.position) || this.game.money <= 0) {
+    // Premium kilidi: üstüne basınca nedenini söyle (her girişte bir kez)
+    const onPad = this.playerInRange(player.position);
+    if (this.premiumLock && onPad && !this.premiumHinted) this.game.hud.toast(t('👑 Standart sürümde online bölümünde en fazla {n} kişi çalışır — bu kişi için Premium gerekli', { n: PREMIUM.onlineStaff }));
+    this.premiumHinted = this.premiumLock && onPad;
+    if (this.locked || !onPad || this.game.money <= 0) {
       this.acc = 0;
       if (this.dwell > 0) {
         this.dwell = 0;
