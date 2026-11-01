@@ -113,7 +113,7 @@ start().catch((err) => {
 function chooseSave({ device, cloud }) {
   return new Promise((resolve) => {
     const el = document.createElement('div');
-    el.className = 'overlay';
+    el.className = 'overlay save-choose'; // yükleme ekranının üstünde olmalı (z-index)
     const card = (key, title, m) => `<button class="save-card" data-pick="${key}"><b>${title}</b><span>${m.name} · ${t('Gün {n}', { n: m.day })} · ${t('Sv.{n}', { n: m.level })}</span><small>$${num(m.money)} · ${m.savedAt ? dateTime(m.savedAt) : t('tarih yok')}</small></button>`;
     el.innerHTML = `<div class="panel"><h2>${t('Hangi kayıtla devam?')}</h2><p class="note">${t('Bu cihazdaki kayıt ile iCloud\'daki kayıt farklı.')}</p>${card('device', t('📱 Bu cihaz'), device)}${card('cloud', '☁️ iCloud', cloud)}</div>`;
     el.addEventListener('click', (e) => {

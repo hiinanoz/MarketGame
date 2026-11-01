@@ -750,3 +750,4 @@ body.in-jail .hud, body.in-jail #joystick, body.in-jail .side-btns { visibility:
 /* Tam ekran masaların (CEO 40, hapis 45) üstünde kalması gerekenler */
 #summary, #lvl-pop, #sim-day, #menu, #home, #final, #intro, #avatar, #loading { z-index: 50; }
 #toast { z-index: 55; }
+.overlay.save-choose { z-index: 80; } /* açılışta iCloud/cihaz kayıt seçimi: yükleme ekranının (50) üstünde */
