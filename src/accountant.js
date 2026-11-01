@@ -1,7 +1,7 @@
 import { Character } from './character.js';
 import { t } from './i18n.js';
 import { workerBadge } from './actors.js';
-import { PRODUCTS, SPECIALS, STAFF_ROLE, WAGES, ACCOUNTANT_TIERS, CAMPAIGN, AD_TYPES, CAMPAIGN_PROMO } from './config.js';
+import { PRODUCTS, specialsAt, STAFF_ROLE, WAGES, ACCOUNTANT_TIERS, CAMPAIGN, AD_TYPES, CAMPAIGN_PROMO } from './config.js';
 
 // Market muhasebecisi (mavi şapka): marketin işlerini takip eder. Her yetki muhasebe odasındaki
 // 🧑‍💼 sekmesinden açılıp kapatılır:
@@ -11,7 +11,7 @@ import { PRODUCTS, SPECIALS, STAFF_ROLE, WAGES, ACCOUNTANT_TIERS, CAMPAIGN, AD_T
 
 // Yatırım (personel dışı) alanları
 const INVEST_TYPES = new Set(['shelf', 'shelfStage', 'stockerCap', 'checkout', 'door',
-  'depot', 'parking', 'expansion', 'room3', 'wholesaler', 'producer']);
+  'depot', 'parking', 'expansion', 'room3', 'room4', 'wholesaler', 'producer']);
 
 /** Bu alan bir çalışan mı işe alıyor? */
 function isStaffPad(def) {
@@ -216,7 +216,7 @@ export class MarketAccountant extends Character {
       const sellRate = r ? r.sold / Math.max(1, r.qty) : 0.8;
       return (p.price - p.cost) * (0.5 + sellRate);
     };
-    const ranked = SPECIALS.filter((k) => !c.isScheduled(k)).sort((a, b) => score(b) - score(a));
+    const ranked = specialsAt(this.game.level).filter((k) => !c.isScheduled(k)).sort((a, b) => score(b) - score(a));
     let budget = (g.money - this.reserve) * (this.expert ? 0.7 : 0.6);
     let made = 0;
     for (const product of ranked) {

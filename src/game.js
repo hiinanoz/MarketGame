@@ -38,7 +38,7 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES, HAIR_CSS } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DAY, DOOR_X, DOOR2_X, DOOR3_X, ROOM3, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
+  DAY, DOOR_X, DOOR2_X, DOOR3_X, DOOR4_X, ROOM3, ROOM4, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -78,7 +78,7 @@ export class Game {
     this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
 
-    this.nav = new Nav({ minX: -50, maxX: 31, minZ: -30, maxZ: 21 });
+    this.nav = new Nav({ minX: -57, maxX: 31, minZ: -30, maxZ: 21 });
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
     // Ayarlar (cihazda saklanır): ses, müzik, 2× hız, menüde arka planda devam
@@ -121,6 +121,7 @@ export class Game {
     this.supply = new Supply(this);
     this.producers = [];
     this.room3Open = false;
+    this.room4Open = false;
     this.later = []; // oyun zamanıyla gecikmeli çağrılar
     this.depot = new Depot(this);
     this.office = new Office(this);
@@ -209,7 +210,7 @@ export class Game {
           ? [co.cashierSpot[0] + 0.4, co.cashierSpot[1] + 3.0]   // 2. kasiyer alanı
           : [co.cashierSpot[0] + 0.3, co.cashierSpot[1] + 5.4];
         // Kasa duvara yakınsa (sağ salon) alan duvarın altında kalmasın: salonun içine çek
-        const room = [ROOM3, ROOM2].find((r) => x > r.minX && x < r.maxX) ?? { minX: -12, maxX: 12 };
+        const room = [ROOM4, ROOM3, ROOM2].find((r) => x > r.minX && x < r.maxX) ?? { minX: -12, maxX: 12 };
         return [THREE.MathUtils.clamp(x, room.minX + 1.6, room.maxX - 1.6), z];
       }
       case 'checkout':
@@ -240,6 +241,7 @@ export class Game {
       case 'roadboard': return { title: t('Reklam panosu +%5'), emoji: '🪧' };
       case 'wholesaler': return { title: t('Toptancıyla Sözleşme Yap'), emoji: '🏢' };
       case 'room3': return { title: t('3. salon'), emoji: '🏗️' };
+      case 'room4': return { title: t('4. salon + Depo 2'), emoji: '🏗️', size: 3.0 };
       case 'producer': return { title: PRODUCERS[def.target].name, emoji: PRODUCERS[def.target].emoji };
       case 'parking': return { title: def.value === 1 ? t('Otopark') : t('Otopark +6'), emoji: '🅿️' };
       case 'valet': return { title: t('Otopark Görevlisi'), emoji: '🦺' };
@@ -383,6 +385,10 @@ export class Game {
       case 'room3':
         this.room3Open = true;
         this.world.openRoom3();
+        break;
+      case 'room4':
+        this.room4Open = true;
+        this.world.openRoom4();
         break;
       case 'producer':
         this.producers.push(new Producer(this, def.target, def.pos[0], def.pos[1]));
@@ -780,6 +786,7 @@ export class Game {
     const d = [[DOOR_X, 4]];
     if (this.door2Open) d.push([DOOR2_X, 4]);
     if (this.room3Open) d.push([DOOR3_X, 4]);
+    if (this.room4Open) d.push([DOOR4_X, 4]);
     return d;
   }
 
@@ -835,6 +842,7 @@ export class Game {
     let door = [DOOR_X, 4];
     if (shelf.x > ROOM2.minX && this.door2Open) door = [DOOR2_X, 4];
     if (shelf.x < ROOM3.maxX) door = [DOOR3_X, 4];
+    if (shelf.x < ROOM4.maxX) door = [DOOR4_X, 4];
     // Yoğun saatlerde bazı yaya müşteriler hırsız (siyah giyinir, kapüşonlu)
     let thief = false;
     if (!slot && this.level >= THEFT.fromLevel) {

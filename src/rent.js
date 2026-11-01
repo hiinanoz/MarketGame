@@ -18,7 +18,7 @@ export class Rent {
     if (this.marketOwned) return 0;
     const g = this.game;
     const M = RENT.market;
-    const rooms = (g.room2Open ? 1 : 0) + (g.room3Open ? 1 : 0);
+    const rooms = (g.room2Open ? 1 : 0) + (g.room3Open ? 1 : 0) + (g.room4Open ? 1 : 0);
     return M.base + rooms * M.room + g.shelves.length * M.shelf + (g.traffic?.lot?.stage ?? 0) * M.parking + (g.depot?.level ?? 0) * M.depot;
   }
 

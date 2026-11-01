@@ -32,7 +32,7 @@ export class Energy {
   get consumption() {
     const g = this.game;
     const E = ELECTRICITY;
-    const rooms = (g.room2Open ? 1 : 0) + (g.room3Open ? 1 : 0);
+    const rooms = (g.room2Open ? 1 : 0) + (g.room3Open ? 1 : 0) + (g.room4Open ? 1 : 0);
     let modules = 0;
     for (const b of g.holding.owned) if (!b.isEnergy) modules += b.modules;
     const market = E.market + rooms * E.perRoom;

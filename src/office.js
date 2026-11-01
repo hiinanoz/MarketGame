@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { t } from './i18n.js';
 import { prop } from './assets.js';
-import { OFFICE, PRODUCTS, SPECIALS, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
+import { OFFICE, PRODUCTS, SPECIALS, specialsAt, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Muhasebe odası: mağazanın arka sağ köşesi. İçeri girince Sipariş / Banka / Kampanya paneli açılır.
@@ -319,7 +319,7 @@ class OfficePanel {
       sec.innerHTML = parts.join('');
       return;
     }
-    const options = SPECIALS.filter((k) => !c.isScheduled(k));
+    const options = specialsAt(this.game.level).filter((k) => !c.isScheduled(k));
     if (!options.includes(this.campaignPick)) this.campaignPick = options[0];
     const cards = options.map((k) => {
       const p = PRODUCTS[k];

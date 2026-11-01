@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { character, animationClips, prop } from './assets.js';
 import { PRODUCTS } from './config.js';
+import { makeGood } from './goods.js';
 
 let capParts = null;
 const TOWN_HAIR = ['#7a4a26', '#2b2522', '#e3b33c', '#b4442a', '#5a3a22'];
@@ -12,7 +13,15 @@ export const CRATE_HEIGHT = 0.36;  // yığında bir katın yüksekliği
 export function makeCrate(productId) {
   const info = PRODUCTS[productId];
   const mesh = prop(info.crate);
-  if (info.item) {
+  if (info.shape) {
+    // Kodla çizilen ürün (salon 4 ve yeni kampanya ürünleri)
+    for (let i = 0; i < 4; i++) {
+      const it = makeGood(info.shape);
+      it.position.set(i % 2 ? 0.42 : -0.42, 0.25, i < 2 ? -0.4 : 0.4);
+      it.rotation.y = (i * Math.PI) / 2;
+      mesh.add(it);
+    }
+  } else if (info.item) {
     // Özel ürün: boş kasanın içinde ürün modelleri
     const n = info.item === 'food_burger' || info.item === 'stew_bowl' ? 2 : 4;
     for (let i = 0; i < n; i++) {

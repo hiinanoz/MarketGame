@@ -12,6 +12,13 @@ export const PRODUCTS = {
   bun:     { name: t('Ekmek'),   emoji: '🍞', crate: 'crate_buns',     cost: 13, price: 33 },
   ham:     { name: t('But'),     emoji: '🍖', crate: 'crate_ham',      cost: 16, price: 40 },
   steak:   { name: t('Biftek'),  emoji: '🥩', crate: 'crate_steak',    cost: 20, price: 50 },
+  // Salon 4 (Sv.38+): kasanın içindeki ürünler kodla çizilir (goods.js → shape), paletleri Depo 2'de
+  milk:      { name: t('Süt'),        emoji: '🥛', crate: 'crate', shape: 'carton',  cost: 22, price: 54 },
+  egg:       { name: t('Yumurta'),    emoji: '🥚', crate: 'crate', shape: 'eggs',    cost: 24, price: 58 },
+  apple:     { name: t('Elma'),       emoji: '🍎', crate: 'crate', shape: 'apple',   cost: 26, price: 62 },
+  juice:     { name: t('Meyve suyu'), emoji: '🧃', crate: 'crate', shape: 'bottle',  cost: 30, price: 72 },
+  chocolate: { name: t('Çikolata'),   emoji: '🍫', crate: 'crate', shape: 'bar',     cost: 34, price: 82 },
+  detergent: { name: t('Deterjan'),   emoji: '🧴', crate: 'crate', shape: 'jug',     cost: 40, price: 95 },
   // Özel ürünler: yalnızca kampanya günlerinde, kampanya standında satılır
   burger:  { name: t('Burger'),      emoji: '🍔', crate: 'crate', item: 'food_burger', cost: 6, price: 18, special: true },
   jam:     { name: t('Reçel'),       emoji: '🍯', crate: 'crate', item: 'jar_A_large', cost: 4, price: 13, special: true },
@@ -23,8 +30,15 @@ export const PRODUCTS = {
   olive:   { name: t('Zeytin'),      emoji: '🫒', crate: 'crate', item: 'jar_D_large', cost: 4, price: 14, special: true },
   mustard: { name: t('Hardal'),      emoji: '🌭', crate: 'crate', item: 'mustard',     cost: 2, price: 8,  special: true },
   pan:     { name: t('Tava seti'),   emoji: '🍳', crate: 'crate', item: 'pan_A',       cost: 12, price: 34, special: true },
+  // Sonradan açılan kampanya ürünleri (level: kampanyada seçilebildiği seviye)
+  pizza:    { name: t('Pizza'),     emoji: '🍕', crate: 'crate', shape: 'pizza',    cost: 10, price: 28, special: true, level: 40 },
+  icecream: { name: t('Dondurma'),  emoji: '🍦', crate: 'crate', shape: 'icecream', cost: 8,  price: 24, special: true, level: 48 },
+  cake:     { name: t('Pasta'),     emoji: '🎂', crate: 'crate', shape: 'cake',     cost: 14, price: 38, special: true, level: 56 },
+  sushi:    { name: t('Suşi seti'), emoji: '🍣', crate: 'crate', shape: 'sushi',    cost: 16, price: 44, special: true, level: 64 },
 };
 export const SPECIALS = Object.keys(PRODUCTS).filter((k) => PRODUCTS[k].special);
+/** Bu seviyede kampanyada seçilebilen özel ürünler. */
+export const specialsAt = (level) => SPECIALS.filter((k) => (PRODUCTS[k].level ?? 0) <= level);
 
 // ---- Seviyeler ----------------------------------------------------------------
 // Ödeme yapıp çıkan her müşteri 1 XP. LEVELS[i] = (i+1). seviyeye ulaşmak için gereken toplam XP.
@@ -125,10 +139,13 @@ export const ROOM1 = { minX: -12, maxX: 12, minZ: -16, maxZ: 4 };
 export const ROOM2 = { minX: 12, maxX: 28, minZ: -16, maxZ: 4 };
 export const DEPOT = { minX: -12, maxX: 12, minZ: -28, maxZ: -16 };
 export const ROOM3 = { minX: -28, maxX: -12, minZ: -16, maxZ: 4 };   // sol salon (Sv.14)
+export const ROOM4 = { minX: -44, maxX: -28, minZ: -16, maxZ: 4 };   // en sol salon (Sv.38)
+export const DEPOT2 = { minX: -44, maxX: -30, minZ: -28, maxZ: -16 }; // salon 4'ün arka deposu (yeni ürünler)
 export const YARD = { minX: -30, maxX: -12, minZ: -30, maxZ: -16 };   // üretimhane bahçesi
 export const DOOR_X = 0;          // ön kapının ortası
 export const DOOR2_X = 20;        // ikinci kapı (satın alınınca)
 export const DOOR3_X = -20;       // üçüncü salonun kapısı
+export const DOOR4_X = -30;       // dördüncü salonun kapısı
 export const STREET_Z = 16;       // müşterilerin geldiği/gittiği yer
 
 // Otopark (mağazanın sol önü). Her yer = bir arabalı müşteri. Yaya müşteri sayısı sınırlı.
@@ -136,6 +153,9 @@ export const PARKING = {
   minX: -31, maxX: -12.5, minZ: 4.8, maxZ: 12.8,
   rowA: 6.6, rowB: 11.0, aisle: 8.8, perRow: 6, spacing: 2.6, entryX: -14,
   extMinX: -47,          // 3. ve 4. aşamada otopark sola doğru büyür
+  deepX: -49.5,          // 5. ve 6. aşama: salon 4'ün solunda, binaya paralel derine giden şerit (koridor x)
+  deepZ: [1.6, -1.0, -3.6, -6.2, -8.8, -11.4], // derin şeritteki park yerlerinin z'si
+  deepSide: 2.8,         // koridordan park yerine uzaklık (5. aşama solda, 6. aşama sağda)
   jamFromSlots: 12,      // bu kadar yerden sonra görevli yoksa girişte tıkanma olur
   jamChance: 0.35,
   jamTime: 5,
@@ -162,6 +182,13 @@ export const SHELVES = [
   { id: 'cheese2',  product: 'cheese',  pos: [-21, -6.5] },
   { id: 'lettuce2', product: 'lettuce', pos: [-25.5, -1.0] },
   { id: 'bun2',     product: 'bun',     pos: [-21, -1.0] },
+  // Dördüncü salon: yeni ürünler
+  { id: 'milk',      product: 'milk',      pos: [-41.5, -11.5] },
+  { id: 'egg',       product: 'egg',       pos: [-37.5, -11.5] },
+  { id: 'apple',     product: 'apple',     pos: [-41.5, -6.5] },
+  { id: 'juice',     product: 'juice',     pos: [-37.5, -6.5] },
+  { id: 'chocolate', product: 'chocolate', pos: [-41.5, -1.0] },
+  { id: 'detergent', product: 'detergent', pos: [-37.5, -1.0] },
 ];
 
 // Reyon kapasite aşamaları: 1. aşama küçük masa, sonra geniş masa.
@@ -171,6 +198,8 @@ export const SHELF_STAGES = [8, 16, 24];
 export const PALLETS = {
   tomato:  [-9, -25.5], carrot: [-5, -25.5], cheese: [-1, -25.5], lettuce: [3, -25.5], onion: [7, -25.5],
   potato:  [-9, -20.5], bun:    [-5, -20.5], ham:    [-1, -20.5], steak:   [3, -20.5],
+  // Depo 2 (salon 4'ün arkası)
+  milk: [-41, -25.5], egg: [-37, -25.5], apple: [-33, -25.5], juice: [-41, -20.5], chocolate: [-37, -20.5], detergent: [-33, -20.5],
 };
 export const SPECIAL_PALLET = [8.5, -20.5]; // kampanya ürününün depo yeri
 export const DEPOT_CAPACITY = [20, 40];  // palet başına kasa (depo yükseltmesiyle 40)
@@ -182,6 +211,7 @@ export const CHECKOUTS = [
   { id: 'checkout1', pos: [8, -3], cashierSpot: [10.1, -4], queueStart: [6.0, -3], cashPile: [8, -0.6] },
   { id: 'checkout2', pos: [25, -4], cashierSpot: [27.0, -5], queueStart: [23.0, -4], cashPile: [25, -1.6] },
   { id: 'checkout3', pos: [-16, -4], cashierSpot: [-13.9, -5], queueStart: [-18.0, -4], cashPile: [-16, -0.6] },
+  { id: 'checkout4', pos: [-32, -4], cashierSpot: [-29.9, -5], queueStart: [-34.0, -4], cashPile: [-32, -0.6] },
 ];
 
 // ---- Satın alınabilenler ------------------------------------------------------------
@@ -246,6 +276,20 @@ export const UNLOCKS = [
   { id: 'parking3',      type: 'parking',   value: 3, cost: 6000, pos: [-38, 8.8], level: 15, requires: ['parking2'] },
   { id: 'parking4',      type: 'parking',   value: 4, cost: 9000, pos: [-38, 8.8], level: 18, requires: ['parking3'] },
   { id: 'stockerCap3',   type: 'stockerCap', value: 10, cost: 1400, pos: [-10.3, -10.6], level: 12, requires: ['stockerCap2'] },
+  // Sv.38+: dördüncü salon, Depo 2 ve yeni ürünler; otopark salonun solunda derine büyür
+  { id: 'room4',         type: 'room4',     cost: 60000, pos: [-25, -13.4], level: 38, requires: ['room3'] },
+  { id: 'checkout4',     type: 'checkout',  target: 'checkout4', cost: 15000, level: 38, requires: ['room4'] },
+  { id: 'cashier4',      type: 'cashier',   target: 'checkout4', cost: 6000,  level: 38, requires: ['checkout4'] },
+  { id: 'cashier4b',     type: 'cashier',   target: 'checkout4', value: 2, cost: 9000, level: 41, requires: ['cashier4'] },
+  { id: 'shelf_milk',    type: 'shelf',     target: 'milk',      cost: 12000, level: 38, requires: ['room4'] },
+  { id: 'shelf_egg',     type: 'shelf',     target: 'egg',       cost: 15000, level: 40, requires: ['shelf_milk'] },
+  { id: 'stocker7',      type: 'stocker',   cost: 9000, pos: [-34.5, -14.2], level: 39, requires: ['stocker6', 'room4'] },
+  { id: 'shelf_apple',   type: 'shelf',     target: 'apple',     cost: 18000, level: 43, requires: ['shelf_egg'] },
+  { id: 'shelf_juice',   type: 'shelf',     target: 'juice',     cost: 22000, level: 47, requires: ['shelf_apple'] },
+  { id: 'shelf_chocolate', type: 'shelf',   target: 'chocolate', cost: 27000, level: 52, requires: ['shelf_juice'] },
+  { id: 'shelf_detergent', type: 'shelf',   target: 'detergent', cost: 33000, level: 57, requires: ['shelf_chocolate'] },
+  { id: 'parking5',      type: 'parking',   value: 5, cost: 20000, pos: [-49.5, -2], level: 40, requires: ['parking4', 'room4'] },
+  { id: 'parking6',      type: 'parking',   value: 6, cost: 30000, pos: [-49.5, -2], level: 45, requires: ['parking5'] },
 ];
 
 // Üretimhaneler: ürettikleri ürünler ve bir kasa üretme süresi (sn). Üretilen mal bedavadır.
@@ -585,6 +629,7 @@ export const GFX = {
 export function zoneOf(x, z) {
   if (z < -16) return x > 12 ? 'online' : 'depot';
   if (x > 12) return 'room2';
+  if (x < -28) return 'room4';
   if (x < -12) return 'room3';
   return 'room1';
 }

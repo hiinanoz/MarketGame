@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { t, upper } from './i18n.js';
 import { prop } from './assets.js';
-import { ROOM1, ROOM2, ROOM3, DEPOT, YARD, DOOR_X, DOOR2_X, DOOR3_X, BACK_ROAD_Z } from './config.js';
+import { ROOM1, ROOM2, ROOM3, ROOM4, DEPOT, DEPOT2, YARD, DOOR_X, DOOR2_X, DOOR3_X, DOOR4_X, BACK_ROAD_Z } from './config.js';
 
 // Statik çevre: çimen, yol, mağaza zemini, duvarlar, dekor. Çarpışma kutularını nav'a kaydeder.
 
@@ -19,6 +19,11 @@ export class World {
     this.scene.add(this.room3);
     this.room3Walls = [];
     this.room3Openings = [];
+    this.room4 = new THREE.Group();
+    this.room4.visible = false;
+    this.scene.add(this.room4);
+    this.room4Walls = [];
+    this.room4Openings = []; // salon 3'ün sol duvarında, salon 4 açılınca kalkan parçalar
     this.dividerWalls = []; // salonlar arasındaki, genişlemede kaldırılacak duvarlar
     this.build();
   }
@@ -85,9 +90,11 @@ export class World {
     }
     // 3. salon duvarları (açılınca devreye girer)
     for (let z = ROOM3.minZ + 2; z < ROOM3.maxZ; z += 4) {
-      this.addWall('wall', ROOM3.minX, z, Math.PI / 2, this.room3, null);
+      const w = this.addWall('wall', ROOM3.minX, z, Math.PI / 2, this.room3, null);
       this.room3Walls.push({ id: `w3l${z}`, box: wallBox(ROOM3.minX, z, Math.PI / 2) });
+      if (z === -10 || z === -6) this.room4Openings.push({ mesh: w, id: `w3l${z}` });
     }
+    this.buildRoom4();
     for (let x = ROOM3.minX + 2; x < ROOM3.maxX; x += 4) {
       this.addWall('wall_window_closed', x, ROOM3.minZ, 0, this.room3, null);
       this.room3Walls.push({ id: `w3b${x}`, box: wallBox(x, ROOM3.minZ, 0) });
@@ -174,7 +181,9 @@ export class World {
       if (x > 54 && z > -34 && z < 14) continue; // doğu mahallesi arsaları
       if (x < -50 && z > -40 && z < 14) continue; // şehir merkezi (medya, kamu binaları) // tedarik vadisi arsaları
       if (z > 12 || (z > BACK_ROAD_Z - 4 && z < BACK_ROAD_Z + 4)) continue; // yollar
-      this.addTree(x, z, 0.8 + rng() * 0.7, rng);
+      // Salon 4, Depo 2 ve derin otoparkın yeri: bu ağaçlar salon 4 açılınca kalkar
+      const r4 = x > -57 && x < -28 && z > -32 && z < 4;
+      this.addTree(x, z, 0.8 + rng() * 0.7, rng, false, r4 ? this.room4Trees : this.scene);
     }
     // 3. salonun yeri: açılana kadar çalılık ve ağaçlar
     this.room3Trees = new THREE.Group();
@@ -435,6 +444,53 @@ export class World {
       nav.boxes.delete(w.id);
     }
     for (const w of this.room3Walls) nav.boxes.set(w.id, w.box);
+    nav.rebuild();
+  }
+
+  /** Salon 4 + arkasındaki Depo 2 (Sv.38). Açılana kadar görünmez, bölge yürünemez ve yerinde ağaçlar durur. */
+  buildRoom4() {
+    const g = this.room4;
+    const nav = this.game.nav;
+    this.shopFloors.push(this.addFloor(ROOM4, g, ['#f1ecf6', '#e5ddee']));
+    this.addFloor(DEPOT2, g, ['#c9ccd1', '#bfc3c9']);
+    this.addPath(DOOR4_X, g);
+    const wall = (name, x, z, rot, id, low = 1) => {
+      this.addWall(name, x, z, rot, g, null, low);
+      this.room4Walls.push({ id, box: wallBox(x, z, rot) });
+    };
+    // Salon 4: sol duvar, arka duvar (ortada depoya geçiş), ön alçak duvar (kapı boşluklu)
+    for (let z = ROOM4.minZ + 2; z < ROOM4.maxZ; z += 4) wall('wall', ROOM4.minX, z, Math.PI / 2, `w4l${z}`);
+    for (let x = ROOM4.minX + 2; x < ROOM4.maxX; x += 4) {
+      if (Math.abs(x + 38) > 0.1) wall('wall', x, ROOM4.minZ, 0, `w4b${x}`, 0.28);
+      if (Math.abs(x - DOOR4_X) < 2.1) continue;
+      wall('wall', x, ROOM4.maxZ, 0, `w4f${x}`, 0.28);
+    }
+    // Depo 2: yanlar yüksek, arka alçak (kamyon görünsün)
+    for (let z = DEPOT2.minZ + 2; z < DEPOT2.maxZ; z += 4) {
+      wall('wall', DEPOT2.minX, z, Math.PI / 2, `d2l${z}`);
+      wall('wall', DEPOT2.maxX, z, Math.PI / 2, `d2r${z}`);
+    }
+    for (let x = DEPOT2.minX + 2; x < DEPOT2.maxX; x += 4) wall('wall', x, DEPOT2.minZ, 0, `d2b${x}`, 0.28);
+    nav.setBox('room4-block', { minX: ROOM4.minX - 1, maxX: ROOM4.maxX - 0.3, minZ: DEPOT2.minZ, maxZ: ROOM4.maxZ + 0.3 });
+    // Açılana kadar alanda ağaçlar
+    const rng = mulberry(4242);
+    this.room4Trees = new THREE.Group();
+    this.scene.add(this.room4Trees);
+    for (let i = 0; i < 16; i++) this.addTree(-43 + rng() * 14, -26 + rng() * 28, 0.7 + rng() * 0.4, rng, false, this.room4Trees);
+  }
+
+  openRoom4() {
+    this.room4.visible = true;
+    this.room4Trees.visible = false;
+    const nav = this.game.nav;
+    nav.boxes.delete('room4-block');
+    for (const w of this.room4Openings) {
+      w.mesh.visible = false;
+      nav.boxes.delete(w.id);
+    }
+    const open = new Set(this.room4Openings.map((w) => w.id));
+    this.room3Walls = this.room3Walls.filter((w) => !open.has(w.id)); // salon 3 yeniden açılırsa geri gelmesin
+    for (const w of this.room4Walls) nav.boxes.set(w.id, w.box);
     nav.rebuild();
   }
 

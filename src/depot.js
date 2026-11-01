@@ -1,12 +1,15 @@
 import * as THREE from 'three';
 import { t } from './i18n.js';
 import { Pallet } from './stations.js';
-import { PRODUCTS, PALLETS, SPECIAL_PALLET, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z, LOGISTICS } from './config.js';
+import { PRODUCTS, PALLETS, SPECIAL_PALLET, DEPOT_CAPACITY, TRUCK_CAPACITY, BACK_ROAD_Z, LOGISTICS, DEPOT2 } from './config.js';
 
 // Arka depo: ürün paletleri, sipariş noktası, sipariş paneli ve toptancı kamyonları.
 
 const TRUCK_SPEED = 16;
 const DOCK_X = 0;
+const DOCK2_X = (DEPOT2.minX + DEPOT2.maxX) / 2; // Depo 2'nin arkası: kamyon önce burada durur
+/** Paleti Depo 2'de olan ürün mü? */
+const inDepot2 = (product) => (PALLETS[product]?.[0] ?? 0) < DEPOT2.maxX;
 const LANE_Z = BACK_ROAD_Z + 1.2;
 
 export class Depot {
@@ -98,14 +101,16 @@ export class Depot {
       this.game.spend(total, new THREE.Vector3(this.kiosk.x, 0, this.kiosk.z));
       for (const p of new Set(cargo)) this.game.supply.ordered(p, cargo.filter((c) => c === p).length);
     }
-    // Yolda gelen kamyon varsa ona yükle, yoksa yeni kamyon
-    let truck = this.trucks.find((tr) => tr.state === 'arriving' && tr.cargo.length < TRUCK_CAPACITY);
+    // Yolda gelen kamyon varsa ona yükle (Depo 2 ürünü, Depo 2'yi geçmiş kamyona yüklenmez), yoksa yeni kamyon
+    const fits = (tr, product) => tr.state === 'arriving' && tr.cargo.length < TRUCK_CAPACITY && !(tr.passedDock2 && inDepot2(product));
     while (cargo.length) {
-      if (!truck || truck.cargo.length >= TRUCK_CAPACITY) {
+      const product = cargo.shift();
+      let truck = this.trucks.find((tr) => fits(tr, product));
+      if (!truck) {
         truck = new Truck(this.game, this, this.trucks.length * -14);
         this.trucks.push(truck);
       }
-      truck.cargo.push(cargo.shift());
+      truck.cargo.push(product);
     }
     this.game.audio.play('cash');
     return total;
@@ -221,19 +226,29 @@ class Truck {
   update(dt) {
     const p = this.mesh.position;
     if (this.state === 'arriving') {
-      // Rampaya yaklaşınca yavaşla
-      const d = DOCK_X - p.x;
+      // Depo 2 ürünü varsa önce Depo 2 rampası, sonra ana rampa; yaklaşınca yavaşla
+      const dock2 = !this.passedDock2 && this.cargo.some(inDepot2);
+      const dockX = dock2 ? DOCK2_X : DOCK_X;
+      const d = dockX - p.x;
       const v = Math.min(TRUCK_SPEED * this.depot.speedFactor, Math.max(3, d * 1.5));
-      p.x = Math.min(DOCK_X, p.x + v * dt);
-      if (p.x >= DOCK_X - 0.01) {
+      p.x = Math.min(dockX, p.x + v * dt);
+      if (p.x >= DOCK2_X - 0.01) this.passedDock2 = true;
+      if (p.x >= dockX - 0.01) {
         this.state = 'unloading';
+        this.atDock2 = dock2;
         this.timer = 0.3;
       }
     } else if (this.state === 'unloading') {
       this.timer -= dt;
       if (this.timer <= 0) {
         this.timer = 0.07;
-        const product = this.cargo.shift();
+        // Depo 2 rampasında yalnızca oranın ürünleri; bitince ana rampaya devam
+        const i = this.atDock2 ? this.cargo.findIndex(inDepot2) : 0;
+        if (this.atDock2 && i < 0) {
+          this.state = this.cargo.length ? 'arriving' : 'leaving';
+          return;
+        }
+        const product = this.cargo.splice(i, 1)[0];
         if (product) {
           const pallet = this.depot.pallets.get(product);
           const from = new THREE.Vector3(p.x - 1.2, 3.1, p.z);

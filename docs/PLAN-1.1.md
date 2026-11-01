@@ -10,7 +10,7 @@ test edilir, TestFlight'a gider. Kararı beklenen yerler **[KARAR]** ile işaret
 
 ---
 
-## Aşama 0 — Hızlı düzeltmeler ve ısınma (1–2 gün)
+## Aşama 0 — Hızlı düzeltmeler ve ısınma ✅
 
 | # | İş | Not |
 |---|---|---|
@@ -46,7 +46,7 @@ geometriye birleştirme (draw call azaltma) olur; yerel yeniden yazım ancak en 
 
 ---
 
-## Aşama 1 — Seviye atlamada reklam (standart sürüm) **[KARAR]**
+## Aşama 1 — Seviye atlamada reklam (standart sürüm) ⏸️ AdMob kimlikleri bekleniyor
 
 İstenen: standart kullanıcıya her seviye geçişinde bir reklam; Premium reklamsız.
 
@@ -67,7 +67,7 @@ Seçenekler:
 
 ---
 
-## Aşama 2 — Market büyümesi, yeni ürünler, otopark **[KARAR]**
+## Aşama 2 — Market büyümesi, yeni ürünler, otopark ✅ (Öneri A + Depo 2 uygulandı)
 
 Mevcut yerleşim: Salon 1 (orta), Salon 2 (sağ), Salon 3 (sol, Sv.14). Otopark binanın önünde solda,
 4. aşamada yola paralel sola uzanıyor. Binanın solunda (x −28'in solu) boş alan var.

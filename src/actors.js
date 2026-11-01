@@ -612,6 +612,7 @@ export class Manager extends Character {
     const out = [{ zone: 'room1', pos: [0, -3.8] }, { zone: 'depot', pos: [-2, -18.5] }];
     if (g.unlocked.has('expansion')) out.push({ zone: 'room2', pos: [19, -3.8] });
     if (g.unlocked.has('room3')) out.push({ zone: 'room3', pos: [-19, -3.8] });
+    if (g.unlocked.has('room4')) out.push({ zone: 'room4', pos: [-35, -3.8] });
     if (g.online?.built) out.push({ zone: 'online', pos: [20, -20.5] });
     return out;
   }

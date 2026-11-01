@@ -147,6 +147,7 @@ export class ParkingLot {
 
   buildRow(stage) {
     const L = PARKING;
+    if (stage >= 5) return this.buildDeep(stage);
     if (stage === 1 || stage === 3) {
       const x0 = stage === 1 ? L.minX : L.extMinX;
       const x1 = stage === 1 ? L.maxX : L.minX;
@@ -180,6 +181,39 @@ export class ParkingLot {
     }
   }
 
+  /** 5. ve 6. aşama: salon 4'ün solunda, binaya paralel derin şerit (yola cephesi yok, giriş ön otoparktan). */
+  buildDeep(stage) {
+    const L = PARKING;
+    const x = L.deepX;
+    if (stage === 5) {
+      const zMin = L.deepZ[L.deepZ.length - 1] - 1.8;
+      const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(L.deepSide * 2 + 3.4, L.maxZ - zMin), this.asphaltMat);
+      asphalt.rotation.x = -Math.PI / 2;
+      asphalt.position.set(x, -0.006, (L.maxZ + zMin) / 2);
+      asphalt.receiveShadow = true;
+      this.group.add(asphalt);
+    }
+    const side = stage === 5 ? -1 : 1; // 5: koridorun solu, 6: sağı
+    const sx = x + side * L.deepSide;
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xf5f5f5 });
+    for (const z of L.deepZ) this.slots.push({ x: sx, z, deep: true, car: null, customer: null });
+    for (let i = 0; i <= L.deepZ.length; i++) {
+      const z = L.deepZ[0] + L.spacing / 2 - i * L.spacing;
+      const line = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.15), lineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.position.set(sx, 0.0, z);
+      this.group.add(line);
+    }
+  }
+
+  /** Arabanın giriş → park yeri rotası (derin şeritte önce koridora girer). */
+  slotRoute(slot) {
+    const L = PARKING;
+    return slot.deep
+      ? [[L.entryX, L.aisle], [L.deepX, L.aisle], [L.deepX, slot.z], [slot.x, slot.z]]
+      : [[slot.x, L.aisle], [slot.x, slot.z]];
+  }
+
   /** Boş bir yere araba gönderir; araba park edince cb(slot) çağrılır. */
   reserve(cb) {
     const slot = this.slots.find((s) => !s.car);
@@ -187,7 +221,7 @@ export class ParkingLot {
     const L = PARKING;
     const car = new Car(this.game.scene, null, [
       [-ROAD_END, LANE_EAST], [L.entryX - 3, LANE_EAST], [L.entryX, L.maxZ + 1], [L.entryX, L.aisle],
-      [slot.x, L.aisle], [slot.x, slot.z],
+      ...this.slotRoute(slot),
     ], 11);
     slot.car = car;
     car.onPark = () => cb(slot);
@@ -204,7 +238,8 @@ export class ParkingLot {
     if (!car) return;
     car.parked = false;
     car.speed = 9;
-    car.setRoute([[slot.x, L.aisle], [L.entryX, L.aisle], [L.entryX, L.maxZ + 1], [L.entryX + 3, LANE_EAST], [ROAD_END, LANE_EAST]]);
+    const out = slot.deep ? [[L.deepX, slot.z], [L.deepX, L.aisle]] : [[slot.x, L.aisle]];
+    car.setRoute([...out, [L.entryX, L.aisle], [L.entryX, L.maxZ + 1], [L.entryX + 3, LANE_EAST], [ROAD_END, LANE_EAST]]);
     car.leaving = true;
     slot.car = null;
     slot.customer = null;
