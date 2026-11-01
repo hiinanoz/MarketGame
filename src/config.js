@@ -617,6 +617,20 @@ export const WORKER_CAPACITY = 4;
 // Market müdürü: bulunduğu bölümdeki (salon/depo) çalışanlar bu kadar hızlı çalışır
 export const MANAGER = { boost: 1.22, stay: 7, cashMin: 15 };
 
+// Genel müdür (Sv.35+, muhasebeci gerekir): market özet modda kendi kendine çalışır.
+// factor: referans cironun ne kadarını tutturur · abstractShare: cironun özetten gelen payı (kalanı ekrandaki gerçek müşteriler)
+export const GM = {
+  level: 35,
+  tiers: {
+    std: { hire: 25000, wage: 600, factor: 0.9 },
+    expert: { hire: 60000, wage: 1200, factor: 1.05, premium: true },
+  },
+  abstractShare: 0.85,
+  maxVisible: 5,         // genel müdür varken ekrandaki en fazla müşteri
+  spawnSlow: 4,          // müşteri gelme aralığı bu kadar uzar
+  costRatio: 0.42,       // özet cironun mal maliyeti (ürünlerin ortalama alış/satış oranı)
+};
+
 // Grafik kalitesi (ayarlar → Grafik). Isınmayı azaltmak için varsayılan 'balanced'.
 // fps: kare sınırı · dpr: en fazla piksel oranı · shadow: gölge haritası (0 = gölge yok) · aa: kenar yumuşatma
 export const GFX = {

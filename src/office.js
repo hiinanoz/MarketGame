@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { t } from './i18n.js';
 import { prop } from './assets.js';
-import { OFFICE, PRODUCTS, SPECIALS, specialsAt, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS, SALE_DAY, CAMPAIGN_PROMO } from './config.js';
+import { OFFICE, PRODUCTS, SPECIALS, specialsAt, CAMPAIGN, RENT, AD_TYPES, ACCOUNTANT_TIERS, SALE_DAY, CAMPAIGN_PROMO, GM } from './config.js';
 import { formatMoney } from './hud.js';
 
 // Muhasebe odası: mağazanın arka sağ köşesi. İçeri girince Sipariş / Banka / Kampanya paneli açılır.
@@ -114,6 +114,17 @@ class OfficePanel {
         this.game.menus?.showPremium();
         return;
       }
+      const gmBtn = e.target.closest('[data-gm]');
+      if (gmBtn && !gmBtn.disabled) {
+        const gm = this.game.gm;
+        const act = gmBtn.dataset.gm;
+        if (act === 'std' || act === 'expert') gm.hire(act);
+        else if (act === 'leave') gm.setActive(false);
+        else if (act === 'back') gm.setActive(true);
+        else if (act === 'fire') gm.dismiss();
+        this.renderAccountant();
+        return;
+      }
       const b = e.target.closest('[data-tier]');
       if (b && !b.disabled && this.game.accountant) {
         this.game.accountant.setTier(b.dataset.tier);
@@ -186,7 +197,7 @@ class OfficePanel {
     const opt = (k, label, desc) => `<label class="row toggle"><span>${label}<small>${desc}</small></span><input type="checkbox" data-set="${k}" ${a.settings[k] ? 'checked' : ''} /></label>`;
     const T = ACCOUNTANT_TIERS;
     const other = a.expert ? 'junior' : 'expert';
-    sec.innerHTML = `
+    sec.innerHTML = `${this.renderGm()}
       <div class="acc-tier">
         <b>${T[a.tier].emoji} ${T[a.tier].name}</b> · ${t('günlük ${n}', { n: a.wage })}
         <small>${a.expert ? t('Pazar araştırması yapar: kampanya talebini doğru bilir (az mağdur müşteri, az kalan stok), maaşı karşılanmayacak personeli almaz, akşam ödemelerine göre yedek tutar, tam ihtiyaç kadar kredi çeker.') : t('Ucuz ama tecrübesiz: kampanya stoğunu son kampanyaya bakarak tahmin eder (talep her gün değişir, sık yanılır), personeli parası yettikçe alır, kredi çekerken fazla çeker.')}</small>
@@ -196,7 +207,7 @@ class OfficePanel {
       </div>
       <p class="note">${t('<b>Yetkiler</b> — kapattığın işi sen yaparsın.')}</p>
       ${opt('order', t('🚚 Siparişler'), t('Paletler %45 altına inince %85\'e tamamlar'))}
-      ${opt('campaign', t('📢 Kampanya seçimi'), t('Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar'))}
+      ${this.game.gm.active ? '' : opt('campaign', t('📢 Kampanya seçimi'), t('Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar'))}
       ${opt('online', t('🌐 Online sipariş'), t('Sv.{n}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır', { n: 25 }))}
       ${opt('ads', t('📣 Reklam'), t('Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)'))}
       <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>${t('Reklam kanalı')}</span><select data-set="adChannel">
@@ -208,6 +219,29 @@ class OfficePanel {
       ${opt('credit', t('🏦 Ödemeler için kredi'), t('Gün sonu kasa yetmezse eksik kadar kredi çeker — önce maaşlar tam ödensin'))}
       <p class="note">${t('<b>Kasada bırakılan en az para:</b> ${reserve} · bu akşamki ödemeler ${due}', { reserve: formatMoney(a.reserve), due: formatMoney(this.game.dueTonight) })}</p>
       <div class="acc-log">${a.log.length ? a.log.map((l) => `<div>${l}</div>`).join('') : `<div>${t('Henüz karar yok.')}</div>`}</div>`;
+  }
+
+  /** Genel müdür kartı (Sv.35+): işe al / izne çıkar / geri çağır. */
+  renderGm() {
+    const g = this.game;
+    const gm = g.gm;
+    if (g.level < GM.level) return '';
+    const T = GM.tiers;
+    if (!gm.hired) {
+      const btn = (k) => {
+        const d = T[k];
+        if (d.premium && !g.premium) return `<button data-premium class="acc-prem"><span>👑 ${t('Tecrübeli genel müdür Premium\'a özel')}</span><small>${t('Referans cironun %{n}\'i · işe alım ${hire} · maaş ${wage}/gün', { n: Math.round(d.factor * 100), hire: formatMoney(d.hire), wage: d.wage })}</small></button>`;
+        return `<button data-gm="${k}" ${gm.canHire(k) ? '' : 'disabled'}><span>${k === 'expert' ? '🎓 ' : ''}${k === 'expert' ? t('Tecrübeli genel müdür işe al') : t('Genel müdür işe al')}</span><small>${t('Referans cironun %{n}\'i · işe alım ${hire} · maaş ${wage}/gün', { n: Math.round(d.factor * 100), hire: formatMoney(d.hire), wage: d.wage })}</small></button>`;
+      };
+      return `<div class="acc-tier gm-card"><b>🧑‍💼 ${t('Genel müdür')}</b>
+        <small>${t('Marketi diğer işletmeler gibi kendi kendine yönetir: sipariş, kampanya, reklam, personel, kasa. Müşteri kalabalığıyla ve seçimlerle uğraşmazsın; ciro son 3 günün ortalamasına göre hesaplanır.')}</small>
+        ${btn('std')}${btn('expert')}</div>`;
+    }
+    const d = gm.def;
+    return `<div class="acc-tier gm-card on"><b>🧑‍💼 ${gm.tier === 'expert' ? t('Tecrübeli genel müdür') : t('Genel müdür')} · ${t('maaş ${n}/gün', { n: d.wage })}</b>
+      <small>${gm.active ? t('Marketi yönetiyor: günlük ~${n} ciro (bugün ${today})', { n: formatMoney(Math.round(gm.dailyRevenue)), today: formatMoney(Math.round(g.day.today.gmRevenue ?? 0)) }) : t('İzinde: market senin yönetiminde. Geri çağırınca son günlerin ortalamasıyla devam eder.')}</small>
+      ${gm.active ? `<button data-gm="leave"><span>🛒 ${t('İzne çıkar (markete dön)')}</span></button>` : `<button data-gm="back"><span>🧑‍💼 ${t('Geri çağır')}</span></button>`}
+      <button data-gm="fire"><span>${t('İşten çıkar')}</span></button></div>`;
   }
 
   // ---- Banka ----

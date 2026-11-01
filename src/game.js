@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { t, num } from './i18n.js';
+import { GeneralManager } from './gm.js';
 import { Nav } from './nav.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
@@ -9,7 +10,7 @@ import { World } from './world.js';
 import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker, Cleaner, Manager, Guard, Advertiser, Valet } from './actors.js';
-import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO, PREMIUM, GFX } from './config.js';
+import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO, PREMIUM, GFX, GM } from './config.js';
 import { Rating, DirtSystem } from './upkeep.js';
 import { Traffic } from './traffic.js';
 import { Supply, Producer } from './production.js';
@@ -140,6 +141,7 @@ export class Game {
     this.life = new Life(this);
     this.achievements = new Achievements(this);
     this.goals = new Goals(this);
+    this.gm = new GeneralManager(this);
     this.decor = new Decor(this);
     this.party = new Celebration(this);
     this.platform = platform;
@@ -603,7 +605,7 @@ export class Game {
     const cash = this.money + this.checkouts.reduce((a, c) => a + c.cash.value, 0);
     const cheapest = Math.min(...[...this.depot.pallets.keys()].map((k) => this.supply.costOf(k)));
     if (!shelvesEmpty || !depotEmpty || carrying || cash >= cheapest * 3) return;
-    if (this.stuckWarnedDay === this.day.day) return;
+    if (this.stuckWarnedDay === this.day.day || this.gm.active) return;
     this.stuckWarnedDay = this.day.day;
     this.hud.toast(t('🏦 Mal kalmadı, para da yetmiyor: muhasebe odası → Banka\'dan kredi çekip sipariş ver (limit ${n})', { n: formatMoney(this.bank.available) }));
   }
@@ -637,6 +639,7 @@ export class Game {
     for (const w of this.workers) n += w.wage ?? WAGES[w.role] ?? 0;
     for (const b of this.holding.owned) n += b.dailyWages;
     if (this.housing.accountant) n += WAGES.accountant;
+    n += this.gm.wage;
     return n;
   }
 
@@ -649,6 +652,8 @@ export class Game {
     for (const w of this.workers) {
       if (WAGES[w.role]) entries.push({ wage: w.wage ?? WAGES[w.role], label: ROLE_NAMES[w.role], fire: () => this.fireWorker(w) });
     }
+    const gmEntry = this.gm.payrollEntry();
+    if (gmEntry) entries.push(gmEntry);
     for (const b of this.holding.owned) entries.push(...b.payrollEntries());
     if (this.housing.accountant) entries.push({ wage: WAGES.accountant, label: '🏘️ Emlak muhasebecisi', fire: () => { this.housing.accountant = false; } });
     let paid = 0;
@@ -825,7 +830,7 @@ export class Game {
       const now = performance.now();
       if (!this.lastTurnawayToast || now - this.lastTurnawayToast > 45000) {
         this.lastTurnawayToast = now;
-        this.hud.toast(lot.capacity ? t('🚗 Otopark dolu — müşteriler geri döndü') : t('🚗 Park yeri yok — müşteriler geri döndü'));
+        if (!this.gm.active) this.hud.toast(lot.capacity ? t('🚗 Otopark dolu — müşteriler geri döndü') : t('🚗 Park yeri yok — müşteriler geri döndü'));
       }
     }
   }
@@ -872,6 +877,7 @@ export class Game {
     }
     this.updatePlayer(dt);
     this.decor.update();
+    this.gm.update(dt);
     this.timers.goals = (this.timers.goals ?? 0) - dt;
     if (this.timers.goals <= 0) {
       this.timers.goals = 1;
@@ -886,8 +892,10 @@ export class Game {
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
     const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor * this.decor.customerFactor;
-    const maxCustomers = Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
-    const interval = Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01);
+    // Genel müdür varken ekranda az müşteri (cironun çoğu özetten gelir)
+    const quiet = this.gm.active;
+    const maxCustomers = quiet ? GM.maxVisible : Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
+    const interval = (Math.max(1.2, 5.5 - this.shelves.length * 0.55) / Math.max(rush, 0.01)) * (quiet ? GM.spawnSlow : 1);
     this.spawnTimer -= dt;
     if (rush > 0 && this.spawnTimer <= 0) {
       this.spawnTimer = interval * (0.7 + Math.random() * 0.6);
@@ -1003,7 +1011,7 @@ export class Game {
         if (pal.giveTo(p)) this.timers.supply = 0.12;
         else if (pal.stock === 0 && !this.warnedEmpty) {
           this.warnedEmpty = true;
-          this.hud.toast(`${PRODUCTS[pal.product].emoji} ${t('stokta yok — sipariş ver 🚚')}`);
+          if (!this.gm.active) this.hud.toast(`${PRODUCTS[pal.product].emoji} ${t('stokta yok — sipariş ver 🚚')}`);
           this.later.push({ t: 3, fn: () => (this.warnedEmpty = false) });
         }
         break;
@@ -1091,6 +1099,11 @@ export class Game {
     }
 
     if (!hint && this.stats.sold < 3) hint = t('Ekrana dokunup sürükleyerek yürü 👆');
+    // Genel müdür marketi yönetirken yönlendirme ve ipucu yok
+    if (this.gm.active) {
+      target = null;
+      hint = '';
+    }
     // Oyuncu ilerledikçe ipuçlarını kapat
     this.hud.hint(this.xp < 25 || hint.includes('🧽') ? hint : '');
 
@@ -1240,6 +1253,7 @@ export class Game {
       life: this.life.serialize(),
       achievements: this.achievements.serialize(),
       goals: this.goals.serialize(),
+      gm: this.gm.serialize(),
       decor: this.decor.serialize(),
       avatar: this.avatar ?? null,
       savedAt: Date.now(),
@@ -1312,6 +1326,7 @@ export class Game {
     this.achievements.restore(data.achievements);
     if (data.stats) Object.assign(this.stats, data.stats);
     this.goals.restore(data.goals);
+    this.gm.restore(data.gm);
     this.decor.restore(data.decor);
     this.lastSavedAt = data.savedAt ?? 0;
     if (data.avatar) this.setAvatar(data.avatar, true);

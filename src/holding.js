@@ -125,6 +125,7 @@ export class Holding {
         <div class="biz-row"><span>👥 ${t('Çalışan')}</span><b>${g.workers.filter((w) => w.role).length}</b><small>${t('maaş ${n}/gün', { n: formatMoney(g.dailyPayroll - g.holding.owned.reduce((a, x) => a + x.dailyWages, 0)) })}</small></div>
         ${g.energy.active ? `<div class="biz-row"><span>⚡ ${t('Elektrik')}</span><b>${t('{n} birim/gün', { n: formatMoney(g.energy.consumption.total) })}</b><small>${g.energy.last ? t('dün fatura ${n}', { n: formatMoney(g.energy.last.bill) }) : t('gün sonunda faturalanır')}</small></div>` : ''}
         <div class="biz-row"><span>🔑 ${t('Bina')}</span><b>${g.rent.marketOwned ? t('senin') : t('kiralık ${n}/hafta', { n: formatMoney(g.rent.marketRent) })}</b><small>${g.rent.marketOwned ? '' : g.rent.canBuyMarket ? t('muhasebe → banka sekmesinden al') : t('Sv.{n}\'de satın alınır', { n: RENT.market.buyLevel })}</small></div>
+        ${g.gm.hired ? `<div class="biz-row"><span>🧑‍💼 ${t('Genel müdür')}</span><b>${g.gm.active ? t('yönetiyor') : t('izinde')}</b><small>${g.gm.active ? t('~${n}/gün', { n: formatMoney(Math.round(g.gm.dailyRevenue)) }) : ''}</small></div>` : ''}
         <div class="biz-row"><span>${t('Muhasebeci')}</span><b>${acc ? `🧑‍💼 ${t('çalışıyor')}` : g.level >= 21 ? t('muhasebe odasının yanından işe al') : `🔒 ${lv(21)}`}</b></div>
         <div class="biz-btns">${go('market')}<button data-go="office">🧾 ${t('Muhasebe')}</button></div>
       </div>`];

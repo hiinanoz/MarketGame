@@ -102,6 +102,7 @@ export class DayCycle {
     platform.score(LEADERBOARDS.companyValue, g.finance.companyValue);
     platform.score(LEADERBOARDS.customers, g.stats.customers ?? 0);
     g.online.endOfDay(this.today);        // online: market satışı referans alınır
+    g.gm.endOfDay(this.today);            // genel müdür için referans günler
     g.holding.endOfDay(this.today);
     g.accountant?.endOfDay();
     g.bank.endOfDay(this.today);

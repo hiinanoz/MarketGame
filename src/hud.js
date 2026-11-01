@@ -255,6 +255,7 @@ export class Hud {
       if (p.election) extra.push(`<div class="${p.election.won ? 'good' : 'bad'}"><span>🗳️ ${p.election.won ? t('Seçim: KAZANDIN, belediye başkanısın') : t('Seçim: {name} kazandı', { name: p.election.mainName })}</span><b>%${p.election.me} – %${p.election.main}</b></div>`);
       if (p.revolt) extra.push(`<div class="bad"><span>📢 ${t('Halk memnun değil: seçimler geri geldi')}</span><b></b></div>`);
     }
+    if (st.gmRevenue) extra.push(`<div class="good"><span>🧑‍💼 ${t('Genel müdür marketi yönetti')}</span><b>+$${formatMoney(Math.round(st.gmRevenue))}</b></div>`);
     if (st.marketWages) extra.push(`<div class="bad"><span>👥 ${t('Market çalışanlarının maaşı')}</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
     if (st.quit?.length) extra.push(`<div class="bad"><span>😞 ${t('Maaşı ödenemeyip ayrılan: {names}', { names: summarize(st.quit) })}</span><b>${st.quit.length}</b></div>`);
     if (st.interestEarned) extra.push(`<div class="good"><span>🏦 ${t('Mevduat faizi')}</span><b>+$${formatMoney(st.interestEarned)}</b></div>`);

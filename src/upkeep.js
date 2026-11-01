@@ -24,7 +24,7 @@ export class Rating {
   add(delta, reason) {
     const before = this.value;
     this.value = THREE.MathUtils.clamp(this.value + delta, 0, 100);
-    if (reason && delta < 0 && Math.floor(before / 10) !== Math.floor(this.value / 10)) {
+    if (reason && delta < 0 && !this.game.gm?.active && Math.floor(before / 10) !== Math.floor(this.value / 10)) {
       this.game.hud.toast(`⭐ ${t('Memnuniyet düştü: {reason}', { reason })}`);
     }
   }

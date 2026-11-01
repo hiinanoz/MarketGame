@@ -89,7 +89,7 @@ Mevcut yerleşim: Salon 1 (orta), Salon 2 (sağ), Salon 3 (sol, Sv.14). Otopark 
 
 ---
 
-## Aşama 3 — Genel müdür (Sv.35+) — market otomatik pilot
+## Aşama 3 — Genel müdür (Sv.35+) — market otomatik pilot ✅ (iki seviye: %90 / Premium %105; izle-karışma)
 
 - Muhasebe → "Genel müdür işe al" (Sv.35, işe alım + günlük maaş). Açılınca market **diğer işletmeler gibi**
   çalışır: sipariş, kampanya, reklam, personel, kasa hepsi otomatik.
