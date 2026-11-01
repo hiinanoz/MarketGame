@@ -255,6 +255,12 @@ export class Hud {
       if (p.election) extra.push(`<div class="${p.election.won ? 'good' : 'bad'}"><span>🗳️ ${p.election.won ? t('Seçim: KAZANDIN, belediye başkanısın') : t('Seçim: {name} kazandı', { name: p.election.mainName })}</span><b>%${p.election.me} – %${p.election.main}</b></div>`);
       if (p.revolt) extra.push(`<div class="bad"><span>📢 ${t('Halk memnun değil: seçimler geri geldi')}</span><b></b></div>`);
     }
+    if (st.club) {
+      const c = st.club;
+      if (c.sponsor) extra.push(`<div class="bad"><span>⚽ ${t('Sponsorluk')}</span><b>−$${formatMoney(c.sponsor)}</b></div>`);
+      if (c.match && this.game.club.involved) extra.push(`<div class="${c.match.gf > c.match.ga ? 'good' : c.match.gf < c.match.ga ? 'bad' : ''}"><span>⚽ ${t('Kasaba Spor')} – ${c.match.opp}</span><b>${c.match.gf}–${c.match.ga}</b></div>`);
+      if (c.season && this.game.club.involved) extra.push(`<div class="${c.season.pos <= 3 ? 'good' : ''}"><span>🏆 ${t('{s}. sezon bitti', { s: c.season.season })}</span><b>${t('{pos}. sıra', { pos: c.season.pos })}</b></div>`);
+    }
     if (st.gmRevenue) extra.push(`<div class="good"><span>🧑‍💼 ${t('Genel müdür marketi yönetti')}</span><b>+$${formatMoney(Math.round(st.gmRevenue))}</b></div>`);
     if (st.marketWages) extra.push(`<div class="bad"><span>👥 ${t('Market çalışanlarının maaşı')}</span><b>−$${formatMoney(st.marketWages)}</b></div>`);
     if (st.quit?.length) extra.push(`<div class="bad"><span>😞 ${t('Maaşı ödenemeyip ayrılan: {names}', { names: summarize(st.quit) })}</span><b>${st.quit.length}</b></div>`);

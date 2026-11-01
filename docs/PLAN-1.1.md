@@ -136,7 +136,15 @@ günde 2–3 kartla başlar, holding büyüdükçe 4–6'ya çıkar · ton hafif
 
 ---
 
-## Aşama 5 — Siyaset 2.0 ve spor kulübü **[KARAR]**
+## Aşama 5 — Siyaset 2.0 ve spor kulübü ✅
+
+**Uygulanan:** `src/club.js` (Kasaba Spor, `CLUB`), `src/legal.js` (hukuki risk + hapis ekranı, `LEGAL`), siyaset/hukuk/kulüp
+kartları `eventcards.js` (`need`), sponsorluk siyasetten kulübe taşındı (eski kayıtlar otomatik). CEO masası açıkken gün
+sonu özeti artık üstte görünür (z-index düzeltmesi).
+
+**Kararlar:** siyaset kartları CEO masasına gelir (holding yoksa bildirim + 🗳️ panelden cevap) · hapis orta sertlikte
+(kefalet ≈ nakdin %20'si / kayyuma devret + geri al / 3 gün ceza: nüfuz düşer, makam gider) · hukuki risk
+"Düşük/Orta/Yüksek" belirsiz gösterge · spor kulübü haritada küçük stadyum + maç günü kalabalığı.
 
 **Spor kulübü (siyaset öncesi, Sv.40+):**
 1. Kampanyalarda "⚽ Kulübe sponsor ol" (günlük ücret, müşteri + nüfuz).

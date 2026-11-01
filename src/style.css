@@ -735,3 +735,18 @@ button { color: var(--ink); font-family: inherit; -webkit-tap-highlight-color: t
 .ceo-found input { flex: 1; min-width: 0; font: inherit; padding: 6px 8px; border-radius: 10px; border: 2px solid #e0d8c6; }
 #ceo-btn { position: relative; }
 body.in-ceo .hud, body.in-ceo #joystick { visibility: hidden; }
+/* Kulüp, hapis (Aşama 5) */
+.round.alert, .pill.alert { box-shadow: 0 0 0 3px #f2a541; animation: pulse-alert 1.2s ease-in-out infinite; }
+@keyframes pulse-alert { 50% { box-shadow: 0 0 0 6px rgba(242, 165, 65, 0.4); } }
+.ceo-table tr.me td { font-weight: 800; background: #fff6e0; }
+.jail-overlay { z-index: 45; background: repeating-linear-gradient(90deg, #2b2b30 0 34px, #45454d 34px 42px); align-items: center; justify-content: center; padding: 16px; }
+.panel.jail { max-width: 420px; width: 100%; background: #f6f1e7; border-radius: 18px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; text-align: center; }
+.panel.jail h2 { margin: 0; font-size: 24px; }
+.panel.jail p { margin: 0; }
+.jail-opt { display: flex; flex-direction: column; gap: 3px; text-align: left; border: none; border-radius: 12px; padding: 10px 12px; background: #fff; font: inherit; color: #23302a; box-shadow: 0 2px 0 #d8cfbd; }
+.jail-opt small { font-size: 12px; color: #5b6660; }
+.jail-opt:disabled { opacity: 0.5; }
+body.in-jail .hud, body.in-jail #joystick, body.in-jail .side-btns { visibility: hidden; }
+/* Tam ekran masaların (CEO 40, hapis 45) üstünde kalması gerekenler */
+#summary, #lvl-pop, #sim-day, #menu, #home, #final, #intro, #avatar, #loading { z-index: 50; }
+#toast { z-index: 55; }

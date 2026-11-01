@@ -144,10 +144,10 @@ export class Holding {
         continue;
       }
       if (b.seized) {
-        const can = g.bank.totalDebt === 0;
+        const can = b.trustee || g.bank.totalDebt === 0;
         cards.push(`
           <div class="biz locked">
-            <div class="biz-head"><span class="biz-e">${d.emoji}</span><div><b>${b.name}</b><small>🏦 ${t('Faiz ödenmediği için bankaya geçti · {n} modül korunuyor', { n: b.modules })}</small></div></div>
+            <div class="biz-head"><span class="biz-e">${d.emoji}</span><div><b>${b.name}</b><small>${b.trustee ? `⚖️ ${t('Kayyuma devredildi · {n} modül korunuyor', { n: b.modules })}` : `🏦 ${t('Faiz ödenmediği için bankaya geçti · {n} modül korunuyor', { n: b.modules })}`}</small></div></div>
             <div class="biz-btns">
               ${can ? `<button class="primary" data-back="${b.id}" ${m < b.seizedPrice ? 'disabled' : ''}>${t('Geri al ${n}', { n: formatMoney(b.seizedPrice) })}</button>` : `<span class="lock">${t('Geri almak için önce tüm borcu kapat (${n})', { n: formatMoney(g.bank.totalDebt) })}</span>`}
               ${go(`biz:${b.id}`)}

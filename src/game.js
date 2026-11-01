@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { t, num } from './i18n.js';
 import { GeneralManager } from './gm.js';
+import { Club } from './club.js';
+import { Legal } from './legal.js';
 import { Events } from './events.js';
 import { CeoDesk } from './ceo.js';
 import { Nav } from './nav.js';
@@ -145,6 +147,8 @@ export class Game {
     this.goals = new Goals(this);
     this.gm = new GeneralManager(this);
     this.events = new Events(this);
+    this.club = new Club(this);
+    this.legal = new Legal(this);
     this.ceoDesk = new CeoDesk(this);
     this.decor = new Decor(this);
     this.party = new Celebration(this);
@@ -487,14 +491,14 @@ export class Game {
     return Math.max(0, PREMIUM.finishDays - used);
   }
 
-  finishDay() {
+  finishDay({ free = false } = {}) {
     if (this.simulating || this.day.phase === 'night') return;
-    if (this.finishDaysLeft <= 0) {
+    if (!free && this.finishDaysLeft <= 0) {
       this.hud.toast(t('👑 Günü tamamla standart sürümde günde {n} kez — Premium\'da sınırsız. Yarın tekrar kullanabilirsin.', { n: PREMIUM.finishDays }));
       this.audio.play('error');
       return;
     }
-    if (!this.premium) {
+    if (!free && !this.premium) {
       const today = new Date().toDateString();
       this.stats.finishCount = this.stats.finishDate === today ? (this.stats.finishCount ?? 0) + 1 : 1;
       this.stats.finishDate = today;
@@ -889,6 +893,8 @@ export class Game {
     this.gm.update(dt);
     this.events.update();
     this.ceoDesk.update();
+    this.club.update(dt);
+    this.legal.update();
     this.timers.goals = (this.timers.goals ?? 0) - dt;
     if (this.timers.goals <= 0) {
       this.timers.goals = 1;
@@ -902,7 +908,7 @@ export class Game {
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
-    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor * this.decor.customerFactor * this.events.customerFactor;
+    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor * this.decor.customerFactor * this.events.customerFactor * this.club.customerFactor;
     // Genel müdür varken ekranda az müşteri (cironun çoğu özetten gelir)
     const quiet = this.gm.active;
     const maxCustomers = quiet ? GM.maxVisible : Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
@@ -1265,6 +1271,8 @@ export class Game {
       achievements: this.achievements.serialize(),
       goals: this.goals.serialize(),
       gm: this.gm.serialize(),
+      club: this.club.serialize(),
+      legal: this.legal.serialize(),
       ceo: this.ceoDesk.serialize(),
       decor: this.decor.serialize(),
       avatar: this.avatar ?? null,
@@ -1339,6 +1347,12 @@ export class Game {
     if (data.stats) Object.assign(this.stats, data.stats);
     this.goals.restore(data.goals);
     this.gm.restore(data.gm);
+    this.club.restore(data.club);
+    if (this.politics.sponsor) { // eski kayıt: sponsorluk siyasetten kulübe taşındı
+      this.club.sponsor = true;
+      this.politics.sponsor = false;
+    }
+    this.legal.restore(data.legal);
     this.ceoDesk.restore(data.ceo);
     this.decor.restore(data.decor);
     this.lastSavedAt = data.savedAt ?? 0;

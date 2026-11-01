@@ -175,6 +175,7 @@ export class Business {
     this.owned = false;
     this.seized = true;
     this.seizedPrice = price;
+    this.trustee = false;
     this.workers = 0;
     this.manager = false;
     this.storage = {};
@@ -186,14 +187,16 @@ export class Business {
   /** Borçlar kapandıysa bankadan geri satın al. */
   buyBack() {
     const g = this.game;
-    if (!this.seized || g.bank.totalDebt > 0 || g.money < this.seizedPrice) return false;
+    if (!this.seized || (!this.trustee && g.bank.totalDebt > 0) || g.money < this.seizedPrice) return false;
     g.spend(this.seizedPrice);
+    const fromTrustee = this.trustee;
     this.seized = false;
+    this.trustee = false;
     this.owned = true;
     this.workers = Math.min(this.perModule, this.workerSlots);
     this.rebuild();
     this.rebuildStaff();
-    g.hud.toast(`🤝 ${this.def.emoji} ${t('{name} bankadan geri alındı', { name: this.name })}`);
+    g.hud.toast(`🤝 ${this.def.emoji} ${fromTrustee ? t('{name} kayyumdan geri alındı', { name: this.name }) : t('{name} bankadan geri alındı', { name: this.name })}`);
     g.audio.play('unlock');
     g.save();
     return true;
@@ -544,7 +547,7 @@ export class Business {
     const g = this.game;
     let text;
     if (this.owned) text = `${this.def.emoji} ${this.name}${this.leased ? ' 🔑' : ''} · ${this.modules}/${this.maxModules}`;
-    else if (this.seized) text = `${this.def.emoji} 🏦 ${t('Bankaya ait')}`;
+    else if (this.seized) text = this.trustee ? `${this.def.emoji} ⚖️ ${t('Kayyumda')}` : `${this.def.emoji} 🏦 ${t('Bankaya ait')}`;
     else if (g.level < this.def.level) text = `${this.def.emoji} ${this.def.owner} · 🔒 ${t('Sv.{n}', { n: this.def.level })}`;
     else if (this.missingReq.length) text = `${this.def.emoji} ${this.def.owner} · 🔒 ${t('önce tedarikçiler')}`;
     else if (this.def.lease) text = `${this.def.emoji} ${t('KİRALIK · devir ${n}', { n: num(this.def.price) })}`;
@@ -636,7 +639,7 @@ export class Business {
     return {
       owned: this.owned, modules: this.modules, workers: this.workers, manager: this.manager,
       storage: this.storage, yesterday: this.yesterday, autoGrow: this.autoGrow,
-      seized: this.seized, seizedPrice: this.seizedPrice, customName: this.customName, battery: this.battery,
+      seized: this.seized, seizedPrice: this.seizedPrice, trustee: !!this.trustee, customName: this.customName, battery: this.battery,
       energyToday: this.energyToday, leased: this.leased,
     };
   }
@@ -646,7 +649,7 @@ export class Business {
     Object.assign(this, {
       owned: !!d.owned, modules: d.modules ?? 0, workers: d.workers ?? 0, manager: !!d.manager || !!d.accountant,
       storage: d.storage ?? {}, yesterday: d.yesterday ?? null,
-      autoGrow: d.autoGrow ?? true, seized: !!d.seized, seizedPrice: d.seizedPrice ?? 0,
+      autoGrow: d.autoGrow ?? true, seized: !!d.seized, seizedPrice: d.seizedPrice ?? 0, trustee: !!d.trustee,
       customName: d.customName ?? '', battery: !!d.battery, energyToday: d.energyToday ?? 0,
       leased: !!d.leased,
     });

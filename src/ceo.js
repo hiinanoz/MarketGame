@@ -1,7 +1,6 @@
 import { t } from './i18n.js';
 import { CEO, DAY } from './config.js';
 import { formatMoney } from './hud.js';
-import { CARDS } from './eventcards.js';
 
 // Holding ve CEO masası: 4 işletme sahibi olunca holding kurulur (ücret + isim). CEO masasında harita çizilmez
 // (ısınma da azalır); gösterge tablosu, günün olay kartları ve işletme tablosuyla oyun ekrandan yönetilir.
@@ -110,14 +109,7 @@ export class CeoDesk {
     const g = this.game;
     const ev = g.events;
     this.renderHead();
-    const cards = ev.active.map((a) => {
-      const c = CARDS.find((x) => x.id === a.id);
-      if (!c) return '';
-      return `<div class="ceo-card"><div class="ceo-card-h"><span class="ce">${c.emoji}</span><b>${t(c.title, a.vars)}</b></div>
-        <p>${t(c.text, a.vars)}</p>
-        <div class="ceo-timer"><i data-left="${a.id}"></i></div>
-        <div class="ceo-choices">${c.choices.map((ch, i) => `<button data-card="${a.id}" data-i="${i}" class="${i === c.def ? 'def' : ''}">${t(ch.label, a.vars)}</button>`).join('')}</div></div>`;
-    }).join('');
+    const cards = ev.agendaHtml('ceo');
     const waiting = ev.queue.length;
     const agenda = cards || `<p class="note">${g.day.phase === 'open' ? (waiting ? t('Şu an karar bekleyen konu yok. Bugün {n} konu daha gelecek.', { n: waiting }) : t('Bugünün gündemi tamam. Yarın yeni konular gelecek.')) : t('Gece: gündem sabah açılır.')}</p>`;
     const rows = g.holding.owned.map((b) => {
@@ -149,13 +141,7 @@ export class CeoDesk {
       g.holding.get(exp.dataset.expand)?.expand();
       return this.render();
     }
-    const b = e.target.closest('[data-card]');
-    if (b) {
-      const entry = g.events.active.find((a) => a.id === b.dataset.card);
-      if (entry) g.events.choose(entry, Number(b.dataset.i));
-      g.audio.play('click');
-      this.render();
-    }
+    if (g.events.handleAgendaClick(e)) this.render();
   }
 
   serialize() {

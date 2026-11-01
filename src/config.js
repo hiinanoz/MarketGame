@@ -793,6 +793,39 @@ export const POLITICS = {
   names: ['Ahmet Kaya', 'Selin Demir', 'Murat Aksoy', 'Zeynep Yıldız', 'Kemal Şahin', 'Elif Arslan', 'Hasan Çelik', 'Ayşe Koç', 'Burak Öztürk'],
 };
 
+// ---- Spor kulübü (Sv.40+) ve hukuk (siyaset 2.0) -----------------------------------------------
+export const CLUB = {
+  fromLevel: 40,
+  sponsor: { cost: 400, perLevel: 20, customers: 1.04, fans: 0.6, influence: 0.6 }, // günlük
+  donations: [5000, 20000, 60000],
+  fansPer: 2500,          // bu kadar bağış = +1 taraftar sevgisi
+  boardAt: 60000,         // toplam bağış → yönetim kuruluna davet
+  matchEvery: 2,          // her 2 günde bir maç
+  season: 10,             // sezon = 10 maç
+  teams: 8,
+  strength: 50,           // takım gücü (rakipler 40–70)
+  transfer: { cost: 30000, perLevel: 300, strength: 4, max: 90 },
+  coach: { cost: 15000 },
+  matchCustomers: 1.15,   // maç günü market müşterisi (sponsor / yönetim)
+  electionFans: 55,       // başkanlık adaylığında bu taraftar sevgisinin üstü avantaj
+  campaign: 15000,        // başkanlık kampanyası
+  influence: { board: 3, president: 8, good: 6, bad: -6 },
+  pos: [-78, -20],        // belediye stadyum projesiyle aynı yer (başkanken büyür)
+  rivals: ['Dere Gücü', 'Liman Spor', 'Fırıncılar İdman Yurdu', 'Yaylaspor', 'Değirmen FK', 'Çarşı Gençlik', 'Kuzey Yıldızı'],
+};
+
+export const LEGAL = {
+  decay: 1,               // günlük hukuki risk azalması
+  levels: [30, 60],       // düşük / orta / yüksek
+  probeFrom: 40,          // bu riskten sonra soruşturma ihtimali başlar
+  probeChance: 0.006,     // günlük ihtimal = (risk − probeFrom) × bu
+  bail: { share: 0.2, min: 20000 },
+  trustee: { buyBack: 0.6 }, // kayyuma devredilen işletme değerinin %60'ına geri alınır
+  sentenceDays: 3,
+  jailInfluence: -15,
+  trustVote: 4,           // temiz sicil (düşük risk) seçimde en fazla bu kadar oy ekler
+};
+
 // ---- Finans (Sv.66–80) ----------------------------------------------------------------------
 export const FINANCE = {
   fromLevel: 66,
