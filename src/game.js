@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { t, num } from './i18n.js';
 import { GeneralManager } from './gm.js';
+import { Events } from './events.js';
+import { CeoDesk } from './ceo.js';
 import { Nav } from './nav.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
@@ -142,6 +144,8 @@ export class Game {
     this.achievements = new Achievements(this);
     this.goals = new Goals(this);
     this.gm = new GeneralManager(this);
+    this.events = new Events(this);
+    this.ceoDesk = new CeoDesk(this);
     this.decor = new Decor(this);
     this.party = new Celebration(this);
     this.platform = platform;
@@ -566,6 +570,11 @@ export class Game {
     return !this.paused && !(this.menuOpen && !this.options.background);
   }
 
+  /** Olay motoru holding kurulu mu diye buna bakar. */
+  get ceo() {
+    return this.ceoDesk;
+  }
+
   /** Tabelalarda görünen ad: "<isim> Market" (isimde zaten market/bakkal geçiyorsa eklenmez). */
   get marketTitle() {
     const n = this.marketName || 'Kasaba';
@@ -878,6 +887,8 @@ export class Game {
     this.updatePlayer(dt);
     this.decor.update();
     this.gm.update(dt);
+    this.events.update();
+    this.ceoDesk.update();
     this.timers.goals = (this.timers.goals ?? 0) - dt;
     if (this.timers.goals <= 0) {
       this.timers.goals = 1;
@@ -891,7 +902,7 @@ export class Game {
     // Müşteri üretimi: günün saatine göre yoğunluk, kapalıyken yok
     this.dirt.enabled = this.level >= DIRT.fromLevel;
     this.rating.update(dt);
-    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor * this.decor.customerFactor;
+    const rush = this.day.rush * this.rating.spawnFactor * this.adBoost * this.campaign.rushBoost * this.ads.factor * this.politics.customerFactor * this.holding.customerFactor * this.finance.customerFactor * this.decor.customerFactor * this.events.customerFactor;
     // Genel müdür varken ekranda az müşteri (cironun çoğu özetten gelir)
     const quiet = this.gm.active;
     const maxCustomers = quiet ? GM.maxVisible : Math.round((3 + this.shelves.length * 2) * Math.max(0.6, rush));
@@ -1254,6 +1265,7 @@ export class Game {
       achievements: this.achievements.serialize(),
       goals: this.goals.serialize(),
       gm: this.gm.serialize(),
+      ceo: this.ceoDesk.serialize(),
       decor: this.decor.serialize(),
       avatar: this.avatar ?? null,
       savedAt: Date.now(),
@@ -1327,6 +1339,7 @@ export class Game {
     if (data.stats) Object.assign(this.stats, data.stats);
     this.goals.restore(data.goals);
     this.gm.restore(data.gm);
+    this.ceoDesk.restore(data.ceo);
     this.decor.restore(data.decor);
     this.lastSavedAt = data.savedAt ?? 0;
     if (data.avatar) this.setAvatar(data.avatar, true);

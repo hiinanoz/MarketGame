@@ -1,6 +1,6 @@
 import { Business } from './business.js';
 import { formatMoney } from './hud.js';
-import { BUSINESSES, STAFF, REGIONS, LOGISTICS, ELECTRICITY, HOUSING, RENT, PREMIUM } from './config.js';
+import { BUSINESSES, STAFF, REGIONS, LOGISTICS, ELECTRICITY, HOUSING, RENT, PREMIUM, CEO } from './config.js';
 import { stageName } from './housing.js';
 import { t } from './i18n.js';
 
@@ -119,7 +119,14 @@ export class Holding {
     const acc = g.accountant;
     const lv = (n) => t('Sv.{n}', { n });
     const go = (id) => `<button data-go="${id}">📍 ${t('Git')}</button>`;
-    const cards = [`
+    const desk = g.ceoDesk;
+    const holdingCard = desk.founded
+      ? `<div class="biz owned ceo-found"><div class="biz-head"><span class="biz-e">🏢</span><div><b>${escapeHtml(desk.name)}</b><small>${t('Holding · tüm işletmelere +%5 verim · günlük gündem CEO masasında')}</small></div></div><div class="biz-btns"><button class="primary" data-ceo>🏢 ${t('CEO masasına geç')}</button></div></div>`
+      : g.holding.owned.length >= CEO.foundBusinesses
+        ? `<div class="biz ceo-found"><div class="biz-head"><span class="biz-e">🏢</span><div><b>${t('Holding kur')}</b><small>${t('4 işletmen var: holdinge dönüş. CEO masası açılır (günlük haberler, skandallar, gizli görüşmeler, tablo yönetimi), tüm işletmelere +%5 verim.')}</small></div></div>
+          <div class="biz-btns"><input id="holding-name" maxlength="24" placeholder="${t('Holding adı')}" /><button class="primary" data-found ${m < CEO.foundCost ? 'disabled' : ''}>${t('Kur ${n}', { n: formatMoney(CEO.foundCost) })}</button></div></div>`
+        : g.holding.owned.length >= 2 ? `<p class="note">🏢 ${t('{n}/{max} işletme: 4 işletmede holding kurabilirsin.', { n: g.holding.owned.length, max: CEO.foundBusinesses })}</p>` : '';
+    const cards = [holdingCard, `
       <div class="biz owned">
         <div class="biz-head"><span class="biz-e">🛒</span><div>${this.nameField('market', g.marketTitle)}<small>${t('Bugün: ${revenue} ciro · {customers} müşteri', { revenue: formatMoney(day.revenue), customers: day.customers })} · ⭐ ${g.rating.stars.toFixed(1)}</small></div></div>
         <div class="biz-row"><span>👥 ${t('Çalışan')}</span><b>${g.workers.filter((w) => w.role).length}</b><small>${t('maaş ${n}/gün', { n: formatMoney(g.dailyPayroll - g.holding.owned.reduce((a, x) => a + x.dailyWages, 0)) })}</small></div>
@@ -293,6 +300,15 @@ export class Holding {
     }
     if (d.buy) this.get(d.buy).buy();
     if (d.expand) this.get(d.expand).expand();
+    if (d.found !== undefined) {
+      if (this.game.ceoDesk.found(this.body.querySelector('#holding-name')?.value)) this.close();
+      return;
+    }
+    if (d.ceo !== undefined) {
+      this.close();
+      this.game.ceoDesk.show();
+      return;
+    }
     if (d.back) this.get(d.back).buyBack();
     if (d.buyout) this.get(d.buyout).buyOut();
     const H = this.game.housing;

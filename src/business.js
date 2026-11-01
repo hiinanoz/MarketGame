@@ -141,7 +141,7 @@ export class Business {
     if (!this.owned || !this.workerSlots) return 0;
     const staff = Math.min(1, this.workers / this.workerSlots);
     const boss = this.manager || this.playerHere ? 1 : STAFF.noManagerRate;
-    return staff * boss;
+    return staff * boss * (this.game.events?.bizFactor(this) ?? 1);
   }
 
   get dailyWages() {

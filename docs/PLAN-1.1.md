@@ -101,7 +101,10 @@ Mevcut yerleşim: Salon 1 (orta), Salon 2 (sağ), Salon 3 (sol, Sv.14). Otopark 
 
 ---
 
-## Aşama 4 — Holding ve CEO modu (kararlar alındı, sıradaki)
+## Aşama 4 — Holding ve CEO modu ✅ (36 olay kartı, 8 dil)
+
+**Uygulanan:** `src/ceo.js` (masa), `src/events.js` (motor), `src/eventcards.js` (kartlar + takip kartları), ayarlar
+`config.js → CEO`. Kart sayısı `2 + floor((işletme−4)/3)` (+0/1 rastgele), en fazla 6; kart süresi gün uzunluğunun %15'i.
 
 **Kararlar:** zaman akar (hız ayarı geçerli; cevapsız kart süre dolunca varsayılan seçenekle kapanır) ·
 günde 2–3 kartla başlar, holding büyüdükçe 4–6'ya çıkar · ton hafif mizahi · holding ücretli + isimli

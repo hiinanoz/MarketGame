@@ -631,6 +631,17 @@ export const GM = {
   costRatio: 0.42,       // özet cironun mal maliyeti (ürünlerin ortalama alış/satış oranı)
 };
 
+// Holding ve CEO masası (olay kartları): 4 işletmeyle holding kurulur.
+export const CEO = {
+  foundBusinesses: 4,
+  foundCost: 50000,
+  holdingBonus: 1.05,    // tüm işletmelere verim
+  maxCards: 6,           // günde en fazla kart (2–3'ten başlar, işletme arttıkça artar)
+  expireShare: 0.15,     // kartın cevap süresi: günün ~%15'i (~2 saat), dolunca varsayılan seçenek
+  cooldownDays: 10,      // aynı kart en erken bu kadar gün sonra tekrar
+  scaleDiv: 400000,      // para etkileri şirket değeri / bu sayı kadar büyür (en az 1×)
+};
+
 // Grafik kalitesi (ayarlar → Grafik). Isınmayı azaltmak için varsayılan 'balanced'.
 // fps: kare sınırı · dpr: en fazla piksel oranı · shadow: gölge haritası (0 = gölge yok) · aa: kenar yumuşatma
 export const GFX = {

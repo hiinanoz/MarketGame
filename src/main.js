@@ -74,7 +74,8 @@ async function start() {
   const loop = (now) => {
     requestAnimationFrame(loop);
     // Kare sınırı (ısınmayı azaltır): seçilen fps'ten sık gelen kareleri atla
-    const idle = !game.viewMode && (game.simulating || !game.running) && !game.party.active;
+    // CEO masası açıkken harita çizilmez (zaman akar)
+    const idle = (!game.viewMode && (game.simulating || !game.running) && !game.party.active) || game.ceoDesk?.open;
     const fps = idle ? GFX.idleFps : game.gfx.fps;
     if (now - last < 1000 / fps - 2) return;
     const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
