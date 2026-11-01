@@ -2,6 +2,7 @@ import { loadAssets } from './assets.js';
 import { Game } from './game.js';
 import { platform } from './platform.js';
 import { Menus } from './menus.js';
+import { GFX } from './config.js';
 import { translateDom, t, num, dateTime } from './i18n.js';
 
 translateDom(); // index.html'deki sabit metinler (seçili dil Türkçe değilse)
@@ -69,7 +70,13 @@ async function start() {
   });
 
   let last = performance.now();
+  let lastIdleRender = 0;
   const loop = (now) => {
+    requestAnimationFrame(loop);
+    // Kare sınırı (ısınmayı azaltır): seçilen fps'ten sık gelen kareleri atla
+    const idle = !game.viewMode && (game.simulating || !game.running) && !game.party.active;
+    const fps = idle ? GFX.idleFps : game.gfx.fps;
+    if (now - last < 1000 / fps - 2) return;
     const dt = Math.max(0, Math.min((now - last) / 1000, 0.05));
     last = now;
     // Hız 1× / 1.5× / 2×: adım küçük kalsın diye kare başına en fazla iki alt adım
@@ -83,8 +90,11 @@ async function start() {
       game.updateCamera(dt); // ana menü / karakter: oyun durur, kamera hareket eder
       game.music.react(game);
     }
-    game.render();
-    requestAnimationFrame(loop);
+    // Sahne duruyorsa (menü, panel, gün tamamlama) seyrek çiz
+    if (!idle || now - lastIdleRender > 1000 / GFX.idleFps) {
+      game.render();
+      lastIdleRender = now;
+    }
   };
   requestAnimationFrame(loop);
 

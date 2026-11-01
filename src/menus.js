@@ -164,6 +164,18 @@ export class Menus {
     this.afterSheet = null;
   }
 
+  // ---- Gelişmiş ayarlar (sıfırlama burada, iki adımlı onay) ----
+
+  showAdvanced() {
+    const g = this.game;
+    this.openSheet(`⚙️ ${t('Gelişmiş ayarlar')}`, `<p class="note">${t('Buradaki işlemler geri alınamaz.')}</p>
+      <button data-reset1 class="danger">${t('Oyunu sıfırla')}</button>`, { onClick: (e) => {
+      if (!e.target.closest('[data-reset1]')) return;
+      this.openSheet(t('Oyun silinsin mi?'), `<p>${platform.native ? t('Mevcut oyunun ({market}, Gün {day}) silinir — iCloud kopyası dahil. Bu geri alınamaz.', { market: g.marketTitle, day: g.day.day }) : t('Mevcut oyunun ({market}, Gün {day}) silinir. Bu geri alınamaz.', { market: g.marketTitle, day: g.day.day })}</p><button data-reset class="danger">${t('Sil ve yeni oyuna başla')}</button>`,
+        { close: t('Vazgeç'), onClick: (ev) => { if (ev.target.closest('[data-reset]')) g.reset(); } });
+    } });
+  }
+
   // ---- Premium ----
 
   showPremium() {

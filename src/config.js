@@ -572,6 +572,15 @@ export const WORKER_CAPACITY = 4;
 
 // Market müdürü: bulunduğu bölümdeki (salon/depo) çalışanlar bu kadar hızlı çalışır
 export const MANAGER = { boost: 1.22, stay: 7, cashMin: 15 };
+
+// Grafik kalitesi (ayarlar → Grafik). Isınmayı azaltmak için varsayılan 'balanced'.
+// fps: kare sınırı · dpr: en fazla piksel oranı · shadow: gölge haritası (0 = gölge yok) · aa: kenar yumuşatma
+export const GFX = {
+  high: { fps: 60, dpr: 2, shadow: 2048, aa: true },
+  balanced: { fps: 30, dpr: 1.5, shadow: 1024, aa: true },
+  battery: { fps: 30, dpr: 1, shadow: 0, aa: false },
+  idleFps: 2,            // menü/panel/gün tamamlama açıkken (sahne duruyor) saniyedeki çizim
+};
 /** Haritadaki bölüm: market salonları ve depo (müdür hız bonusu için). */
 export function zoneOf(x, z) {
   if (z < -16) return x > 12 ? 'online' : 'depot';
@@ -644,6 +653,7 @@ export const HOUSING = {
     site: { name: t('Site (8 daire, havuzlu)'), emoji: '🏘️', level: 42, cost: 65000, days: 6, units: 8, rent: 1800, renovation: 700 },
     villa: { name: t('Lüks villa'), emoji: '🏡', level: 47, cost: 45000, days: 4, units: 1, rent: 9000, renovation: 3000 },
   },
+  demolish: { share: 1 / 8, mayorDiv: 4 }, // yıkım ücreti: binanın inşaat maliyetinin 1/8'i, belediye başkanıysan 4'te biri
   agent: { level: 37, hire: 200, commission: 0.1 },  // emlakçı: her binaya bir tane, kiradan %10
   tenancyDays: [14, 42],   // kiracının kalma süresi (gün)
   searchDays: [1, 2],      // elle ilana verince kiracı bulma süresi

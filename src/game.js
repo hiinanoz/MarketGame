@@ -9,7 +9,7 @@ import { World } from './world.js';
 import { Character } from './character.js';
 import { Shelf, Checkout, UnlockPad } from './stations.js';
 import { Customer, Cashier, Stocker, Cleaner, Manager, Guard, Advertiser, Valet } from './actors.js';
-import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO, PREMIUM } from './config.js';
+import { MANAGER, zoneOf, SALE_DAY, CAMPAIGN_PROMO, PREMIUM, GFX } from './config.js';
 import { Rating, DirtSystem } from './upkeep.js';
 import { Traffic } from './traffic.js';
 import { Supply, Producer } from './production.js';
@@ -50,9 +50,13 @@ const CAM_ANGLES = { steep: THREE.MathUtils.degToRad(66), normal: Math.atan2(0.8
 export class Game {
   constructor(container) {
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
+    // Grafik ayarı açılışta okunur (değişince sayfa yenilenir); seçenekler aşağıda tekrar yüklenir
+    let gfxName = 'balanced';
+    try { gfxName = JSON.parse(localStorage.getItem('marketgame-options') || '{}').gfx || 'balanced'; } catch { /* gizli mod */ }
+    this.gfx = GFX[gfxName] ?? GFX.balanced;
+    this.renderer = new THREE.WebGLRenderer({ antialias: this.gfx.aa, powerPreference: 'default' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.gfx.dpr));
+    this.renderer.shadowMap.enabled = this.gfx.shadow > 0;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -66,8 +70,8 @@ export class Game {
     this.hemi = new THREE.HemisphereLight(0xffffff, 0x7a8f6a, 1.7);
     this.scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xfff3dd, 2.2);
-    this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.castShadow = this.gfx.shadow > 0;
+    this.sun.shadow.mapSize.set(this.gfx.shadow || 512, this.gfx.shadow || 512);
     const sc = this.sun.shadow.camera;
     sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 70;
     this.sun.shadow.bias = -0.0005;
@@ -78,7 +82,7 @@ export class Game {
     this.fx = new Fx(this.scene);
     this.audio = new Audio();
     // Ayarlar (cihazda saklanır): ses, müzik, 2× hız, menüde arka planda devam
-    this.options = { sound: true, music: true, speed: 1, cam: 'normal', background: false, sfxVol: 0.8, musicVol: 0.6, musicAdaptive: true };
+    this.options = { sound: true, music: true, speed: 1, cam: 'normal', background: false, sfxVol: 0.8, musicVol: 0.6, musicAdaptive: true, gfx: 'balanced' };
     try { Object.assign(this.options, JSON.parse(localStorage.getItem('marketgame-options') || '{}')); } catch { /* yok */ }
     if (this.options.fast) this.options.speed = 2; // eski ayar (aç/kapa 2×)
     // Premium: şimdilik test anahtarı (App Store satın alımı gelince platform.entitlement)

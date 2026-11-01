@@ -26,7 +26,12 @@ export class Hud {
       this.menu.classList.add('hidden');
       game.menuOpen = false;
     });
-    document.getElementById('reset-btn').addEventListener('click', () => game.reset());
+    // Sıfırlama ☰ menüde değil, gelişmiş ayarlarda ve iki adımlı onayla (yanlışlıkla basılmasın)
+    document.getElementById('advanced-btn').addEventListener('click', () => {
+      this.menu.classList.add('hidden');
+      game.menuOpen = false;
+      game.menus?.showAdvanced();
+    });
     // Ayarlar (bu cihazda saklanır)
     const opts = game.options;
     const bind = (id, key, apply) => {
@@ -93,6 +98,8 @@ export class Hud {
     });
     this.syncSpeedSeg = seg('opt-speed', 'speed', Number, () => this.syncSpeed());
     seg('opt-cam', 'cam');
+    // Grafik: renderer açılışta kurulduğu için kaydedip yenile
+    seg('opt-gfx', 'gfx', (v) => v, () => { game.save(); location.reload(); });
     this.speedBtn = document.getElementById('speed-btn');
     this.speedBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
     this.speedBtn.addEventListener('click', () => {

@@ -245,6 +245,7 @@ export class Holding {
         <div class="biz-btns">
           ${empty && !p.agent && !H.accountant ? `<button class="primary" data-list="${p.i}">${t('Kiraya ver ({n})', { n: empty })}</button>` : ''}
           ${dirty && !p.agent && !H.accountant ? `<button data-renovate="${p.i}" ${m < ht.renovation ? 'disabled' : ''}>🔧 ${t('Tadilat {n}×${cost}', { n: dirty, cost: formatMoney(ht.renovation) })}</button>` : ''}
+          <button data-demolish="${p.i}" ${m < H.demolishCost(p) ? 'disabled' : ''}>🚧 ${t('Yık ${n}', { n: formatMoney(H.demolishCost(p)) })}</button>
           ${go}
         </div></div>`);
     }
@@ -301,6 +302,12 @@ export class Holding {
     }
     if (d.list) H.list(Number(d.list));
     if (d.renovate) H.renovate(Number(d.renovate));
+    if (d.demolish) {
+      const p = H.plots[Number(d.demolish)];
+      const cost = H.demolishCost(p);
+      this.game.menus?.openSheet(`🚧 ${t('Bina yıkılsın mı?')}`, `<p>${t('{name} yıkılır, kiracılar çıkar ve biriken kira hemen ödenir. Belediyeye yıkım ücreti: <b>${n}</b>{mayor}. Sonra arsaya yeni bir bina yapabilirsin.', { name: H.type(p).name, n: formatMoney(cost), mayor: this.game.isMayor ? ` (${t('başkan indirimi')})` : '' })}</p><button data-demolish-ok class="danger">${t('Yık ${n}', { n: formatMoney(cost) })}</button>`,
+        { close: t('Vazgeç'), onClick: (ev) => { if (ev.target.closest('[data-demolish-ok]')) { H.demolish(p.i); this.game.menus.closeSheet(); this.render(); } } });
+    }
     if (d.agent) H.hireAgent(Number(d.agent));
     if (d.company !== undefined) H.buyCompany();
     if (d.haccountant !== undefined) H.hireAccountant();

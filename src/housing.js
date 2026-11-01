@@ -90,6 +90,33 @@ export class Housing {
     return Math.round(HOUSING.types[typeId].cost * (this.company ? HOUSING.company.costFactor : 1));
   }
 
+  /** Yıkım ücreti (belediyeye): inşaat maliyetinin 1/8'i; belediye başkanıysan 4 kat ucuz. */
+  demolishCost(p) {
+    if (!p.type) return 0;
+    const D = HOUSING.demolish;
+    return Math.round(this.costOf(p.type) * D.share / (this.game.isMayor ? D.mayorDiv : 1));
+  }
+
+  /** Bitmiş binayı yık: kiracılar çıkar, biriken kira hemen ödenir, arsa boşalır (yeni tip seçilebilir). */
+  demolish(i) {
+    const g = this.game;
+    const p = this.plots[i];
+    if (!p?.built) return false;
+    const cost = this.demolishCost(p);
+    if (g.money < cost) return false;
+    const rent = Math.round(p.accrued);
+    const old = this.type(p);
+    g.spend(cost);
+    if (rent) g.money += rent - (p.agent ? Math.round(rent * HOUSING.agent.commission) : 0);
+    Object.assign(p, { type: null, built: false, progress: 0, units: [], accrued: 0 });
+    g.hud.setMoney(g.money);
+    g.hud.toast(`🚧 ${t('{name} yıkıldı (belediyeye ${n}) — arsaya yeni bina yapabilirsin', { name: old.name, n: cost })}`);
+    g.audio.play('drop');
+    this.rebuild(p);
+    g.save();
+    return true;
+  }
+
   buildDays(typeId) {
     return HOUSING.types[typeId].days * (this.company ? HOUSING.company.timeFactor : 1) * (this.game.premium ? PREMIUM.buildSpeed : 1);
   }
