@@ -101,7 +101,20 @@ Mevcut yerleşim: Salon 1 (orta), Salon 2 (sağ), Salon 3 (sol, Sv.14). Otopark 
 
 ---
 
-## Aşama 4 — Holding ve CEO modu **[KARAR]**
+## Aşama 4 — Holding ve CEO modu (kararlar alındı, sıradaki)
+
+**Kararlar:** zaman akar (hız ayarı geçerli; cevapsız kart süre dolunca varsayılan seçenekle kapanır) ·
+günde 2–3 kartla başlar, holding büyüdükçe 4–6'ya çıkar · ton hafif mizahi · holding ücretli + isimli
+(~$50.000, tüm işletmelere +%5 verim).
+
+**Teknik tasarım:**
+- `src/ceo.js`: CEO masası (DOM, 3D çizim durur → `game.viewMode = 'ceo'`, `GFX.idleFps`), gösterge tablosu, işletme tablosu, gündem.
+- `src/events.js`: olay kartı motoru — her kartın koşulu (sahip olunan işletme, seviye, siyaset durumu, borç…), 2–3 seçeneği,
+  anlık etkisi (para, nüfuz, memnuniyet, işletme verimi, hisse fiyatı) ve gecikmeli sonuçları (n gün sonra gelen takip kartı).
+  Kart verisi `config.js` → `EVENTS` (metinler `t()` ile, 8 dil).
+- Kart sayısı: `2 + floor(işletme sayısı / 4)`, en fazla 6; aynı kart 10 gün içinde tekrar gelmez.
+- Varsayılan seçenek: süre dolunca (oyun saatiyle ~2 saat) en "temkinli" seçenek uygulanır.
+- Haritaya dön / CEO masası düğmesi HUD'da; holding olunca tablette de.
 
 - **Holding ol:** 4 işletme sahibi olunca tablette "Holding kur" (kuruluş ücreti, holding adı). Holding olunca
   **CEO modu** açılır; istediğin an "🗺️ Haritaya dön" / "💼 CEO masası" arasında geçiş.
