@@ -24,7 +24,7 @@ Tablolarda kullanılan kısaltmalar:
 
 ---
 
-## Bölüm A — Hemen yapılacaklar (1.1.x)
+## Bölüm A — Hemen yapılacaklar (1.1.x) ✅
 
 | # | İstek | Ne yapılacak |
 |---|---|---|
@@ -279,14 +279,14 @@ Olumlu haber için de medya binasına gidebilirsin:
 
 | # | Konu | Öneri | Diğer seçenek |
 |---|---|---|---|
-| 1 | Genel müdür ciro tavanı (A5) | ×1.6 standart / ×2.0 tecrübeli (cevap gelmedi; bu öneriyle uygulanır, sonra değiştirilebilir) | Tavansız; ya da ×1.3 / ×1.5 |
+| 1 | Genel müdür ciro tavanı (A5) | ✅ **Karar: ×1.6 / ×2.0** | — |
 | 2 | Şehir modu ne zaman (B1) | ✅ **Karar: holding kurulmuş + Sv.40** | — |
-| 3 | Araç (B3) | Serbest sürüş + "Şoförle git" | Yalnızca hedef seç, otomatik git |
-| 4 | Mekân sahneleri (B4) | 3D küçük oda + karakterler | 2D çizim kartlar (daha hafif) |
+| 3 | Araç (B3) | ✅ **Karar: serbest sürüş + "Şoförle git"** | — |
+| 4 | Mekân sahneleri (B4) | ✅ **Karar: 3D küçük oda + karakterler** | — |
 | 5 | Etkinliğin zaman maliyeti (C1) | ✅ **Karar: var** (1–3 oyun saati, çakışma) | — |
 | 6 | Cevapsız madde (C1) | ✅ **Karar: gün sonunda "katılmadın"** | — |
 | 7 | İlişkiler (C3) | ✅ **Karar: evet, 7 kişi** | — |
-| 8 | Sekreter (D1) | Maaşlı; tecrübeli asistan Premium | Ücretsiz, tek seviye |
+| 8 | Sekreter (D1) | ✅ **Karar: maaşlı; tecrübeli asistan Premium** | — |
 | 9 | Medya yolları (D3) | Tablodaki 5 yol + olumlu haber yolları | Değiştirmek istediğin satırlar |
 | 10 | Tablolar (C4, D2) | Bu haliyle | Ekle/çıkar/değiştir dediğin maddeler |
 

@@ -207,7 +207,7 @@ class OfficePanel {
       </div>
       <p class="note">${t('<b>Yetkiler</b> — kapattığın işi sen yaparsın.')}</p>
       ${opt('order', t('🚚 Siparişler'), t('Paletler %45 altına inince %85\'e tamamlar'))}
-      ${this.game.gm.active ? '' : opt('campaign', t('📢 Kampanya seçimi'), t('Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar'))}
+      ${this.game.gm.active ? `<p class="note">🧑‍💼 ${t('Genel müdür varken kampanyaları o kurar; senin kampanya ayarın izne çıkınca geçerli olur.')}</p>` : opt('campaign', t('📢 Kampanya seçimi'), t('Her akşam 19:00\'da yarın için 3\'e kadar kampanya hazırlar; öğleden sonra satış yavaşsa %25 ek indirim yapar'))}
       ${opt('online', t('🌐 Online sipariş'), t('Sv.{n}+: bütçe varsa online bölümünü açar, müdür yardımcısı, toplayıcı ve kurye alır', { n: 25 }))}
       ${opt('ads', t('📣 Reklam'), t('Her akşam yarın için seçtiğin kanaldan reklam verir (bütçe yetiyorsa)'))}
       <label class="row toggle sub-set ${a.settings.ads ? '' : 'off'}"><span>${t('Reklam kanalı')}</span><select data-set="adChannel">
@@ -240,17 +240,42 @@ class OfficePanel {
     const d = gm.def;
     return `<div class="acc-tier gm-card on"><b>🧑‍💼 ${gm.tier === 'expert' ? t('Tecrübeli genel müdür') : t('Genel müdür')} · ${t('maaş ${n}/gün', { n: d.wage })}</b>
       <small>${gm.active ? t('Marketi yönetiyor: günlük ~${n} ciro (bugün ${today})', { n: formatMoney(Math.round(gm.dailyRevenue)), today: formatMoney(Math.round(g.day.today.gmRevenue ?? 0)) }) : t('İzinde: market senin yönetiminde. Geri çağırınca son günlerin ortalamasıyla devam eder.')}</small>
+      ${gm.active ? this.gmStats() : ''}
       ${gm.active ? `<button data-gm="leave"><span>🛒 ${t('İzne çıkar (markete dön)')}</span></button>` : `<button data-gm="back"><span>🧑‍💼 ${t('Geri çağır')}</span></button>`}
       <button data-gm="fire"><span>${t('İşten çıkar')}</span></button></div>`;
+  }
+
+  /** Genel müdür: verim, tavan, bugünkü kampanyalar ve son 7 gün. */
+  gmStats() {
+    const gm = this.game.gm;
+    const pct = (v) => t('%{n}', { n: Math.round(v * 100) });
+    const camps = gm.camps.map((c) => `${PRODUCTS[c.product].emoji} +${pct(c.boost)}`).join(' · ');
+    const max = Math.max(1, ...gm.hist.map((h) => h.revenue));
+    const bars = gm.hist.map((h) => `<i class="${h.change < 0 ? 'down' : ''}" style="height:${Math.max(8, Math.round((h.revenue / max) * 100))}%" title="${t('Gün {n}', { n: h.day })}"></i>`).join('');
+    const best = gm.hist.length ? gm.hist.reduce((a, h) => (h.revenue > a.revenue ? h : a)) : null;
+    const worst = gm.hist.length ? gm.hist.reduce((a, h) => (h.revenue < a.revenue ? h : a)) : null;
+    return `<div class="gm-stats">
+        <div><span>${t('Verim')}</span><b>${pct(gm.ratio)}</b><small>${t('tavan {n}', { n: pct(gm.cap) })}</small></div>
+        <div><span>${t('Bugünkü kampanya')}</span><b>${camps || '—'}</b></div>
+      </div>
+      ${gm.hist.length ? `<div class="gm-bars">${bars}</div><small>${t('Son {n} gün', { n: gm.hist.length })} · ${t('en iyi ${a} · en kötü ${b}', { a: formatMoney(best.revenue), b: formatMoney(worst.revenue) })}</small>` : ''}`;
   }
 
   // ---- Banka ----
 
   renderBank() {
+    document.getElementById('bank-sec').innerHTML = this.bankHtml();
+  }
+
+  /** Banka ekranı (market ofisi ve 💼 tabletin 🏦 sekmesi aynı içeriği kullanır). */
+  bankHtml() {
     const b = this.game.bank;
     const m = this.game.money;
+    // Geç oyunda küçük tutarlar işe yaramaz: seviyeyle büyüyen düğmeler
+    const amounts = this.game.level >= 40 ? [10000, 50000, 250000] : this.game.level >= 20 ? [2000, 10000, 50000] : [500, 2000, 10000];
+    const step = amounts[0];
     const row = (label, value, cls = '') => `<div class="${cls}"><span>${label}</span><b>$${formatMoney(Math.round(value))}</b></div>`;
-    document.getElementById('bank-sec').innerHTML = `
+    return `
       <div class="stats">
         ${row(t('Nakit'), m)}
         ${row(t('Mevduat (+%2/gün)'), b.deposit)}
@@ -265,18 +290,18 @@ class OfficePanel {
       ${this.renderRent()}
       <p class="note">${t('Kredi limiti ${limit} = seviye ${base} + işletmeler ${assets} + kazanç ${income}. Yeni işletme aldıkça ve kazancın arttıkça yükselir.', { limit: formatMoney(b.limit), base: formatMoney(b.limitParts.base), assets: formatMoney(b.limitParts.assets), income: formatMoney(b.limitParts.income) })}</p>
       <div class="bank-group"><span>${t('Kredi çek')}</span>
-        ${[500, 2000, 10000].map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
+        ${amounts.map((n) => `<button data-act="borrow" data-n="${n}" ${b.available < n ? 'disabled' : ''}>+$${formatMoney(n)}</button>`).join('')}
       </div>
       <div class="bank-group"><span>${t('Borç öde')}</span>
-        <button data-act="repay" data-n="500" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(500, b.totalDebt, Math.max(0, Math.floor(m))))}</button>
+        <button data-act="repay" data-n="${step}" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>$${formatMoney(Math.min(step, b.totalDebt, Math.max(0, Math.floor(m))))}</button>
         <button data-act="repay" data-n="all" ${!b.totalDebt || m <= 0 ? 'disabled' : ''}>${m >= b.totalDebt ? t('Borcun tamamı') : t('Elimdekini öde')} ($${formatMoney(Math.min(b.totalDebt, Math.max(0, Math.floor(m))))})</button>
       </div>
       <div class="bank-group"><span>${t('Para yatır')}</span>
-        <button data-act="put" data-n="500" ${m < 1 ? 'disabled' : ''}>$500</button>
+        <button data-act="put" data-n="${step}" ${m < 1 ? 'disabled' : ''}>$${formatMoney(step)}</button>
         <button data-act="put" data-n="half" ${m < 2 ? 'disabled' : ''}>${t('Yarısı')}</button>
       </div>
       <div class="bank-group"><span>${t('Para çek')}</span>
-        <button data-act="withdraw" data-n="500" ${!b.deposit ? 'disabled' : ''}>$500</button>
+        <button data-act="withdraw" data-n="${step}" ${!b.deposit ? 'disabled' : ''}>$${formatMoney(step)}</button>
         <button data-act="withdraw" data-n="all" ${!b.deposit ? 'disabled' : ''}>${t('Tümünü çek')}</button>
       </div>
       ${b.lastLog ? `<p class="note bank-log">${b.lastLog}</p>` : ''}`;
@@ -301,18 +326,23 @@ class OfficePanel {
   }
 
   onBank(e) {
+    if (this.bankAction(e)) this.renderBank();
+  }
+
+  /** Banka düğmesi tıklandıysa işlemi yapar (true döner). */
+  bankAction(e) {
     const btn = e.target.closest('button[data-act]');
-    if (!btn || btn.disabled) return;
+    if (!btn || btn.disabled) return false;
     if (btn.dataset.act === 'buymarket') {
       this.game.rent.buyMarket();
-      this.renderBank();
-      return;
+      return true;
     }
     const b = this.game.bank;
     const raw = btn.dataset.n;
     const n = raw === 'all' ? Infinity : raw === 'half' ? Math.floor(this.game.money / 2) : Number(raw);
     b[btn.dataset.act](n);
-    this.renderBank();
+    this.game.hud.setMoney(this.game.money);
+    return true;
   }
 
   // ---- Kampanya ----

@@ -67,6 +67,12 @@ export class Holding {
   update(dt) {
     for (const b of this.businesses) b.update(dt);
     this.btn.classList.toggle('hidden', this.game.level < 21);
+    // Sahip olunan işletme / arsanın önünde "⚙️ Yönet" balonu
+    this.nearT = (this.nearT ?? 0) - dt;
+    if (this.nearT <= 0) {
+      this.nearT = 0.3;
+      this.updateNear();
+    }
     if (this.isOpen) {
       this.tick = (this.tick ?? 0) + dt;
       if (this.tick > 1.5) {
@@ -97,10 +103,50 @@ export class Holding {
     return !this.el.classList.contains('hidden');
   }
 
-  open(tab) {
+  open(tab, focus = null) {
     this.tab = tab;
     this.el.classList.remove('hidden');
     this.render();
+    if (focus) this.focusCard(focus);
+  }
+
+  /** Tablette bir kartı öne çıkar (⚙️ Yönet ile açıldığında). */
+  focusCard(key) {
+    const card = this.body.querySelector(`[data-go="${key}"]`)?.closest('.biz');
+    if (!card) return;
+    card.scrollIntoView({ block: 'center' });
+    card.classList.add('focus');
+    setTimeout(() => card.classList.remove('focus'), 1600);
+  }
+
+  /** Oyuncu sahip olduğu bir yerin önünde mi? (işletme ön cephesi, arsa önü) */
+  nearOwned() {
+    const g = this.game;
+    if (g.viewMode || g.ceoDesk?.open) return null;
+    const p = g.player.position;
+    for (const b of this.owned) {
+      const fz = b.frontZ + (b.def.building?.facing === -1 ? -1.2 : 1.2);
+      if (Math.abs(p.x - b.x) < Math.max(4, b.w / 2) && Math.abs(p.z - fz) < 3.5) return { key: `biz:${b.id}`, tab: 'biz', label: `${b.def.emoji} ${b.name}` };
+    }
+    for (const pl of g.housing.plots) {
+      if (!pl.owned) continue;
+      if (Math.abs(p.x - pl.x) < 4.5 && Math.abs(p.z - (pl.z + 6.5)) < 3) return { key: `plot:${pl.i}`, tab: 'estate', label: `🏠 ${pl.name || t('Arsa {n}', { n: pl.i + 1 })}` };
+    }
+    return null;
+  }
+
+  updateNear() {
+    const n = this.nearOwned();
+    const btn = this.manageBtn ??= (() => {
+      const el = document.getElementById('manage-btn');
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());
+      el.addEventListener('click', () => this.near && this.open(this.near.tab, this.near.key));
+      return el;
+    })();
+    if ((n?.key ?? null) === (this.near?.key ?? null)) return;
+    this.near = n;
+    btn.classList.toggle('hidden', !n);
+    if (n) btn.innerHTML = `⚙️ <b>${t('Yönet')}</b> <span>${escapeHtml(n.label)}</span>`;
   }
 
   close() {
@@ -109,7 +155,7 @@ export class Holding {
 
   render() {
     this.el.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === this.tab));
-    this.body.innerHTML = this.tab === 'map' ? this.renderMap() : this.tab === 'estate' ? this.renderEstate() : this.tab === 'fin' ? this.game.finance.render() : this.renderBusinesses();
+    this.body.innerHTML = this.tab === 'map' ? this.renderMap() : this.tab === 'estate' ? this.renderEstate() : this.tab === 'fin' ? this.game.finance.render() : this.tab === 'bank' ? this.game.office.panel.bankHtml() : this.renderBusinesses();
   }
 
   renderBusinesses() {
@@ -279,6 +325,10 @@ export class Holding {
   }
 
   onClick(e) {
+    if (this.tab === 'bank') {
+      if (this.game.office.panel.bankAction(e)) this.render();
+      return;
+    }
     const btn = e.target.closest('button');
     if (!btn || btn.disabled) return;
     const d = btn.dataset;

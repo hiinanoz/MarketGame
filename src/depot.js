@@ -264,7 +264,7 @@ class Truck {
       }
     } else {
       p.x += TRUCK_SPEED * this.depot.speedFactor * dt;
-      if (p.x > 90) {
+      if (p.x > 165) {
         this.game.scene.remove(this.mesh);
         this.depot.removeTruck(this);
       }

@@ -99,8 +99,9 @@ export class MarketAccountant extends Character {
     if (this.timer <= 0) {
       this.timer = 4;
       if (this.settings.order) this.manageOrders();
-      if (this.settings.campaign) this.manageCampaign();
-      if (this.settings.campaign) this.managePromo();
+      // Genel müdür varken kampanyaları o yürütür (özet ciroya eklenir); muhasebecinin ayarı değişmez
+      if (this.settings.campaign && !this.game.gm.active) this.manageCampaign();
+      if (this.settings.campaign && !this.game.gm.active) this.managePromo();
       if (this.settings.ads) this.manageAds();
       if (this.settings.online) this.manageOnline();
       if (this.settings.invest) this.manageInvestments();

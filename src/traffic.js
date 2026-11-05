@@ -8,7 +8,7 @@ import { bubbleTexture } from './fx.js';
 
 const LANE_EAST = 18.6;  // +x yönüne giden şerit
 const LANE_WEST = 21.4;  // −x yönüne giden şerit
-const ROAD_END = 95;
+const ROAD_END = 150; // yol −150…+170: arabalar ufukta belirip kaybolur
 
 const MODELS = ['car_sedan', 'car_hatchback', 'car_stationwagon', 'car_taxi', 'car_sedan', 'car_hatchback'];
 

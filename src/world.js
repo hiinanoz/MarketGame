@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { t, upper } from './i18n.js';
 import { prop } from './assets.js';
-import { ROOM1, ROOM2, ROOM3, ROOM4, DEPOT, DEPOT2, YARD, DOOR_X, DOOR2_X, DOOR3_X, DOOR4_X, BACK_ROAD_Z } from './config.js';
+import { ROOM1, ROOM2, ROOM3, ROOM4, DEPOT, DEPOT2, YARD, DOOR_X, DOOR2_X, DOOR3_X, DOOR4_X, BACK_ROAD_Z, ROAD_SPAN } from './config.js';
 
 // Statik çevre: çimen, yol, mağaza zemini, duvarlar, dekor. Çarpışma kutularını nav'a kaydeder.
 
@@ -139,11 +139,13 @@ export class World {
     // Kaldırım: sokak lambaları ve banklar
     for (let x = -44; x <= 40; x += 12) {
       if ([0, 20, -20, -14, -8].some((d) => Math.abs(x - d) < 2.5)) continue;
-      const l = prop('streetlight');
-      l.scale.setScalar(4);
-      l.position.set(x, 0, 14.25);
-      l.rotation.y = -Math.PI / 2; // kol caddeye doğru
-      s.add(l);
+      this.addLamp(x);
+    }
+    // Uzayan cadde: iki uçta da lambalar (yol tabelası pedlerinin yanını boş bırak)
+    for (let x = -140; x <= 160; x += 18) {
+      if (x > -48 && x < 44) continue;
+      if ([-49.5, 56, 31].some((d) => Math.abs(x - d) < 3)) continue;
+      this.addLamp(x);
     }
     for (const x of [15.5, 33]) {
       const b = prop('bench');
@@ -286,10 +288,18 @@ export class World {
     this.game.nav.setBox(`billboard-${x}`, { minX: x - 2, maxX: x + 2, minZ: z - 0.2, maxZ: z + 0.2 });
   }
 
+  addLamp(x) {
+    const l = prop('streetlight');
+    l.scale.setScalar(4);
+    l.position.set(x, 0, 14.25);
+    l.rotation.y = -Math.PI / 2; // kol caddeye doğru
+    this.scene.add(l);
+  }
+
   addStrip(color, depth, z, y) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(200, depth), new THREE.MeshStandardMaterial({ color, roughness: 1 }));
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_SPAN.east - ROAD_SPAN.west, depth), new THREE.MeshStandardMaterial({ color, roughness: 1 }));
     m.rotation.x = -Math.PI / 2;
-    m.position.set(0, y, z);
+    m.position.set((ROAD_SPAN.west + ROAD_SPAN.east) / 2, y, z);
     m.receiveShadow = true;
     this.scene.add(m);
     return m;
@@ -299,7 +309,7 @@ export class World {
     this.addStrip(0x5b6470, depth, z, -0.012);
     const lineMat = new THREE.MeshBasicMaterial({ color: 0xf2f2f2 });
     const lineGeo = new THREE.PlaneGeometry(2.6, 0.25);
-    for (let x = -90; x <= 90; x += 6) {
+    for (let x = ROAD_SPAN.west + 3; x <= ROAD_SPAN.east - 3; x += 6) {
       const line = new THREE.Mesh(lineGeo, lineMat);
       line.rotation.x = -Math.PI / 2;
       line.position.set(x, -0.005, z);

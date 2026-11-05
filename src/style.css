@@ -751,3 +751,22 @@ body.in-jail .hud, body.in-jail #joystick, body.in-jail .side-btns { visibility:
 #summary, #lvl-pop, #sim-day, #menu, #home, #final, #intro, #avatar, #loading { z-index: 50; }
 #toast { z-index: 55; }
 .overlay.save-choose { z-index: 80; } /* açılışta iCloud/cihaz kayıt seçimi: yükleme ekranının (50) üstünde */
+
+/* ⚙️ Yönet balonu (sahip olunan işletme / arsa önünde) */
+.manage-btn { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); transform: translateX(-50%); z-index: 6; border: none; border-radius: 999px; padding: 10px 16px; font: inherit; font-size: 16px; background: #fffaf0; color: #23302a; box-shadow: 0 3px 0 #c9bfa8, 0 6px 14px rgba(0,0,0,0.18); display: flex; gap: 6px; align-items: center; max-width: 86vw; white-space: nowrap; }
+.manage-btn span { overflow: hidden; text-overflow: ellipsis; color: #5b6660; font-size: 14px; }
+.biz.focus { outline: 3px solid #f2a541; outline-offset: 2px; transition: outline-color 0.3s; }
+
+/* Genel müdür 2.0 */
+.gm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
+.gm-stats > div { background: rgba(0,0,0,0.05); border-radius: 10px; padding: 6px 8px; display: flex; flex-direction: column; min-width: 0; }
+.gm-stats span { font-size: 11px; opacity: 0.75; }
+.gm-stats small { font-size: 11px; opacity: 0.75; }
+.gm-bars { display: flex; align-items: flex-end; gap: 4px; height: 46px; margin: 4px 0; }
+.gm-bars i { flex: 1; background: #4caf50; border-radius: 4px 4px 0 0; }
+.gm-bars i.down { background: #e57373; }
+
+/* Tablet sekmeleri (5 sekme): telefonda yatay kaydırılır */
+#holding .tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; min-width: 0; flex: 1 1 auto; }
+#holding .tabs::-webkit-scrollbar { display: none; }
+#holding .tabs button { flex: 0 0 auto; }

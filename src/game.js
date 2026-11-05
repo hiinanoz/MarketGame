@@ -994,7 +994,7 @@ export class Game {
     p.position.x += p.velocity.x * dt;
     p.position.z += p.velocity.z * dt;
     this.nav.collide(p.position, 0.45);
-    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 81 ? -100 : this.level >= 51 ? -90 : -49, this.level >= 81 ? 128 : this.level >= 36 ? 104 : this.level >= 13 ? 58 : 45);
+    p.position.x = THREE.MathUtils.clamp(p.position.x, this.level >= 81 ? -130 : this.level >= 51 ? -110 : this.level >= 40 ? -95 : -49, this.level >= 81 ? 128 : this.level >= 36 ? 104 : this.level >= 13 ? 58 : 45);
     p.position.z = THREE.MathUtils.clamp(p.position.z, this.level >= 31 ? -158 : this.level >= 22 ? -96 : -31, this.level >= 66 ? 54 : 17.5);
     p.update(dt);
     this.playerRing.position.set(p.position.x, 0.04, p.position.z);

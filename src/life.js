@@ -55,7 +55,7 @@ export class Life {
     const built = g.housing.plots.filter((p) => p.built);
     if (built.length) return built.map((p) => ({ x: p.x, z: p.z + 5.6, via: [[p.x + 6, LANES.north], [p.x + 6, p.z + 5.6]] }));
     // Henüz ev yoksa şehrin dışından gelir
-    return [{ x: 104, z: LANES.north, edge: true }, { x: -100, z: LANES.north, edge: true }];
+    return [{ x: 160, z: LANES.north, edge: true }, { x: -140, z: LANES.north, edge: true }];
   }
 
   spawn() {

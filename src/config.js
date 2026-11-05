@@ -163,6 +163,7 @@ export const PARKING = {
 };
 export const VALET_SPOT = [-12.9, 14.0];
 export const WALK_IN_CAP = 12;   // aynı anda en fazla yaya müşteri
+export const ROAD_SPAN = { west: -150, east: 170 }; // ana cadde ve arka yolun uçları
 export const BACK_ROAD_Z = -32;   // toptancı kamyonlarının yolu
 
 // Reyonlar: masa konumu. Müşteri masanın önünde (+z) durur, yükseltme alanı arkasında (−z).
@@ -629,6 +630,10 @@ export const GM = {
   maxVisible: 5,         // genel müdür varken ekrandaki en fazla müşteri
   spawnSlow: 4,          // müşteri gelme aralığı bu kadar uzar
   costRatio: 0.42,       // özet cironun mal maliyeti (ürünlerin ortalama alış/satış oranı)
+  // Genel müdür 2.0: verim her gün değişir (iyi gün / hatalı gün), tavana yaklaştıkça artış yavaşlar
+  goodChance: 0.8, good: [0.05, 0.10], bad: [0.10, 0.15],
+  cap: { std: 1.6, expert: 2.0 }, floor: 0.7,   // referans ciroya göre en fazla / en az
+  campaigns: { standard: 1, premium: 2 }, campaignBoost: [0.15, 0.35], // günlük kampanya: referans cironun payı
 };
 
 // Holding ve CEO masası (olay kartları): 4 işletmeyle holding kurulur.
