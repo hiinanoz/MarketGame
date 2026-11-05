@@ -16,6 +16,8 @@ export const VENUES = {
   school: { name: t('Kasaba İlkokulu'), emoji: '🏫', x: -130, kind: 'school', color: 0xf0b37a, h: 5 },
   court: { name: t('Adliye'), emoji: '⚖️', x: -137.5, kind: 'court', color: 0xcfc6b4, h: 7 },
   inn: { name: t('Tarihi Han'), emoji: '🕯️', x: -145, kind: 'inn', color: 0x9c6b48, h: 5 },
+  tv: { name: t('Manşet TV'), emoji: '📺', x: -110, kind: 'studio', color: 0x2c3e66, h: 9, north: true },
+  gazette: { name: t('Kasaba Gazetesi'), emoji: '📰', x: -58, kind: 'newsroom', existing: true },
   stadium: { name: t('Stadyum'), emoji: '🏟️', x: -78, kind: 'box', existing: true },
   market: { name: t('Market'), emoji: '🛒', x: 0, kind: 'market', existing: true },
   depot: { name: t('Lojistik deposu'), emoji: '🚚', x: 38, kind: 'depot', existing: true },
@@ -72,7 +74,8 @@ export class Venues {
     for (const [id, v] of Object.entries(VENUES)) {
       if (v.existing) continue;
       const g = new THREE.Group();
-      g.position.set(v.x, 0, BLVD_Z);
+      g.position.set(v.x, 0, v.north ? 9.5 : BLVD_Z);
+      if (v.north) g.rotation.y = Math.PI; // caddenin kuzeyinde: kapı güneye (caddeye) bakar
       const mat = (c, r = 0.8) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
       const body = new THREE.Mesh(new THREE.BoxGeometry(6.4, v.h, 6), mat(v.color, v.kind === 'hq' ? 0.25 : 0.8));
       body.position.y = v.h / 2;
@@ -111,7 +114,7 @@ export class Venues {
   sceneFor(kind) {
     if (this.scenes[kind]) return this.scenes[kind];
     const scene = new THREE.Scene();
-    const palette = { hall: [0x5a2e2e, 0xf1e3c8], bank: [0x2f3e4c, 0xe9eef2], townhall: [0x3c4a3a, 0xefe6d2], school: [0x4d6e8a, 0xfff3d6], court: [0x3e342c, 0xe7dcc8], inn: [0x2a1c14, 0xc89a68], box: [0x1d2a3a, 0xd7e3ee], depot: [0x3a3a32, 0xd8d2c0], factory: [0x34383c, 0xd2d6da], hq: [0x2b3a48, 0xe9e2d4], market: [0x2b3a48, 0xe9e2d4] }[kind] ?? [0x333333, 0xeeeeee];
+    const palette = { studio: [0x151a2a, 0x2c3e66], newsroom: [0x2e3a2e, 0xe8e2d0], hall: [0x5a2e2e, 0xf1e3c8], bank: [0x2f3e4c, 0xe9eef2], townhall: [0x3c4a3a, 0xefe6d2], school: [0x4d6e8a, 0xfff3d6], court: [0x3e342c, 0xe7dcc8], inn: [0x2a1c14, 0xc89a68], box: [0x1d2a3a, 0xd7e3ee], depot: [0x3a3a32, 0xd8d2c0], factory: [0x34383c, 0xd2d6da], hq: [0x2b3a48, 0xe9e2d4], market: [0x2b3a48, 0xe9e2d4] }[kind] ?? [0x333333, 0xeeeeee];
     scene.background = new THREE.Color(palette[0]);
     scene.add(new THREE.HemisphereLight(0xfff6e6, 0x40342a, 1.7));
     const lamp = new THREE.PointLight(0xffd9a0, 8, 12);
@@ -169,6 +172,17 @@ export class Venues {
       box(5, 1.6, 0.06, 0x24423a, 0, 1.8, -3.45); // kara tahta
       for (const [x, z] of [[-2.5, 0.5], [0, 0.5], [2.5, 0.5], [-2.5, 2.3], [0, 2.3], [2.5, 2.3]]) box(1.2, 0.08, 0.7, 0xc89a68, x, 0.6, z);
       seats.push([-2.5, 1.1], [2.5, 1.1], [0, 2.9]);
+    } else if (kind === 'studio') {
+      box(6, 0.4, 2.2, 0x23283a, 0, 0.2, -1.8); // stüdyo masası zemini
+      box(3.6, 0.9, 0.9, 0xd8dde8, 0, 0.75, -1.6);
+      box(8, 2.4, 0.06, 0x3f6fd8, 0, 2.2, -3.45); // dev ekran
+      seats.push([-1.1, -1.0], [1.1, -1.0]);
+    } else if (kind === 'newsroom') {
+      for (const [x, z] of [[-2.6, -1.4], [0, -1.4], [2.6, -1.4], [-2.6, 1.2], [2.6, 1.2]]) {
+        box(1.6, 0.08, 0.9, 0xc8b08a, x, 0.75, z);
+        box(0.6, 0.4, 0.05, 0x20242a, x, 1.0, z - 0.3);
+      }
+      table(0, 1.6, false);
     } else if (kind === 'inn') {
       table(0, 0.8, false);
       for (const x of [-0.6, 0.6]) {
@@ -270,6 +284,15 @@ export class Venues {
     if (id === 'bank') extra.push(`<button data-go="safe">🏦 ${t('Banka işlemleri')}</button>`);
     if (id === 'townhall' && g.politics?.unlocked) extra.push(`<button data-go="politics">🏛️ ${t('Siyaset')}</button>`);
     if (id === 'stadium' && g.club?.unlocked) extra.push(`<button data-go="club">⚽ ${t('Kulüp')}</button>`);
+    if ((id === 'gazette' || id === 'tv') && g.news) {
+      const ok = g.news.canPositive && g.day.phase === 'open';
+      const charity = g.day.day - g.news.lastCharity <= 5;
+      extra.push(`<p class="note">🗞️ ${t('Olumlu haber yaptır (günde bir):')}</p>`,
+        `<button data-pos="press" ${ok ? '' : 'disabled'}>🎤 ${t('Basın toplantısı')}</button>`,
+        `<button data-pos="interview" ${ok ? '' : 'disabled'}>🗣️ ${t('Röportaj ver')}</button>`,
+        `<button data-pos="sponsored" ${ok ? '' : 'disabled'}>🧾 ${t('Sponsorlu haber')}</button>`,
+        `<button data-pos="charity" ${ok && charity ? '' : 'disabled'} title="${t('Son 5 günde bir hayır işi yaptıysan')}">❤️ ${t('Hayır işi haberi')}</button>`);
+    }
     this.body.innerHTML = `${items || `<p class="note">${t('Şu an burada seni bekleyen bir etkinlik yok.')}</p>`}
       <div class="biz-btns">${extra.join('')}<button class="primary" data-leave>🚗 ${t('Araca dön')}</button><button data-plaza>🏢 ${t('Plazaya dön')}</button></div>`;
   }
@@ -288,6 +311,15 @@ export class Venues {
       this.leave();
       g.drive.toPlaza();
       return g.plaza.openSheet('safe');
+    }
+    if (b.dataset.pos) {
+      const fx = g.events.effects({});
+      const r = g.news.positive(b.dataset.pos, fx);
+      const text = `🗞️ ${r}${fx.summary.length ? ` · ${fx.summary.join(' · ')}` : ''}`;
+      g.events.addLog(text);
+      g.hud.toast(text);
+      g.hud.setMoney(g.money);
+      return this.render();
     }
     if (b.dataset.go === 'politics') return g.politics.open();
     if (b.dataset.go === 'club') return g.club.open();

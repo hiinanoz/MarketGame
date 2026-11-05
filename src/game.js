@@ -6,6 +6,7 @@ import { Relations } from './relations.js';
 import { Plaza } from './plaza.js';
 import { Venues } from './venues.js';
 import { Drive } from './drive.js';
+import { News } from './news.js';
 import { Legal } from './legal.js';
 import { Events } from './events.js';
 import { CeoDesk } from './ceo.js';
@@ -158,6 +159,7 @@ export class Game {
     this.plaza = new Plaza(this);
     this.venues = new Venues(this);
     this.drive = new Drive(this);
+    this.news = new News(this);
     this.decor = new Decor(this);
     this.party = new Celebration(this);
     this.platform = platform;
@@ -1331,6 +1333,7 @@ export class Game {
       club: this.club.serialize(),
       relations: this.relations.serialize(),
       plaza: this.plaza.serialize(),
+      news: this.news.serialize(),
       legal: this.legal.serialize(),
       ceo: this.ceoDesk.serialize(),
       decor: this.decor.serialize(),
@@ -1409,6 +1412,7 @@ export class Game {
     this.club.restore(data.club);
     this.relations.restore(data.relations);
     this.plaza.restore(data.plaza);
+    this.news.restore(data.news);
     if (this.politics.sponsor) { // eski kayıt: sponsorluk siyasetten kulübe taşındı
       this.club.sponsor = true;
       this.politics.sponsor = false;

@@ -87,6 +87,7 @@ export class Events {
   planDay() {
     const g = this.game;
     this.plannedDay = g.day.day;
+    try { g.news?.planDay(); } catch (e) { console.error(e); }
     const pool = CARDS.filter((c) => this.eligible(c));
     const n = Math.min(pool.length, this.dailyCount());
     const picked = [];
@@ -140,7 +141,11 @@ export class Events {
         continue;
       }
       if (card.mandatory) this.choose(a, card.def ?? 0, { auto: true });
-      else this.skip(a, card);
+      else if (a.labels?.length) {
+        // Katıldın ama son adıma gelmeden gün bitti
+        this.active.splice(this.active.indexOf(a), 1);
+        this.addLog(`${card.emoji} ${t(card.title, a.vars)} → ${a.labels.join(' → ')} (${t('yarım kaldı')})${a.sum.length ? ` · ${a.sum.join(' · ')}` : ''}`);
+      } else this.skip(a, card);
     }
   }
 
@@ -170,10 +175,17 @@ export class Events {
     return card.steps?.start ?? card;
   }
 
+  /** Etkinliğin ortasındayken (adım bekleniyor, etkinlik ekranı açık) gün saati durur. */
+  get holdClock() {
+    const g = this.game;
+    return !this.busy && !g.simulating && this.active.some((a) => a.step) && (g.venues?.open || g.plaza?.panel === 'agenda' || g.ceoDesk?.open);
+  }
+
   /** Madde şu an cevaplanabilir mi? */
   isOpen(entry) {
     const g = this.game;
-    return !this.busy && g.day.phase === 'open' && g.day.t >= entry.from && g.day.t < entry.to;
+    // Başlamış etkinliğin sonraki adımları pencere bitse de (gün bitmeden) cevaplanabilir
+    return !this.busy && g.day.phase === 'open' && ((g.day.t >= entry.from && g.day.t < entry.to) || !!entry.step);
   }
 
   /** Seçeneği uygula. Etkinlik seçenekleri oyun saatini ilerletir; adım bitmediyse madde açık kalır. */
@@ -274,9 +286,32 @@ export class Events {
     return `${String(hh + (mm === 60 ? 1 : 0)).padStart(2, '0')}:${String(mm % 60).padStart(2, '0')}`;
   }
 
+  /** Maddenin mekânı (haber uyarısı gibi maddelerde değişkenden). */
+  placeOf(c, a) {
+    return a?.vars?.venue ?? c?.place;
+  }
+
   /** Şehir modunda bu madde için mekâna gitmek gerekir mi? (etkinlik / toplantı / maç) */
-  needsVenue(c) {
-    return !!(this.game.cityMode && c.kind && c.kind !== 'decision' && c.place && VENUES[c.place]);
+  needsVenue(c, a) {
+    const place = this.placeOf(c, a);
+    return !!(this.game.cityMode && c.kind && c.kind !== 'decision' && place && VENUES[place]);
+  }
+
+  /** Bugünün ajandasına hemen madde ekle (ör. sekreterin haber uyarısı). */
+  addNow(id, vars = {}) {
+    const g = this.game;
+    const card = this.card(id);
+    if (!card || g.day.phase !== 'open') return;
+    const [from, to] = this.windowOf(card);
+    this.active.push({ id, vars, from: Math.max(from, 0), to, step: null, sum: [], notified: true, uid: `${id}-${Math.random().toString(36).slice(2, 7)}` });
+    if (!this.panelOpen()) {
+      const sec = g.plaza?.secretary;
+      g.hud.toast(`☎️ ${sec ? `${sec.name}: ` : ''}${t(card.title, vars)}`);
+      g.audio.play('bell', 0.6);
+    }
+    g.ceoDesk.unseen++;
+    g.ceoDesk.syncButton();
+    this.refresh();
   }
 
   /** Bekleyen maddelerin HTML'i (where: 'ceo' | 'politics' | 'club'; opts.venue: yalnızca o mekândakiler). */
@@ -285,9 +320,10 @@ export class Events {
     return this.active.map((a) => {
       const c = CARDS.find((x) => x.id === a.id);
       if (!c || this.homeOf(c) !== where) return '';
-      const atVenue = opts.venue && c.place === opts.venue && (opts.venue !== 'biz' || a.vars?.id === opts.vars?.id);
+      const place = this.placeOf(c, a);
+      const atVenue = opts.venue && place === opts.venue && (opts.venue !== 'biz' || a.vars?.id === opts.vars?.id);
       if (opts.venue && !atVenue) return '';
-      const far = this.needsVenue(c) && !atVenue;
+      const far = this.needsVenue(c, a) && !atVenue;
       const step = this.stepOf(c, a);
       const open = this.isOpen(a) && !far;
       const kind = c.kind ?? 'decision';
@@ -295,12 +331,14 @@ export class Events {
       const state = g.day.t < a.from ? `<span class="ag-wait">⏳ ${t('Başlangıç {time}', { time: this.clock(a.from) })}</span>` : '';
       const choices = step.choices.map((ch, i) => {
         const ok = !ch.when || ch.when(g, a.vars);
+        if (!ok && ch.hideIfNot) return '';
         const hrs = ch.hours ? ` <small>· ${t('{n} saat', { n: ch.hours })}</small>` : '';
-        return `<button data-card="${a.id}" data-i="${i}" class="${i === c.def && c.mandatory ? 'def' : ''}" ${open && ok ? '' : 'disabled'}>${t(ch.label, a.vars)}${hrs}</button>`;
+        const can = (open || (ch.anywhere && this.isOpen(a))) && ok;
+        return `<button data-card="${a.id}" data-i="${i}" class="${i === c.def && c.mandatory ? 'def' : ''}" ${can ? '' : 'disabled'}>${t(ch.label, a.vars)}${hrs}</button>`;
       }).join('');
       const progress = a.labels?.length ? `<p class="ag-prog">✔︎ ${a.labels.join(' → ')}${a.sum.length ? ` · ${a.sum.join(' · ')}` : ''}</p>` : '';
       return `<div class="ceo-card ag-${kind}${open ? '' : ' ag-later'}"><div class="ceo-card-h"><span class="ce">${c.emoji}</span><b>${t(c.title, a.vars)}</b></div>
-        <div class="ag-meta">${KIND[kind]} ${when}${c.place ? ` · 📍 ${VENUES[c.place] ? g.venues.nameOf(c.place, a.vars) : t(c.place, a.vars)}` : ''}${c.mandatory ? ` · ⚠️ ${t('zorunlu')}` : ''}</div>
+        <div class="ag-meta">${KIND[kind]} ${when}${place ? ` · 📍 ${VENUES[place] ? g.venues.nameOf(place, a.vars) : t(place, a.vars)}` : ''}${c.mandatory ? ` · ⚠️ ${t('zorunlu')}` : ''}</div>
         ${progress}<p>${t(step.text ?? c.text, a.vars)}</p>${state}
         ${far ? `<div class="ag-far"><span>📍 ${t('Katılmak için mekâna git')}</span><button data-chauffeur="${a.id}" ${g.day.phase === 'open' && g.day.t < a.to && !this.busy ? '' : 'disabled'}>🚗 ${t('Şoförle git')} <small>· ${t('20 dk')}</small></button></div>` : ''}
         <div class="ceo-choices">${choices}</div></div>`;
@@ -321,7 +359,7 @@ export class Events {
       const card = entry && this.card(entry.id);
       if (card) {
         this.game.plaza.hide();
-        this.game.drive.chauffeur(card.place, entry.vars);
+        this.game.drive.chauffeur(this.placeOf(card, entry), entry.vars);
       }
       return true;
     }

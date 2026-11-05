@@ -58,7 +58,8 @@ export class DayCycle {
 
   update(dt) {
     if (this.phase === 'open') {
-      this.t += dt;
+      // Çok adımlı bir etkinliğin masasındayken (sonraki adım bekleniyor) saat ilerlemez
+      if (!this.game.events?.holdClock) this.t += dt;
       if (this.t >= DAY.length) {
         this.phase = 'closing';
         this.closingT = 0;
@@ -99,6 +100,7 @@ export class DayCycle {
     g.legal.endOfDay(this.today);     // hukuki risk, soruşturma
     g.relations.endOfDay();           // ilişkiler sıfıra doğru
     g.plaza.endOfDay();               // tecrübeli asistanın ufak işleri
+    g.news.endOfDay(this.today);      // zamanı gelen haberler yayınlanır
     g.politics.endOfDay(this.today);  // nüfuz, vergi, projeler, seçim
     g.finance.endOfDay(this.today);   // temettü, banka geliri
     g.life.endOfDay();                // şehir büyür

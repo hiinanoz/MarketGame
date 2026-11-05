@@ -439,7 +439,7 @@ export const CARDS = [
   },
   // ---- Hukuk (takip kartları) ----
   {
-    id: 'probe', emoji: '⚖️', need: 'legal', followup: true, def: 2, mandatory: true,
+    id: 'probe', emoji: '⚖️', need: 'legal', followup: true, def: 2, mandatory: true, kind: 'meeting', place: 'court', window: [9, 17],
     title: t('Savcılık senin hakkında soruşturma başlattı'),
     text: t('Dosya kalın. Kapağında senin fotoğrafın var, en kötü açıdan.'),
     choices: [
@@ -532,7 +532,7 @@ export const CARDS = [
       auction: {
         text: t('Tatlılar geldi, müzayede başladı. Sunucu mikrofona üfleyip "Birinci lot!" diyor.'),
         choices: [
-          { label: t('Yaşlılar evine bağış ($5K)'), do: (g, E) => { E.cash(-5000); E.influence(4); E.happy(2); } },
+          { label: t('Yaşlılar evine bağış ($5K)'), do: (g, E) => { E.cash(-5000); E.influence(4); E.happy(2); if (g.news) g.news.lastCharity = g.day.day; } },
           { label: t('Ünlü futbolcunun formasına teklif ($12K)'), do: (g, E) => (E.relChance('club', 0.55) ? (E.cash(-12000), E.customers(5, 5), E.fans(3), E.rel('club', 5), t('Forma senin: marketin vitrininde')) : (E.rel('club', 2), t('Forma rakip patrona gitti'))) },
           { label: t('Sadece yemeğin tadını çıkar'), do: (g, E) => { E.influence(1); } },
         ],
@@ -634,7 +634,7 @@ export const CARDS = [
     title: t('Okul ziyareti daveti'),
     text: t('Müdire Hanım, öğrencilerin "patronla tanışmak" istediğini yazmış. Bir çocuk şimdiden soru listesi hazırlamış.'),
     choices: [
-      { label: t('Kütüphaneye kitap ($3K)'), hours: 1, do: (g, E) => { E.cash(-3000); E.happy(2); E.influence(3); } },
+      { label: t('Kütüphaneye kitap ($3K)'), hours: 1, do: (g, E) => { E.cash(-3000); E.happy(2); E.influence(3); if (g.news) g.news.lastCharity = g.day.day; } },
       { label: t('Girişimcilik dersi ver'), hours: 1, do: (g, E) => { E.influence(2); return E.chance(0.4) ? (E.customers(5, 3), t('Bir çocuğun sorusu viral oldu')) : ''; } },
     ],
   },
@@ -645,6 +645,122 @@ export const CARDS = [
     choices: [
       { label: t('Çay ısmarla, dinle'), hours: 1, do: (g, E) => { E.cash(-300); E.biz('logistics', 10, 5); E.rel('union', 3); } },
       { label: t('Yeni mola odası ($6K)'), hours: 1, do: (g, E) => { E.cash(-6000); E.biz('logistics', 5, 30); E.rel('union', 6); } },
+    ],
+  },
+  // ---- 1.2-c Haberler (sekreterin uyarısı) ----
+  {
+    id: 'news_warn', emoji: '📰', followup: true, kind: 'meeting', window: [8, 22], def: 0, need: 'holding',
+    title: t('Olumsuz haber geliyor: "{headline}"'),
+    text: t('Sekreterin aradı: {outlet} {when} bu haberi yayınlayacak. Plazadan açıklama yapabilir ya da yayın binasına gidip konuşabilirsin.'),
+    choices: [
+      { label: t('Görmezden gel'), anywhere: true, do: () => t('Haber yayınlanacak') },
+      { label: t('Basın açıklaması yaz'), anywhere: true, do: (g, E, v) => g.news.pressRelease(v.nid, E) },
+      { label: t('Rica et'), do: (g, E, v) => g.news.deal(v.nid, 'ask', E) },
+      { label: t('Reklam anlaşması öner'), do: (g, E, v) => g.news.deal(v.nid, 'ads', E) },
+      { label: t('Rüşvet ver'), when: (g) => !g.news.journalist, do: (g, E, v) => g.news.deal(v.nid, 'bribe', E) },
+      { label: t('Olay çıkar'), do: (g, E, v) => g.news.deal(v.nid, 'scene', E) },
+      { label: t('Kendi gazetende göm'), hideIfNot: true, when: (g, v) => v.venue === 'gazette' && g.holding.mediaOwned, do: (g, E, v) => g.news.deal(v.nid, 'own', E) },
+    ],
+  },
+  {
+    id: 'journalist', emoji: '🕵️', followup: true, mandatory: true, def: 1, need: 'holding',
+    title: t('Araştırmacı gazeteci peşinde'),
+    text: t('Üç haberin parayla durdurulduğunu fark eden genç bir gazeteci dosya hazırlıyor. Rüşvet teklifini kaydetmekle tehdit ediyor.'),
+    choices: [
+      { label: t('Açık ol, röportaj ver'), do: (g, E) => { E.influence(-2); E.risk(-10); g.news.journalist = false; g.news.bribes = 0; } },
+      { label: t('Görmezden gel'), do: (g, E) => { E.influence(-6); E.rel('editor', -10); g.news.journalist = false; g.news.bribes = 0; return t('Dosya yayınlandı'); } },
+    ],
+  },
+  {
+    id: 'bribe_scandal', emoji: '💸', followup: true, mandatory: true, def: 0, need: 'holding',
+    title: t('Manşet: "Patron gazeteye rüşvet verdi!"'),
+    text: t('Bir muhabir zarfın fotoğrafını çekmiş. Zarfın üstünde holdingin logosu var.'),
+    choices: [
+      { label: t('Özür dile'), do: (g, E) => { E.influence(-4); E.rel('editor', 3); } },
+      { label: t('Kesinlikle inkâr et'), do: (g, E) => (E.chance(0.4) ? t('Haber kısa sürede unutuldu') : (E.influence(-10), E.risk(10), t('Kayıtlar ortaya çıktı!'))) },
+    ],
+  },
+  // ---- 1.2-c Sv.51–65 (PLAN-1.2 C4 #11–#20) ----
+  {
+    id: 'council_session', emoji: '🏛️', kind: 'event', place: 'townhall', window: [10, 16], minLevel: 51, need: 'politics',
+    title: t('Belediye meclisi oturumu'),
+    text: t('Gündemde park, otopark ve vergi var. Galeride gazeteciler, sıralarda esnaf.'),
+    choices: [
+      { label: t('Halktan yana konuş'), hours: 2, do: (g, E) => { E.influence(4); if (!g.isMayor) E.rel('mayor', -5); } },
+      { label: t('Başkanla anlaş'), hours: 2, when: (g) => !g.isMayor, do: (g, E) => { E.rel('mayor', 10); E.influence(-1); } },
+      { label: t('Kendi imar projeni sun'), hours: 2, do: (g, E) => (g.isMayor || E.relChance('mayor', 0.45) ? (E.cash(8000), E.influence(1), t('Projen onaylandı: arsaların değerlendi')) : (E.influence(-1), t('Proje komisyona gönderildi'))) },
+    ],
+  },
+  {
+    id: 'election_rally', emoji: '📣', kind: 'event', place: 'townhall', window: [17, 22], minLevel: 51, need: 'politics', weight: 2, when: (g) => g.politics.campaignTime,
+    title: t('Belediye meydanında seçim mitingi'),
+    text: t('Meydana kürsü kuruldu. Kalabalık, çay ocağı ve bir davul ekibi hazır.'),
+    skip: (g, E) => { E.influence(-2); return t('Rakip meydanı aldı'); },
+    choices: [
+      { label: t('İcraatını anlat'), hours: 3, do: (g, E) => { E.influence(5); } },
+      { label: t('Konser + miting ($9K)'), hours: 3, do: (g, E) => { E.cash(-9000); E.influence(8); } },
+      { label: t('Rakibe yüklen'), hours: 3, do: (g, E) => { E.influence(6); E.rel('rival', -15); E.risk(5); } },
+    ],
+  },
+  {
+    id: 'tv_debate', emoji: '📺', kind: 'event', place: 'tv', window: [18, 22], minLevel: 51, need: 'politics', weight: 2, when: (g) => g.politics.campaignTime, vars: (g) => ({ name: g.politics.poll().mainName }),
+    title: t('Manşet TV açık oturum: sen ve {name}'),
+    text: t('Stüdyo ışıkları yandı. Moderatör kartlarını düzeltiyor; {name} kravatını.'),
+    skip: (g, E) => { E.influence(-3); return t('"Kaçtı" dediler'); },
+    steps: {
+      start: { choices: [{ label: t('Stüdyoya geç'), hours: 2, goto: 'q1', do: () => '' }] },
+      q1: {
+        text: t('1. soru: "Market fiyatları neden bu kadar yüksek?"'),
+        choices: [
+          { label: t('İcraat: indirim günlerini anlat'), goto: 'q2', do: (g, E) => { E.influence(2); } },
+          { label: t('Vaat: fiyatlar düşecek'), goto: 'q2', do: (g, E) => { E.influence(E.chance(0.5) ? 3 : -1); } },
+          { label: t('Saldırı: rakibin zammı'), goto: 'q2', do: (g, E) => { E.influence(E.chance(0.5) ? 4 : -2); } },
+        ],
+      },
+      q2: {
+        text: t('2. soru: "Şehirde iş bulmak neden zor?"'),
+        choices: [
+          { label: t('İcraat: istihdam rakamlarını anlat'), goto: 'q3', do: (g, E) => { E.influence(g.totalStaff >= 100 ? 4 : 1); } },
+          { label: t('Vaat: yeni fabrika'), goto: 'q3', do: (g, E) => { E.influence(E.chance(0.55) ? 3 : -1); } },
+          { label: t('Saldırı: rakip hiç iş vermedi'), goto: 'q3', do: (g, E) => { E.influence(E.chance(0.45) ? 4 : -3); } },
+        ],
+      },
+      q3: {
+        text: t('Son soru: "Seçilirsen şehir için ilk ne yapacaksın?"'),
+        choices: [
+          { label: t('Park ve oyun alanları'), do: (g, E) => { E.influence(3); E.happy(1); } },
+          { label: t('Vergileri düşürmek'), do: (g, E) => { E.influence(4); } },
+          { label: t('"Kendimi" diye espri yap'), do: (g, E) => (E.chance(0.5) ? (E.influence(5), t('Stüdyo kahkahaya boğuldu')) : (E.influence(-4), t('Espri anlaşılmadı'))) },
+        ],
+      },
+    },
+  },
+  {
+    id: 'neighborhood_breakfast', emoji: '🥯', kind: 'event', place: 'culture', window: [8, 11], minLevel: 51, need: 'politics',
+    title: t('Mahalle derneği kahvaltısı'),
+    text: t('Uzun masalar, simitler, çay. Mahallenin dertleri de masada.'),
+    choices: [
+      { label: t('Masaları sen öde ($4K)'), hours: 2, do: (g, E) => { E.cash(-4000); E.influence(5); E.happy(2); g.news.lastCharity = g.day.day; } },
+      { label: t('Katıl, dinle'), hours: 2, do: (g, E) => { E.influence(2); E.later('neighborhood_wish', 1); return t('Mahalle bir istekte bulundu'); } },
+    ],
+  },
+  {
+    id: 'neighborhood_wish', emoji: '🛝', followup: true, need: 'politics', def: 1,
+    title: t('Mahallenin isteği: çocuk oyun alanı'),
+    text: t('Kahvaltıdaki teyzeler parka oyun alanı istiyor. Biri planı peçeteye çizmiş.'),
+    skip: (g, E) => { E.later('broken_promise', 15); return t('Söz verdin sayıldı'); },
+    choices: [
+      { label: t('Oyun alanını yaptır ($15K)'), do: (g, E) => { E.cash(-15000); E.influence(6); E.happy(3); g.news.lastCharity = g.day.day; } },
+      { label: t('Söz ver (sonra bakarız)'), do: (g, E) => { E.later('broken_promise', 15); } },
+    ],
+  },
+  {
+    id: 'broken_promise', emoji: '😠', followup: true, mandatory: true, def: 0, need: 'politics',
+    title: t('Tutulmayan söz gündemde'),
+    text: t('Teyzeler peçeteyi çerçeveletip belediyeye asmış: "Oyun alanı nerede?"'),
+    choices: [
+      { label: t('Özür dile'), do: (g, E) => { E.influence(-6); } },
+      { label: t('Hemen yaptır ($20K)'), do: (g, E) => { E.cash(-20000); E.influence(2); E.happy(2); } },
     ],
   },
 ];

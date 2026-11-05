@@ -136,7 +136,7 @@ export class Drive {
     const cand = Object.keys(VENUES).filter((id) => !VENUES[id].dynamic).map((id) => ({ id, x: VENUES[id].x, vars: {} }));
     for (const a of g.events.active) {
       const c = g.events.card(a.id);
-      if (c?.place === 'biz' && a.vars?.id) cand.push({ id: 'biz', x: g.venues.stopX('biz', a.vars), vars: a.vars });
+      if (g.events.placeOf(c, a) === 'biz' && a.vars?.id) cand.push({ id: 'biz', x: g.venues.stopX('biz', a.vars), vars: a.vars });
     }
     for (const c of cand) {
       if (c.x === null) continue;
@@ -149,7 +149,7 @@ export class Drive {
   renderBar() {
     const g = this.game;
     const s = this.stop;
-    const waiting = s ? g.events.active.filter((a) => g.events.card(a.id)?.place === s.id && (s.id !== 'biz' || a.vars?.id === s.vars.id)).length : 0;
+    const waiting = s ? g.events.active.filter((a) => g.events.placeOf(g.events.card(a.id), a) === s.id && (s.id !== 'biz' || a.vars?.id === s.vars.id)).length : 0;
     const name = s ? g.venues.nameOf(s.id, s.vars) : '';
     this.btn.innerHTML = `${s ? `<button class="primary" data-enter>${VENUES[s.id].emoji} ${s.id === 'market' ? t('Markete gir') : s.id === 'hq' ? t('Plazaya gir') : t('İçeri gir: {name}', { name })}${waiting ? ` <i class="badge">${waiting}</i>` : ''}</button>` : `<span class="drive-hint">🚗 ${t('Sağa sola sür: duraklarda içeri girebilirsin')}</span>`}
       <div class="drive-row"><button data-walk>🚶 ${t('Arabadan in')}</button><button data-plaza>🏢 ${t('Plazaya dön')}</button></div>`;

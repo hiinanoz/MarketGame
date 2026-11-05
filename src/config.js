@@ -645,6 +645,20 @@ export const SECRETARY = {
   expert: { name: 'Selin Hanım', wage: 500, notice: 2, premium: true, chores: true },
 };
 
+// Haberler (1.2-c): olumsuz haber türleri (gerçek durumdan doğar) ve yayınlanırsa etkileri.
+export const NEWS = {
+  chance: 0.28, // günlük olumsuz haber ihtimali (seçim döneminde ×2)
+  types: {
+    wages: { title: t('Marketin kasiyerleri az maaş alıyor'), influence: -3, customers: -5 },
+    hygiene: { title: t('İşletmelerinde hijyen iddiası'), influence: -3, biz: -10 },
+    donations: { title: t('Patronun gizli bağışları'), influence: -6 },
+    smear: { title: t('Rakip adaydan ağır iddialar'), influence: -5 },
+    debt: { title: t('Holdingin borçları büyüyor'), influence: -2, stock: -6 },
+    party: { title: t('Otelde skandal parti'), influence: -4, biz: -15 },
+    king: { title: t('Kral mı, patron mu?'), influence: -5 },
+  },
+};
+
 // İlişkiler (1.2): şehrin önemli kişileri, −100…+100. Kararlar ve etkinlikler değiştirir.
 export const RELATIONS = {
   decay: 0.01,   // her gün sıfıra doğru %1
