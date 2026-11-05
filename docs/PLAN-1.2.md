@@ -1,4 +1,4 @@
-# Sürüm 1.2 — "Şehrin patronu" planı (kararların bir kısmı alındı)
+# Sürüm 1.2 — "Şehrin patronu" planı (tamamlandı)
 
 Bu belgede iki bölüm var:
 
