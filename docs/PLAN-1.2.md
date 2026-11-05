@@ -1,4 +1,4 @@
-# Sürüm 1.2 — "Şehrin patronu" planı (taslak, karar bekliyor)
+# Sürüm 1.2 — "Şehrin patronu" planı (kararların bir kısmı alındı)
 
 Bu belgede iki bölüm var:
 
@@ -162,7 +162,7 @@ Biçim:
 
 #### Sv.40–50 — Holding patronu, kulübe giriş
 
-| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ |
+| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ Cevap yoksa |
 |---|---|---|---|---|
 | 1 | **Esnaf hayır yemeği** (Kültür Merkezi) | 🎟️ Etkinlik, 2 saat | Masaya otur → 2. adım müzayede: **a)** Yaşlılar evine bağış $5K → ⭐+4, 😊+2 · **b)** Ünlü futbolcunun forması için $12K teklif 🎲 → kazanırsan forma marketin vitrininde 🛒+%5 (5 gün), 📣+3 · **c)** Sadece yemek ye → ⭐+1 | ⭐−1 ("gelmedi") |
 | 2 | **Kasaba Spor maçı** (Stadyum) | ⚽ Maç, 2 saat | **Tribün:** 📣+3, ⭐+1, bedava · **Loca $2K:** 🤝 Kulüp Başkanı +8, 2. adım teklif (#3) · **Saha kenarı (sponsorsan):** maç sonu basına konuşma → ⭐+3 | — |
@@ -177,7 +177,7 @@ Biçim:
 
 #### Sv.51–65 — Siyasete giriş
 
-| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ |
+| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ Cevap yoksa |
 |---|---|---|---|---|
 | 11 | **Belediye meclisi oturumu** (Belediye) | 🎟️ Etkinlik, 2 saat | Gündem değişkenli: park, otopark, vergi. **a)** Halktan yana konuş → ⭐+4, 🤝 Başkan −5 · **b)** Başkanla anlaş → 🤝+10, ⭐ −1 · **c)** Kendi projeni sun (imar) 🎲 → arsa değeri +%20 | — |
 | 12 | **Altyapıdan yetenek** (zincir, #3b'den sonra) | 🗂️ Karar | **a)** Takımda tut → takım gücü +5 · **b)** Büyük kulübe sat → 💵 büyük, 📣 −5 | Takımda kalır |
@@ -192,7 +192,7 @@ Biçim:
 
 #### Sv.66–80 — Ekonominin patronu
 
-| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ |
+| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ Cevap yoksa |
 |---|---|---|---|---|
 | 21 | **Hayır galası ve müzayede** (Otel balo salonu) | 🎟️ Etkinlik, 3 saat | 3 lot, her lotta artırma (rakip patronlar da teklif verir): **Lot 1** tablo $20K+ → ⭐+4 · **Lot 2** "başkanla yemek" → 🤝 Başkan +20 · **Lot 3** stadyum isim hakkı → 📣+10, 🛒+%5 kalıcı · Hiçbir şey alma → ⭐+1 | — |
 | 22 | **Yatırımcı yemeği: Mr. Kaplan** (Otel restoranı) | 🤝 Toplantı | **a)** Hisse sat (%10) → 💵 çok, 📈+%5 · **b)** Ortak liman projesi → liman 🏭+%20 (10 gün) · **c)** Nazikçe geç → 🤝 −5 | 🤝 −5 |
@@ -207,7 +207,7 @@ Biçim:
 
 #### Sv.81–100 — Şehrin sahibi
 
-| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ |
+| # | Madde (yer) | Tür | Seçenekler → sonuç | ⏱ Cevap yoksa |
 |---|---|---|---|---|
 | 31 | **Şehir zirvesi** (Fuar alanı) | 🎟️ Etkinlik, 3 saat | Büyük projeler: **a)** Metro hattı $300K → 😊+10, 🛒+%10 kalıcı · **b)** Teknopark → işletmeler 🏭+%5 kalıcı · **c)** Sahil yolu → otel/restoran +%15 | — |
 | 32 | **Şehir mülkü pazarlığı** (Belediye; bugünkü `city.js`) | 🤝 Toplantı | Mevcut pazarlık burada masada yapılır: rica / sert / ilişki kozu (🤝 Başkan). | — |
@@ -279,13 +279,13 @@ Olumlu haber için de medya binasına gidebilirsin:
 
 | # | Konu | Öneri | Diğer seçenek |
 |---|---|---|---|
-| 1 | Genel müdür ciro tavanı (A5) | ×1.6 standart / ×2.0 tecrübeli | Tavansız; ya da ×1.3 / ×1.5 |
-| 2 | Şehir modu ne zaman (B1) | Holding kurulmuş + Sv.40 | Sadece Sv.40 ya da sadece holding |
+| 1 | Genel müdür ciro tavanı (A5) | ×1.6 standart / ×2.0 tecrübeli (cevap gelmedi; bu öneriyle uygulanır, sonra değiştirilebilir) | Tavansız; ya da ×1.3 / ×1.5 |
+| 2 | Şehir modu ne zaman (B1) | ✅ **Karar: holding kurulmuş + Sv.40** | — |
 | 3 | Araç (B3) | Serbest sürüş + "Şoförle git" | Yalnızca hedef seç, otomatik git |
 | 4 | Mekân sahneleri (B4) | 3D küçük oda + karakterler | 2D çizim kartlar (daha hafif) |
-| 5 | Etkinliğin zaman maliyeti (C1) | Var (1–3 oyun saati, çakışma) | Yok, sınırsız katılım |
-| 6 | Cevapsız madde (C1) | Gün sonunda "katılmadın" | Varsayılan seçenek uygulanır |
-| 7 | İlişkiler (C3) | Evet, 7 kişi | Yok, yalnızca nüfuz |
+| 5 | Etkinliğin zaman maliyeti (C1) | ✅ **Karar: var** (1–3 oyun saati, çakışma) | — |
+| 6 | Cevapsız madde (C1) | ✅ **Karar: gün sonunda "katılmadın"** | — |
+| 7 | İlişkiler (C3) | ✅ **Karar: evet, 7 kişi** | — |
 | 8 | Sekreter (D1) | Maaşlı; tecrübeli asistan Premium | Ücretsiz, tek seviye |
 | 9 | Medya yolları (D3) | Tablodaki 5 yol + olumlu haber yolları | Değiştirmek istediğin satırlar |
 | 10 | Tablolar (C4, D2) | Bu haliyle | Ekle/çıkar/değiştir dediğin maddeler |
