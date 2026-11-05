@@ -78,6 +78,7 @@ export class Menus {
     g.viewMode = null;
     if (g.isNewGame && !g.started) return this.startIntro();
     g.paused = false;
+    if (g.cityMode) g.ceoDesk.show(); // şehir modu: oyun plaza ofisinden başlar
   }
 
   bind() {

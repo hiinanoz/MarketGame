@@ -437,12 +437,13 @@ export class Holding {
   }
 
   serialize() {
-    return Object.fromEntries(this.businesses.map((b) => [b.id, b.serialize()]));
+    return { ...Object.fromEntries(this.businesses.map((b) => [b.id, b.serialize()])), _nextDiscount: this.nextDiscount ?? 0 };
   }
 
   restore(d) {
     if (!d) return;
     for (const b of this.businesses) b.restore(d[b.id]);
+    this.nextDiscount = d._nextDiscount ?? 0;
   }
 }
 

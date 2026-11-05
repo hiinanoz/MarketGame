@@ -100,7 +100,7 @@ export class Bank {
    */
   payInterest(today) {
     const g = this.game;
-    const f = g.finance?.interestFactor ?? 1; // Şehir Bankası / finans merkezi
+    const f = (g.finance?.interestFactor ?? 1) * (g.relations?.bankRate ?? 1); // Şehir Bankası / finans merkezi / banka müdürüyle ilişki
     const a = Math.round(this.debt * BANK.loanRate * f);
     const b = Math.round(this.startDebt * START_LOAN.rate * f);
     const due = a + b;

@@ -153,8 +153,10 @@ export class Business {
 
   buy() {
     const g = this.game;
-    if (this.owned || this.seized || g.level < this.def.level || g.money < this.def.price || this.missingReq.length) return false;
-    g.spend(this.def.price);
+    const price = Math.round(this.def.price * (1 - (g.holding.nextDiscount ?? 0))); // ajanda: erken teklif indirimi
+    if (this.owned || this.seized || g.level < this.def.level || g.money < price || this.missingReq.length) return false;
+    g.spend(price);
+    g.holding.nextDiscount = 0;
     this.owned = true;
     this.modules = 1;
     this.workers = this.def.startWorkers ?? this.perModule; // tedarikçide eski işçiler kalır, şubede kadroyu sen kurarsın

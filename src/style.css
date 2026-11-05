@@ -770,3 +770,49 @@ body.in-jail .hud, body.in-jail #joystick, body.in-jail .side-btns { visibility:
 #holding .tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; min-width: 0; flex: 1 1 auto; }
 #holding .tabs::-webkit-scrollbar { display: none; }
 #holding .tabs button { flex: 0 0 auto; }
+
+/* Plaza ofisi (1.2) */
+.plaza { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+.plaza.hidden { display: none; }
+.plaza > * { pointer-events: auto; }
+body.in-plaza #hud, body.in-plaza .side-btns, body.in-plaza #joystick, body.in-plaza #election-pill, body.in-plaza #manage-btn, body.in-plaza #staff-pill, body.in-plaza #rating, body.in-plaza #gems-pill { visibility: hidden; }
+.plz-top { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; }
+.plz-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(20, 30, 40, 0.72); color: #fff; border-radius: 14px; padding: 8px 12px; }
+.plz-title b { font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plz-title span { font-size: 14px; opacity: 0.85; white-space: nowrap; }
+.plz-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+.plz-stats span { background: rgba(255, 250, 240, 0.92); color: #23302a; border-radius: 999px; padding: 4px 10px; font-weight: 800; font-size: 14px; }
+.plz-spots { position: absolute; inset: 0; pointer-events: none; }
+.plz-spot { position: absolute; left: 0; top: 0; pointer-events: auto; border: none; border-radius: 14px; padding: 6px 9px; background: rgba(255, 250, 240, 0.94); color: #23302a; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 1px; box-shadow: 0 3px 0 rgba(0,0,0,0.18), 0 6px 14px rgba(0,0,0,0.25); min-width: 58px; }
+.plz-spot span { font-size: 22px; line-height: 1.1; }
+.plz-spot b { font-size: 12px; white-space: nowrap; }
+.plz-spot .badge { position: absolute; top: -6px; right: -6px; }
+.plz-bottom { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); display: flex; justify-content: center; }
+.plz-agenda { border: none; border-radius: 16px; padding: 12px 16px; background: #3f8f46; color: #fff; font: inherit; font-weight: 800; font-size: 16px; box-shadow: 0 4px 0 #2b6630; max-width: 100%; }
+.plz-sheet { position: absolute; inset: 0; background: rgba(10, 16, 22, 0.45); display: flex; align-items: flex-end; justify-content: center; }
+.plz-sheet.hidden { display: none; }
+.plz-sheet-in { background: var(--panel, #fffaf0); width: min(560px, 100%); max-height: 82%; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); }
+.plz-sheet-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; }
+.plz-sheet-head b { font-size: 18px; }
+.plz-sheet-body { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; overscroll-behavior: contain; }
+.ag-meta { font-size: 12px; font-weight: 700; color: #5b6660; }
+.ag-later { opacity: 0.8; }
+.ag-wait { font-size: 12px; font-weight: 700; color: #b5651d; }
+.ag-prog { font-size: 12px; color: #2f8a3a; margin: 0; }
+.ceo-choices button small { font-weight: 600; opacity: 0.7; }
+.ceo-choices button:disabled { opacity: 0.5; }
+.sec-brief { display: flex; gap: 10px; align-items: center; }
+.sec-face { font-size: 34px; }
+.sec-brief div { display: flex; flex-direction: column; }
+.sec-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
+.rel-list { display: flex; flex-direction: column; gap: 6px; }
+.rel { display: grid; grid-template-columns: 30px 1fr 80px; grid-template-rows: auto auto; column-gap: 8px; align-items: center; background: #fff; border-radius: 10px; padding: 6px 8px; }
+.rel-e { grid-row: span 2; font-size: 22px; }
+.rel-t { display: flex; flex-direction: column; min-width: 0; }
+.rel-t small { font-size: 11px; opacity: 0.7; }
+.rel-bar { position: relative; height: 8px; background: #ece4d3; border-radius: 4px; overflow: hidden; }
+.rel-bar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #b9ad96; }
+.rel-bar i { position: absolute; top: 0; bottom: 0; }
+.rel-bar i.pos { background: #4caf50; }
+.rel-bar i.neg { background: #e57373; }
+.rel em { grid-column: 2 / 4; font-style: normal; font-size: 12px; font-weight: 700; }

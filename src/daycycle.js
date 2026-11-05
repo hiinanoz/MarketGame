@@ -97,6 +97,8 @@ export class DayCycle {
     g.housing.endOfDay(this.today);   // kiracılar, tadilat, haftalık kira geliri
     g.club.endOfDay(this.today);      // sponsorluk, maç, sezon
     g.legal.endOfDay(this.today);     // hukuki risk, soruşturma
+    g.relations.endOfDay();           // ilişkiler sıfıra doğru
+    g.plaza.endOfDay();               // tecrübeli asistanın ufak işleri
     g.politics.endOfDay(this.today);  // nüfuz, vergi, projeler, seçim
     g.finance.endOfDay(this.today);   // temettü, banka geliri
     g.life.endOfDay();                // şehir büyür

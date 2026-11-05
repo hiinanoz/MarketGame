@@ -14,6 +14,7 @@ const pick = (kinds) => (g) => {
   return b ? { biz: b.name, id: b.id } : {};
 };
 const FOOD = ['field', 'barn', 'hall', 'restaurant'];
+const formatK = (n) => (n >= 1000 ? `${Math.round(n / 1000)}K` : `${n}`);
 
 export const CARDS = [
   {
@@ -40,9 +41,9 @@ export const CARDS = [
     title: t('Gizli görüşme: Ucuzcu Kardeşler birleşme teklif ediyor'),
     text: t('Bodrum katta, tek ampullü bir odada buluşuyorsunuz. "Kardeş kardeşe" diyorlar ama gözleri kasada.'),
     choices: [
-      { label: t('Kabul et, peşin parayı al'), do: (g, E) => { E.cash(12000); E.customers(-5, 5); } },
+      { label: t('Kabul et, peşin parayı al'), do: (g, E) => { E.cash(12000); E.customers(-5, 5); E.rel('rival', 10); } },
       { label: t('Sert pazarlık'), do: (g, E) => (E.chance(0.6) ? (E.cash(20000), t('Masadan büyük çekle kalktın')) : t('Kardeşler kapıyı çarpıp gitti')) },
-      { label: t('Görüşmeyi basına sızdır'), do: (g, E) => { E.influence(2); E.customers(4, 3); } },
+      { label: t('Görüşmeyi basına sızdır'), do: (g, E) => { E.influence(2); E.customers(4, 3); E.rel('rival', -20); E.rel('editor', 4); } },
       { label: t('Kibarca reddet'), do: () => '' },
     ],
   },
@@ -51,9 +52,9 @@ export const CARDS = [
     title: t('Sendika: {biz} çalışanları zam istiyor'),
     text: t('Çalışanlar ellerinde pankartlarla toplandı. Pankartlardan biri yanlış yazılmış ama mesaj anlaşılıyor.'),
     choices: [
-      { label: t('Zammı ver'), do: (g, E, v) => { E.cash(-4000); E.biz(v.id, 10, 5); } },
+      { label: t('Zammı ver'), do: (g, E, v) => { E.cash(-4000); E.biz(v.id, 10, 5); E.rel('union', 6); } },
       { label: t('Yarısını ver'), do: (g, E) => { E.cash(-2000); } },
-      { label: t('Reddet'), do: (g, E, v) => (E.chance(0.5) ? (E.biz(v.id, -40, 2), t('Grev başladı!')) : t('Homurdanarak işe döndüler')) },
+      { label: t('Reddet'), do: (g, E, v) => { E.rel('union', -8); return E.relChance('union', 0.5) ? t('Homurdanarak işe döndüler') : (E.biz(v.id, -40, 2), t('Grev başladı!')); } },
     ],
   },
   {
@@ -298,7 +299,7 @@ export const CARDS = [
     title: t('Banka "kaçırılmaz" kredi kampanyası sunuyor'),
     text: t('Faiz düşük görünüyor. Küçük yazılar ise mikroskopla okunacak kadar küçük.'),
     choices: [
-      { label: t('Krediyi al'), do: (g, E) => { E.cash(10000); E.later('loan_due', 5); } },
+      { label: t('Krediyi al'), do: (g, E) => { E.cash(10000); E.rel('banker', 2); E.later('loan_due', 5); } },
       { label: t('Teşekkürler, gerek yok'), do: () => '' },
     ],
   },
@@ -438,7 +439,7 @@ export const CARDS = [
   },
   // ---- Hukuk (takip kartları) ----
   {
-    id: 'probe', emoji: '⚖️', need: 'legal', followup: true, def: 2,
+    id: 'probe', emoji: '⚖️', need: 'legal', followup: true, def: 2, mandatory: true,
     title: t('Savcılık senin hakkında soruşturma başlattı'),
     text: t('Dosya kalın. Kapağında senin fotoğrafın var, en kötü açıdan.'),
     choices: [
@@ -448,7 +449,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'trial', emoji: '👨‍⚖️', need: 'legal', followup: true, def: 0,
+    id: 'trial', emoji: '👨‍⚖️', need: 'legal', followup: true, def: 0, mandatory: true, kind: 'event', window: [10, 16], place: t('Adliye'),
     title: t('Dava günü'),
     text: t('Hâkim gözlüğünü indirdi. Bu genelde iyiye işaret değil.'),
     choices: [
@@ -513,6 +514,137 @@ export const CARDS = [
     choices: [
       { label: t('Altyapıya yatırım yap'), do: (g, E) => { E.cash(-6000); g.club.strength = Math.min(90, g.club.strength + 2); E.fans(2); } },
       { label: t('Büyük kulübe sat'), do: (g, E) => { E.cash(9000); E.fans(-3); } },
+    ],
+  },
+  // ---- 1.2 Şehir modu: Sv.40–50 ajanda maddeleri (PLAN-1.2 C4 #1–#10) ----
+  {
+    id: 'charity_dinner', emoji: '🍽️', kind: 'event', place: t('Kasaba Kültür Merkezi'), window: [18, 22], minLevel: 40, weight: 2,
+    title: t('Esnaf hayır yemeği'),
+    text: t('Esnaf derneği yaşlılar evi için yemek veriyor. Sonunda müzayede var; masanda belediyeden biri ve kulüp başkanı oturacak.'),
+    skip: (g, E) => { E.influence(-1); },
+    steps: {
+      start: {
+        choices: [
+          { label: t('Masaya otur'), hours: 2, goto: 'auction', do: () => '' },
+          { label: t('Gitme, bağış gönder'), do: (g, E) => { E.cash(-3000); E.influence(2); } },
+        ],
+      },
+      auction: {
+        text: t('Tatlılar geldi, müzayede başladı. Sunucu mikrofona üfleyip "Birinci lot!" diyor.'),
+        choices: [
+          { label: t('Yaşlılar evine bağış ($5K)'), do: (g, E) => { E.cash(-5000); E.influence(4); E.happy(2); } },
+          { label: t('Ünlü futbolcunun formasına teklif ($12K)'), do: (g, E) => (E.relChance('club', 0.55) ? (E.cash(-12000), E.customers(5, 5), E.fans(3), E.rel('club', 5), t('Forma senin: marketin vitrininde')) : (E.rel('club', 2), t('Forma rakip patrona gitti'))) },
+          { label: t('Sadece yemeğin tadını çıkar'), do: (g, E) => { E.influence(1); } },
+        ],
+      },
+    },
+  },
+  {
+    id: 'club_match_visit', emoji: '⚽', kind: 'match', place: t('Stadyum'), window: [18, 22], minLevel: 40, weight: 2, when: (g) => g.club?.unlocked,
+    title: t('Kasaba Spor maçı'),
+    text: t('Akşam maç var. Tribün coşkulu, locada ikram, saha kenarında kameralar.'),
+    steps: {
+      start: {
+        choices: [
+          { label: t('Tribünden izle'), hours: 2, do: (g, E) => { E.fans(3); E.influence(1); } },
+          { label: t('Locadan izle ($2K)'), hours: 2, goto: 'box', do: (g, E) => { E.cash(-2000); E.rel('club', 8); } },
+          { label: t('Saha kenarı (sponsorsan)'), hours: 2, when: (g) => g.club?.sponsor, do: (g, E) => { E.influence(3); E.fans(2); return t('Maç sonu basına konuştun'); } },
+        ],
+      },
+      box: {
+        text: t('Devre arasında kulüp yöneticileri yanına oturdu: "Kulübün size ihtiyacı var."'),
+        choices: [
+          { label: t('Forma sponsoru ol'), when: (g) => !g.club?.sponsor, do: (g) => { g.club.sponsor = true; return t('Formada artık senin logon var'); } },
+          { label: t('Altyapıya $20K'), do: (g, E) => { E.cash(-20000); E.fans(3); E.later('youth_talent', 6); } },
+          { label: t('Stadyum tabelası ($8K)'), do: (g, E) => { E.cash(-8000); E.customers(10, 4); } },
+          { label: t('Nazikçe reddet'), do: (g, E) => { E.rel('club', -5); } },
+        ],
+      },
+    },
+  },
+  {
+    id: 'youth_talent', emoji: '🌟', followup: true, mandatory: true, def: 0, need: 'holding',
+    title: t('Altyapıdan yetenek çıktı'),
+    text: t('Altyapıya yaptığın yatırım meyvesini verdi: 17 yaşında bir golcü herkesin ağzında.'),
+    choices: [
+      { label: t('Takımda tut'), do: (g, E) => { g.club.strength = Math.min(90, g.club.strength + 5); E.fans(4); } },
+      { label: t('Büyük kulübe sat'), do: (g, E) => { E.cash(15000); E.fans(-5); } },
+    ],
+  },
+  {
+    id: 'banker_lunch', emoji: '🏦', kind: 'meeting', place: t('Şehir Bankası'), window: [12, 15], minLevel: 40,
+    title: t('Banka müdürüyle öğle yemeği'),
+    text: t('Nermin Hanım seni öğle yemeğine davet etti. Masada iki çatal, bir de dosya var.'),
+    skip: (g, E) => { E.rel('banker', -2); },
+    choices: [
+      { label: t('Özel kredi iste'), hours: 1, do: (g, E) => {
+        E.rel('banker', 3);
+        if (!E.relChance('banker', 0.5)) return t('"Şimdilik olmaz" dedi');
+        const n = 20000 * E.scale;
+        g.bank.debt += n;
+        g.money += n;
+        return t('${n} limit dışı kredi', { n: formatK(n) });
+      } },
+      { label: t('Mevduat yatır'), hours: 1, do: (g, E) => { const n = Math.round(g.money * 0.2); g.money -= n; g.bank.deposit += n; E.rel('banker', 10); return t('${n} mevduata', { n: formatK(n) }); } },
+      { label: t('Sadece sohbet et'), hours: 1, do: (g, E) => { E.rel('banker', 3); } },
+    ],
+  },
+  {
+    id: 'union_meeting', emoji: '👷', kind: 'meeting', window: [10, 17], minLevel: 40, place: '{biz}', when: has(['factory', 'port', 'mall', 'airport', 'hall', 'barn']), vars: pick(['factory', 'port', 'mall', 'airport', 'hall', 'barn']),
+    title: t('Sendika toplantısı: {biz}'),
+    text: t('Rıza Usta masaya bir dosya koydu: "Arkadaşlar yorgun, maaşlar yetmiyor."'),
+    skip: (g, E, v) => { if (E.chance(0.3)) { E.biz(v.id, -40, 2); return t('Grev başladı!'); } return ''; },
+    choices: [
+      { label: t('%8 zam ver'), hours: 1, do: (g, E, v) => { E.cash(-4000); E.biz(v.id, 10, 7); E.rel('union', 10); } },
+      { label: t('Prim sistemi öner'), hours: 1, do: (g, E, v) => { E.cash(-2000); E.biz(v.id, 5, 5); E.rel('union', 3); } },
+      { label: t('Reddet'), hours: 1, do: (g, E, v) => (E.relChance('union', 0.5) ? (E.rel('union', -10), t('Homurdanarak işe döndüler')) : (E.biz(v.id, -40, 2), E.rel('union', -5), t('Grev başladı!'))) },
+    ],
+  },
+  {
+    id: 'rival_secret', emoji: '🕯️', kind: 'meeting', place: t('Han odası'), window: [20, 22], minLevel: 40,
+    title: t('Ucuzcu Kardeşler gizli görüşme istiyor'),
+    text: t('Tarihi handa, mum ışığında. Kardeşlerin büyüğü "bölgeyi paylaşalım" diyor, küçüğü telefonla oynuyor.'),
+    choices: [
+      { label: t('Bölge paylaşımı (fiyat anlaşması)'), hours: 1, do: (g, E) => { E.customers(8, 5); E.risk(15); E.rel('rival', 10); } },
+      { label: t('Ortak tedarik anlaşması'), hours: 1, do: (g, E) => { E.biz('all', 5, 5); E.rel('rival', 10); } },
+      { label: t('Görüşmeyi kaydet, basına ver'), hours: 1, do: (g, E) => { E.influence(3); E.rel('rival', -30); E.rel('editor', 5); } },
+    ],
+  },
+  {
+    id: 'award_ceremony', emoji: '🏆', kind: 'event', place: t('Kasaba Kültür Merkezi'), window: [19, 22], minLevel: 40,
+    title: t('"Yılın Girişimcisi" ödül töreni'),
+    text: t('Adın finalistler arasında. Kürsüde bir mikrofon, bir de çok yavaş açılan zarf var.'),
+    skip: () => t('Ödül başkasına gitti'),
+    choices: [
+      { label: t('Katıl, konuşma yap'), hours: 2, do: (g, E) => { E.influence(5); E.rel('editor', 5); return t('Olumlu haber çıktı'); } },
+      { label: t('Ödülü çalışanlara ithaf et'), hours: 2, do: (g, E) => { E.influence(3); E.biz('all', 5, 3); } },
+    ],
+  },
+  {
+    id: 'tender_next', emoji: '📑', minLevel: 40, place: t('Belediye'), when: (g) => g.holding.businesses.some((b) => !b.owned && !b.seized && b.def.level <= g.level + 6) && !g.holding.nextDiscount,
+    title: t('Satılık işletme için erken teklif fırsatı'),
+    text: t('Belediyedeki tanıdığın, bir sonraki satılık işletmenin ihalesinden önce teklif verebileceğini söylüyor.'),
+    choices: [
+      { label: t('Erken teklif ver (dosya ücreti)'), do: (g, E) => { E.cash(-2000); g.holding.nextDiscount = 0.15; E.rel('mayor', 3); return t('Sıradaki işletme alımında −%15'); } },
+      { label: t('Bekle'), do: () => '' },
+    ],
+  },
+  {
+    id: 'school_visit', emoji: '🏫', kind: 'event', place: t('Kasaba İlkokulu'), window: [9, 13], minLevel: 40,
+    title: t('Okul ziyareti daveti'),
+    text: t('Müdire Hanım, öğrencilerin "patronla tanışmak" istediğini yazmış. Bir çocuk şimdiden soru listesi hazırlamış.'),
+    choices: [
+      { label: t('Kütüphaneye kitap ($3K)'), hours: 1, do: (g, E) => { E.cash(-3000); E.happy(2); E.influence(3); } },
+      { label: t('Girişimcilik dersi ver'), hours: 1, do: (g, E) => { E.influence(2); return E.chance(0.4) ? (E.customers(5, 3), t('Bir çocuğun sorusu viral oldu')) : ''; } },
+    ],
+  },
+  {
+    id: 'truckers_cafe', emoji: '🚚', kind: 'event', place: t('Lojistik deposu'), window: [8, 12], minLevel: 40, when: (g) => g.holding.logisticsOwned,
+    title: t('Kamyon şoförleri kahvesi'),
+    text: t('Şoförler sabah çayında toplanmış; yolların, molaların ve kahvenin acılığının konuşulduğu yer.'),
+    choices: [
+      { label: t('Çay ısmarla, dinle'), hours: 1, do: (g, E) => { E.cash(-300); E.biz('logistics', 10, 5); E.rel('union', 3); } },
+      { label: t('Yeni mola odası ($6K)'), hours: 1, do: (g, E) => { E.cash(-6000); E.biz('logistics', 5, 30); E.rel('union', 6); } },
     ],
   },
 ];

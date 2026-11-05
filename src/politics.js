@@ -81,6 +81,7 @@ export class Politics {
     for (const k of Object.keys(POLITICS.projects)) if (this.projects[k]) s += 4;
     s += Math.min(10, g.totalStaff / 15);
     s -= Math.max(0, this.taxRate - 5) * 1.6;
+    s += this.happyBonus ?? 0; // ajanda kararları (yol, park…)
     return Math.max(0, Math.min(100, Math.round(s)));
   }
 
@@ -254,6 +255,7 @@ export class Politics {
     if (!this.started) return;
     const info = {};
     this.temp *= 1 - POLITICS.decay;
+    if (this.happyBonus) this.happyBonus *= 0.97;
     if (this.sponsor) {
       const c = POLITICS.sponsorCost + g.level * 20;
       if (g.money >= c) {
@@ -449,8 +451,8 @@ export class Politics {
   }
 
   serialize() {
-    const { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history } = this;
-    return { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history };
+    const { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history, happyBonus } = this;
+    return { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history, happyBonus };
   }
 
   restore(d) {

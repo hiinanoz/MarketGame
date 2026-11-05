@@ -636,6 +636,30 @@ export const GM = {
   campaigns: { standard: 1, premium: 2 }, campaignBoost: [0.15, 0.35], // günlük kampanya: referans cironun payı
 };
 
+// Şehir modu (1.2): holding kurulmuş + Sv.40 → oyun plaza ofisinden yönetilir.
+export const CITY_MODE = { level: 40 };
+
+// Sekreter (plaza): sabah brifingi, hatırlatmalar. Tecrübeli asistan (Premium) ufak işleri kendisi yapar.
+export const SECRETARY = {
+  std: { name: 'Selin Hanım', wage: 250, notice: 1 },
+  expert: { name: 'Selin Hanım', wage: 500, notice: 2, premium: true, chores: true },
+};
+
+// İlişkiler (1.2): şehrin önemli kişileri, −100…+100. Kararlar ve etkinlikler değiştirir.
+export const RELATIONS = {
+  decay: 0.01,   // her gün sıfıra doğru %1
+  people: {
+    banker: { name: 'Nermin Hanım', emoji: '🏦', role: t('Şehir Bankası müdürü') },
+    editor: { name: 'Ferdi Bey', emoji: '📰', role: t('Kasaba Gazetesi yayın yönetmeni') },
+    mayor: { name: t('Belediye Başkanı'), emoji: '🏛️', role: t('Belediye') },
+    club: { name: t('Kulüp Başkanı'), emoji: '⚽', role: t('Kasaba Spor') },
+    rival: { name: t('Ucuzcu Kardeşler'), emoji: '🛍️', role: t('Rakip patronlar') },
+    union: { name: 'Rıza Usta', emoji: '👷', role: t('Sendika başkanı') },
+    investor: { name: 'Mr. Kaplan', emoji: '💼', role: t('Yabancı yatırımcı'), level: 66 },
+  },
+  bankRate: { good: 40, goodMult: 0.8, bad: -40, badMult: 1.2 },
+};
+
 // Holding ve CEO masası (olay kartları): 4 işletmeyle holding kurulur.
 export const CEO = {
   foundBusinesses: 4,

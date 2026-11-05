@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { t, num } from './i18n.js';
 import { GeneralManager } from './gm.js';
 import { Club } from './club.js';
+import { Relations } from './relations.js';
+import { Plaza } from './plaza.js';
 import { Legal } from './legal.js';
 import { Events } from './events.js';
 import { CeoDesk } from './ceo.js';
@@ -43,7 +45,7 @@ import { DayCycle } from './daycycle.js';
 import { CHARACTER_NAMES, HAIR_CSS } from './assets.js';
 import {
   PRODUCTS, SHELVES, CHECKOUTS, UNLOCKS, LEVELS, START_MONEY, START_CAPACITY, PLAYER_SPEED, ROOM2,
-  DAY, DOOR_X, DOOR2_X, DOOR3_X, DOOR4_X, ROOM3, ROOM4, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
+  DAY, CITY_MODE, DOOR_X, DOOR2_X, DOOR3_X, DOOR4_X, ROOM3, ROOM4, WORKER_CAPACITY, START_LOAN, START_DEPOT_STOCK, RATING, DIRT, WALK_IN_CAP, ADS, THEFT, GUARD_SPOTS, PRODUCERS, VALET_SPOT, OVERTIME_PAY, STAFF_ROLE, WAGES, ROLE_NAMES, BANK, RENT,
 } from './config.js';
 
 const SAVE_KEY = 'marketgame-save-v2';
@@ -150,6 +152,8 @@ export class Game {
     this.club = new Club(this);
     this.legal = new Legal(this);
     this.ceoDesk = new CeoDesk(this);
+    this.relations = new Relations(this);
+    this.plaza = new Plaza(this);
     this.decor = new Decor(this);
     this.party = new Celebration(this);
     this.platform = platform;
@@ -542,6 +546,44 @@ export class Game {
     requestAnimationFrame(tick);
   }
 
+  /**
+   * Zamanı ileri sar (etkinliğe katılınca): kare başına parça parça simülasyon, gün bitmeden durur.
+   * Sırada "Gün tamamlanıyor" ekranı başlık değiştirerek kullanılır.
+   */
+  fastForward(hours, title, onDone) {
+    if (this.simulating || this.day.phase !== 'open') return onDone?.();
+    const span = DAY.closeHour - DAY.openHour;
+    const target = Math.min(DAY.length - 0.1, this.day.t + (hours / span) * DAY.length);
+    const el = document.getElementById('sim-day');
+    const h2 = el.querySelector('h2');
+    const oldTitle = h2.textContent;
+    h2.textContent = `⏳ ${title}`;
+    document.getElementById('sim-note').textContent = t('Etkinliktesin: {n} saat geçiyor…', { n: hours });
+    const bar = document.getElementById('sim-bar');
+    el.classList.remove('hidden');
+    this.simulating = true;
+    const sound = this.audio.enabled;
+    this.audio.enabled = false;
+    const startT = this.day.t;
+    const tick = () => {
+      const t0 = performance.now();
+      while (performance.now() - t0 < 25 && this.day.t < target && this.day.phase === 'open') this.update(0.05);
+      bar.style.width = `${Math.round(Math.min(1, (this.day.t - startT) / Math.max(0.01, target - startT)) * 100)}%`;
+      if (this.day.t < target && this.day.phase === 'open') return requestAnimationFrame(tick);
+      this.simulating = false;
+      this.audio.enabled = sound;
+      el.classList.add('hidden');
+      h2.textContent = oldTitle;
+      onDone?.();
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /** Şehir modu (1.2): holding kurulmuş ve Sv.40 → plaza ofisi ana ekran. */
+  get cityMode() {
+    return !!this.ceoDesk?.founded && this.level >= CITY_MODE.level;
+  }
+
   /** Standart sürümde kilitli alan mı? (online bölümünde 6 kişiden fazlası Premium) */
   premiumLocked(def) {
     if (this.premium) return false;
@@ -653,6 +695,7 @@ export class Game {
     for (const b of this.holding.owned) n += b.dailyWages;
     if (this.housing.accountant) n += WAGES.accountant;
     n += this.gm.wage;
+    n += this.plaza.payrollEntry()?.wage ?? 0;
     return n;
   }
 
@@ -667,6 +710,8 @@ export class Game {
     }
     const gmEntry = this.gm.payrollEntry();
     if (gmEntry) entries.push(gmEntry);
+    const secEntry = this.plaza.payrollEntry();
+    if (secEntry) entries.push(secEntry);
     for (const b of this.holding.owned) entries.push(...b.payrollEntries());
     if (this.housing.accountant) entries.push({ wage: WAGES.accountant, label: '🏘️ Emlak muhasebecisi', fire: () => { this.housing.accountant = false; } });
     let paid = 0;
@@ -893,6 +938,9 @@ export class Game {
     this.gm.update(dt);
     this.events.update();
     this.ceoDesk.update();
+    this.plaza.update(dt);
+    // Şehir moduna ilk geçiş: plaza açılır, sekreter kendini tanıtır
+    if (this.cityMode && !this.plaza.introDone && !this.simulating && !this.paused && !this.viewMode && this.day.phase === 'open') this.ceoDesk.show();
     this.club.update(dt);
     this.legal.update();
     this.timers.goals = (this.timers.goals ?? 0) - dt;
@@ -1236,6 +1284,7 @@ export class Game {
   }
 
   render() {
+    if (this.plaza?.open && this.plaza.built) return this.plaza.render(this.renderer);
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -1272,6 +1321,8 @@ export class Game {
       goals: this.goals.serialize(),
       gm: this.gm.serialize(),
       club: this.club.serialize(),
+      relations: this.relations.serialize(),
+      plaza: this.plaza.serialize(),
       legal: this.legal.serialize(),
       ceo: this.ceoDesk.serialize(),
       decor: this.decor.serialize(),
@@ -1348,6 +1399,8 @@ export class Game {
     this.goals.restore(data.goals);
     this.gm.restore(data.gm);
     this.club.restore(data.club);
+    this.relations.restore(data.relations);
+    this.plaza.restore(data.plaza);
     if (this.politics.sponsor) { // eski kayıt: sponsorluk siyasetten kulübe taşındı
       this.club.sponsor = true;
       this.politics.sponsor = false;
@@ -1369,8 +1422,14 @@ export class Game {
   /** Oyuncu görünümü: { model, hair, outfit, pants, acc, accColor }. */
   setAvatar(av, silent = false) {
     this.avatar = { ...av };
-    this.player.rebuildModel(av.model ?? 'Barbarian', { hair: av.hair ?? 0, outfit: av.outfit ?? 0, pants: av.pants ?? 0, acc: av.acc ?? 'none', accColor: av.accColor ?? 'red', hairStyle: av.hairStyle ?? 'short', hairCss: HAIR_CSS[av.hair ?? 0] });
+    this.player.rebuildModel(...this.avatarArgs());
     if (!silent) this.save();
+  }
+
+  /** Oyuncu modeli ve görünümü (plazadaki "sen" de aynısını kullanır). */
+  avatarArgs() {
+    const av = this.avatar ?? {};
+    return [av.model ?? 'Barbarian', { hair: av.hair ?? 0, outfit: av.outfit ?? 0, pants: av.pants ?? 0, acc: av.acc ?? 'none', accColor: av.accColor ?? 'red', hairStyle: av.hairStyle ?? 'short', hairCss: HAIR_CSS[av.hair ?? 0] }];
   }
 
   async reset() {

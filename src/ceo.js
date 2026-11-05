@@ -56,6 +56,10 @@ export class CeoDesk {
 
   show() {
     if (!this.founded) return;
+    if (this.game.cityMode) {
+      if (this.open) this.hide();
+      return this.game.plaza.show();
+    }
     this.open = true;
     this.unseen = 0;
     this.syncButton();
@@ -97,35 +101,41 @@ export class CeoDesk {
         <div><span>📊 ${t('Dün kâr')}</span><b class="${profit >= 0 ? 'up' : 'down'}">${profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(Math.round(profit)))}</b></div>
         <div><span>⭐ ${t('Nüfuz')}</span><b>${t('%{n}', { n: g.politics?.popularity ?? 0 })}</b></div>
       </div>`;
-    // Kart süre çubukları
-    for (const bar of this.body.querySelectorAll('[data-left]')) {
-      const a = g.events.active.find((x) => x.id === bar.dataset.left);
-      if (a) bar.style.width = `${Math.max(0, Math.min(100, ((a.expires - g.day.t) / (DAY.length * CEO.expireShare)) * 100))}%`;
-    }
   }
 
   render() {
     if (!this.open) return;
+    if (this.game.cityMode) return this.show(); // şehir moduna geçildi: plaza
     const g = this.game;
     const ev = g.events;
     this.renderHead();
     const cards = ev.agendaHtml('ceo');
-    const waiting = ev.queue.length;
-    const agenda = cards || `<p class="note">${g.day.phase === 'open' ? (waiting ? t('Şu an karar bekleyen konu yok. Bugün {n} konu daha gelecek.', { n: waiting }) : t('Bugünün gündemi tamam. Yarın yeni konular gelecek.')) : t('Gece: gündem sabah açılır.')}</p>`;
+    const agenda = cards || `<p class="note">${g.day.phase === 'open' ? t('Bugünün gündemi tamam. Yarın yeni konular gelecek.') : t('Gece: gündem sabah açılır.')}</p>`;
+    const table = this.dossierHtml();
+    this.body.innerHTML = `
+      <h4>🗂️ ${t('Günün gündemi')}</h4>${agenda}
+      ${ev.log.length ? `<h4>📜 ${t('Son gelişmeler')}</h4>${this.logHtml(6)}` : ''}
+      ${table}
+      <div class="biz-btns"><button data-tablet>💼 ${t('Tableti aç')}</button></div>`;
+  }
+
+  logHtml(n = 6) {
+    return `<div class="ceo-log">${this.game.events.log.slice(0, n).map((l) => `<div>${t('Gün {n}', { n: l.day })}: ${l.text}</div>`).join('')}</div>`;
+  }
+
+  /** İşletmeler tablosu (CEO masası ve plazadaki dosya dolabı). */
+  dossierHtml() {
+    const g = this.game;
     const rows = g.holding.owned.map((b) => {
       const y = b.yesterday;
       return `<tr><td>${b.def.emoji} ${esc(b.name)}</td><td>${b.modules}/${b.maxModules}</td><td>${b.workers}${b.manager ? ' · 🟥' : ''}</td><td class="${(y?.profit ?? 0) >= 0 ? 'up' : 'down'}">${y ? `${y.profit >= 0 ? '+' : '−'}$${formatMoney(Math.abs(Math.round(y.profit)))}` : '—'}</td>
         <td>${b.nextModule() && g.level >= b.nextModule().level ? `<button data-expand="${b.id}" ${g.money < b.nextModule().cost ? 'disabled' : ''}>🏗️ $${formatMoney(b.nextModule().cost)}</button>` : ''}</td></tr>`;
     }).join('');
     const market = g.gm.active ? `🧑‍💼 ${t('Genel müdür yönetiyor')} · ~$${formatMoney(Math.round(g.gm.dailyRevenue))}/${t('gün')}` : `⚠️ ${t('Market senin yönetiminde — genel müdür alırsan CEO masasından ayrılmana gerek kalmaz')}`;
-    this.body.innerHTML = `
-      <h4>🗂️ ${t('Günün gündemi')}</h4>${agenda}
-      ${ev.log.length ? `<h4>📜 ${t('Son gelişmeler')}</h4><div class="ceo-log">${ev.log.slice(0, 6).map((l) => `<div>${t('Gün {n}', { n: l.day })}: ${l.text}</div>`).join('')}</div>` : ''}
-      <h4>🏭 ${t('İşletmeler')}</h4>
+    return `<h4>🏭 ${t('İşletmeler')}</h4>
       <p class="note">🛒 ${esc(g.marketTitle)} · ${market}</p>
       <div class="ceo-table"><table><thead><tr><th>${t('İşletme')}</th><th>${t('Modül')}</th><th>${t('Personel')}</th><th>${t('Dün')}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="note">${t('Ayrıntılı yönetim (personel, satış, kira) için 💼 tablet; haritada gezmek için "Haritaya dön".')}</p>
-      <div class="biz-btns"><button data-tablet>💼 ${t('Tableti aç')}</button></div>`;
+      <p class="note">${t('Ayrıntılı yönetim (personel, satış, kira) için 💼 tablet; haritada gezmek için "Haritaya dön".')}</p>`;
   }
 
   onClick(e) {
