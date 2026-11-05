@@ -75,7 +75,7 @@ async function start() {
     requestAnimationFrame(loop);
     // Kare sınırı (ısınmayı azaltır): seçilen fps'ten sık gelen kareleri atla
     // CEO masası açıkken harita çizilmez (zaman akar)
-    const plaza = game.plaza?.open && !game.simulating;
+    const plaza = (game.plaza?.open || game.venues?.open) && !game.simulating;
     const idle = !plaza && ((!game.viewMode && (game.simulating || !game.running) && !game.party.active) || game.ceoDesk?.open || game.legal?.jailed);
     const fps = plaza ? Math.min(20, game.gfx.fps) : idle ? GFX.idleFps : game.gfx.fps; // plaza: küçük sahne, 20 fps yeter
     if (now - last < 1000 / fps - 2) return;

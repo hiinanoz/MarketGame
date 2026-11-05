@@ -2,6 +2,7 @@ import { t } from './i18n.js';
 import { DAY, CEO } from './config.js';
 import { formatMoney } from './hud.js';
 import { CARDS } from './eventcards.js';
+import { VENUES } from './venues.js';
 
 // Günlük ajanda (1.2): her sabah sekreter günün listesini getirir (holding büyüdükçe 2–3'ten 4–6'ya).
 // Madde türleri: 🗂️ karar (gün içinde ne zaman istersen), 🎟️ etkinlik / 🤝 toplantı / ⚽ maç (saat aralığı var;
@@ -218,13 +219,14 @@ export class Events {
 
   panelOpen() {
     const g = this.game;
-    return !!(g.ceoDesk?.open || g.plaza?.open || g.club?.isOpen || g.politics?.isOpen);
+    return !!(g.ceoDesk?.open || g.plaza?.open || g.venues?.open || g.club?.isOpen || g.politics?.isOpen);
   }
 
   refresh() {
     const g = this.game;
     g.ceoDesk?.render();
     g.plaza?.refresh();
+    if (g.venues?.open) g.venues.render();
     if (g.club?.isOpen) g.club.render();
     if (g.politics?.isOpen) g.politics.render();
   }
@@ -272,14 +274,22 @@ export class Events {
     return `${String(hh + (mm === 60 ? 1 : 0)).padStart(2, '0')}:${String(mm % 60).padStart(2, '0')}`;
   }
 
-  /** Bekleyen maddelerin HTML'i (where: 'ceo' | 'politics' | 'club'). */
-  agendaHtml(where) {
+  /** Şehir modunda bu madde için mekâna gitmek gerekir mi? (etkinlik / toplantı / maç) */
+  needsVenue(c) {
+    return !!(this.game.cityMode && c.kind && c.kind !== 'decision' && c.place && VENUES[c.place]);
+  }
+
+  /** Bekleyen maddelerin HTML'i (where: 'ceo' | 'politics' | 'club'; opts.venue: yalnızca o mekândakiler). */
+  agendaHtml(where, opts = {}) {
     const g = this.game;
     return this.active.map((a) => {
       const c = CARDS.find((x) => x.id === a.id);
       if (!c || this.homeOf(c) !== where) return '';
+      const atVenue = opts.venue && c.place === opts.venue && (opts.venue !== 'biz' || a.vars?.id === opts.vars?.id);
+      if (opts.venue && !atVenue) return '';
+      const far = this.needsVenue(c) && !atVenue;
       const step = this.stepOf(c, a);
-      const open = this.isOpen(a);
+      const open = this.isOpen(a) && !far;
       const kind = c.kind ?? 'decision';
       const when = kind === 'decision' ? t('gün içinde') : `${this.clock(a.from)}–${this.clock(a.to)}`;
       const state = g.day.t < a.from ? `<span class="ag-wait">⏳ ${t('Başlangıç {time}', { time: this.clock(a.from) })}</span>` : '';
@@ -290,8 +300,9 @@ export class Events {
       }).join('');
       const progress = a.labels?.length ? `<p class="ag-prog">✔︎ ${a.labels.join(' → ')}${a.sum.length ? ` · ${a.sum.join(' · ')}` : ''}</p>` : '';
       return `<div class="ceo-card ag-${kind}${open ? '' : ' ag-later'}"><div class="ceo-card-h"><span class="ce">${c.emoji}</span><b>${t(c.title, a.vars)}</b></div>
-        <div class="ag-meta">${KIND[kind]} ${when}${c.place ? ` · 📍 ${t(c.place, a.vars)}` : ''}${c.mandatory ? ` · ⚠️ ${t('zorunlu')}` : ''}</div>
+        <div class="ag-meta">${KIND[kind]} ${when}${c.place ? ` · 📍 ${VENUES[c.place] ? g.venues.nameOf(c.place, a.vars) : t(c.place, a.vars)}` : ''}${c.mandatory ? ` · ⚠️ ${t('zorunlu')}` : ''}</div>
         ${progress}<p>${t(step.text ?? c.text, a.vars)}</p>${state}
+        ${far ? `<div class="ag-far"><span>📍 ${t('Katılmak için mekâna git')}</span><button data-chauffeur="${a.id}" ${g.day.phase === 'open' && g.day.t < a.to && !this.busy ? '' : 'disabled'}>🚗 ${t('Şoförle git')} <small>· ${t('20 dk')}</small></button></div>` : ''}
         <div class="ceo-choices">${choices}</div></div>`;
     }).join('');
   }
@@ -303,6 +314,17 @@ export class Events {
 
   /** Kart seçeneği tıklandıysa uygula (true döner). */
   handleAgendaClick(e) {
+    const ch = e.target.closest('[data-chauffeur]');
+    if (ch) {
+      if (ch.disabled) return true;
+      const entry = this.active.find((a) => a.id === ch.dataset.chauffeur);
+      const card = entry && this.card(entry.id);
+      if (card) {
+        this.game.plaza.hide();
+        this.game.drive.chauffeur(card.place, entry.vars);
+      }
+      return true;
+    }
     const b = e.target.closest('[data-card]');
     if (!b) return false;
     if (b.disabled) return true;

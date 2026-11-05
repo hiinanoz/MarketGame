@@ -180,6 +180,7 @@ export class Plaza {
 
   show() {
     const g = this.game;
+    if (g.drive?.active) g.drive.end();
     this.build();
     this.syncBoss();
     this.open = true;
@@ -431,10 +432,9 @@ export class Plaza {
     this.game.holding.goTo('market');
   }
 
-  /** Şehre çık (makam aracı 1.2-b'de): şimdilik haritaya dönülür. */
+  /** Şehre çık: makam aracı plazanın önünde. */
   goCity() {
-    this.hide();
-    this.game.hud.toast(`🚗 ${t('Şehirdesin. Plazaya dönmek için 🏢 düğmesi.')}`);
+    this.game.drive.start();
   }
 
   serialize() {

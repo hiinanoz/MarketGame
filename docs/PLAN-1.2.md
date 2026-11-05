@@ -296,7 +296,7 @@ Olumlu haber için de medya binasına gidebilirsin:
 |---|---|---|
 | **1.1.x** | Bölüm A (A1–A5). Kararı beklemeden başlanabilir; yalnızca #1 gerekli. | Küçük-orta |
 | **1.2-a** ✅ | Plaza ofisi + sekreter + günlük ajanda (kartlar ajandaya taşınır) + ilişkiler + Sv.40–50 maddeleri (#1–#10) | Büyük |
-| **1.2-b** | Araçla gezme + mekân iç sahneleri (Kültür Merkezi, Stadyum, Banka) + etkinlikler Sv.40–50 | Büyük |
+| **1.2-b** ✅ | Araçla gezme + mekân iç sahneleri (Şehir Bulvarı: plaza, Kültür Merkezi, banka, belediye, okul, adliye, han; stadyum, depo, işletmeler) | Büyük |
 | **1.2-c** | Medya binaları + haber sistemi (D) + Sv.51–65 maddeleri | Orta-büyük |
 | **1.2-d** | Otel, borsa, liman, havalimanı mekânları + Sv.66–100 maddeleri + içerik tamamlama (~120) | Büyük |
 

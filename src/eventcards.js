@@ -449,7 +449,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'trial', emoji: '👨‍⚖️', need: 'legal', followup: true, def: 0, mandatory: true, kind: 'event', window: [10, 16], place: t('Adliye'),
+    id: 'trial', emoji: '👨‍⚖️', need: 'legal', followup: true, def: 0, mandatory: true, kind: 'event', window: [10, 16], place: 'court',
     title: t('Dava günü'),
     text: t('Hâkim gözlüğünü indirdi. Bu genelde iyiye işaret değil.'),
     choices: [
@@ -518,7 +518,7 @@ export const CARDS = [
   },
   // ---- 1.2 Şehir modu: Sv.40–50 ajanda maddeleri (PLAN-1.2 C4 #1–#10) ----
   {
-    id: 'charity_dinner', emoji: '🍽️', kind: 'event', place: t('Kasaba Kültür Merkezi'), window: [18, 22], minLevel: 40, weight: 2,
+    id: 'charity_dinner', emoji: '🍽️', kind: 'event', place: 'culture', window: [18, 22], minLevel: 40, weight: 2,
     title: t('Esnaf hayır yemeği'),
     text: t('Esnaf derneği yaşlılar evi için yemek veriyor. Sonunda müzayede var; masanda belediyeden biri ve kulüp başkanı oturacak.'),
     skip: (g, E) => { E.influence(-1); },
@@ -540,7 +540,7 @@ export const CARDS = [
     },
   },
   {
-    id: 'club_match_visit', emoji: '⚽', kind: 'match', place: t('Stadyum'), window: [18, 22], minLevel: 40, weight: 2, when: (g) => g.club?.unlocked,
+    id: 'club_match_visit', emoji: '⚽', kind: 'match', place: 'stadium', window: [18, 22], minLevel: 40, weight: 2, when: (g) => g.club?.unlocked,
     title: t('Kasaba Spor maçı'),
     text: t('Akşam maç var. Tribün coşkulu, locada ikram, saha kenarında kameralar.'),
     steps: {
@@ -572,7 +572,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'banker_lunch', emoji: '🏦', kind: 'meeting', place: t('Şehir Bankası'), window: [12, 15], minLevel: 40,
+    id: 'banker_lunch', emoji: '🏦', kind: 'meeting', place: 'bank', window: [12, 15], minLevel: 40,
     title: t('Banka müdürüyle öğle yemeği'),
     text: t('Nermin Hanım seni öğle yemeğine davet etti. Masada iki çatal, bir de dosya var.'),
     skip: (g, E) => { E.rel('banker', -2); },
@@ -590,7 +590,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'union_meeting', emoji: '👷', kind: 'meeting', window: [10, 17], minLevel: 40, place: '{biz}', when: has(['factory', 'port', 'mall', 'airport', 'hall', 'barn']), vars: pick(['factory', 'port', 'mall', 'airport', 'hall', 'barn']),
+    id: 'union_meeting', emoji: '👷', kind: 'meeting', window: [10, 17], minLevel: 40, place: 'biz', when: has(['factory', 'port', 'mall', 'airport', 'hall', 'barn']), vars: pick(['factory', 'port', 'mall', 'airport', 'hall', 'barn']),
     title: t('Sendika toplantısı: {biz}'),
     text: t('Rıza Usta masaya bir dosya koydu: "Arkadaşlar yorgun, maaşlar yetmiyor."'),
     skip: (g, E, v) => { if (E.chance(0.3)) { E.biz(v.id, -40, 2); return t('Grev başladı!'); } return ''; },
@@ -601,7 +601,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'rival_secret', emoji: '🕯️', kind: 'meeting', place: t('Han odası'), window: [20, 22], minLevel: 40,
+    id: 'rival_secret', emoji: '🕯️', kind: 'meeting', place: 'inn', window: [20, 22], minLevel: 40,
     title: t('Ucuzcu Kardeşler gizli görüşme istiyor'),
     text: t('Tarihi handa, mum ışığında. Kardeşlerin büyüğü "bölgeyi paylaşalım" diyor, küçüğü telefonla oynuyor.'),
     choices: [
@@ -611,7 +611,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'award_ceremony', emoji: '🏆', kind: 'event', place: t('Kasaba Kültür Merkezi'), window: [19, 22], minLevel: 40,
+    id: 'award_ceremony', emoji: '🏆', kind: 'event', place: 'culture', window: [19, 22], minLevel: 40,
     title: t('"Yılın Girişimcisi" ödül töreni'),
     text: t('Adın finalistler arasında. Kürsüde bir mikrofon, bir de çok yavaş açılan zarf var.'),
     skip: () => t('Ödül başkasına gitti'),
@@ -621,7 +621,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'tender_next', emoji: '📑', minLevel: 40, place: t('Belediye'), when: (g) => g.holding.businesses.some((b) => !b.owned && !b.seized && b.def.level <= g.level + 6) && !g.holding.nextDiscount,
+    id: 'tender_next', emoji: '📑', minLevel: 40, place: 'townhall', when: (g) => g.holding.businesses.some((b) => !b.owned && !b.seized && b.def.level <= g.level + 6) && !g.holding.nextDiscount,
     title: t('Satılık işletme için erken teklif fırsatı'),
     text: t('Belediyedeki tanıdığın, bir sonraki satılık işletmenin ihalesinden önce teklif verebileceğini söylüyor.'),
     choices: [
@@ -630,7 +630,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'school_visit', emoji: '🏫', kind: 'event', place: t('Kasaba İlkokulu'), window: [9, 13], minLevel: 40,
+    id: 'school_visit', emoji: '🏫', kind: 'event', place: 'school', window: [9, 13], minLevel: 40,
     title: t('Okul ziyareti daveti'),
     text: t('Müdire Hanım, öğrencilerin "patronla tanışmak" istediğini yazmış. Bir çocuk şimdiden soru listesi hazırlamış.'),
     choices: [
@@ -639,7 +639,7 @@ export const CARDS = [
     ],
   },
   {
-    id: 'truckers_cafe', emoji: '🚚', kind: 'event', place: t('Lojistik deposu'), window: [8, 12], minLevel: 40, when: (g) => g.holding.logisticsOwned,
+    id: 'truckers_cafe', emoji: '🚚', kind: 'event', place: 'depot', window: [8, 12], minLevel: 40, when: (g) => g.holding.logisticsOwned,
     title: t('Kamyon şoförleri kahvesi'),
     text: t('Şoförler sabah çayında toplanmış; yolların, molaların ve kahvenin acılığının konuşulduğu yer.'),
     choices: [

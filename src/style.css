@@ -816,3 +816,21 @@ body.in-plaza #hud, body.in-plaza .side-btns, body.in-plaza #joystick, body.in-p
 .rel-bar i.pos { background: #4caf50; }
 .rel-bar i.neg { background: #e57373; }
 .rel em { grid-column: 2 / 4; font-style: normal; font-size: 12px; font-weight: 700; }
+
+/* Makam aracı (1.2-b) */
+.drive-bar { position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); z-index: 7; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+.drive-bar.hidden { display: none; }
+.drive-bar button, .drive-bar .drive-hint { pointer-events: auto; border: none; border-radius: 14px; padding: 10px 14px; font: inherit; font-weight: 800; background: #fffaf0; color: #23302a; box-shadow: 0 3px 0 #c9bfa8; position: relative; }
+.drive-bar .drive-hint { font-size: 13px; font-weight: 700; background: rgba(255,250,240,0.9); }
+.drive-bar button.primary { background: #3f8f46; color: #fff; box-shadow: 0 3px 0 #2b6630; font-size: 16px; }
+.drive-bar .badge { position: absolute; top: -6px; right: -6px; }
+.drive-row { display: flex; gap: 8px; }
+body.in-drive #manage-btn, body.in-drive #holding-btn { visibility: hidden; }
+.ag-far { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; font-weight: 700; color: #5b6660; }
+.ag-far button { border: none; border-radius: 10px; padding: 7px 10px; font: inherit; font-weight: 800; background: #3f8f46; color: #fff; }
+.ag-far button:disabled { opacity: 0.5; }
+.vn-sheet { background: linear-gradient(to bottom, transparent 30%, rgba(10,16,22,0.35)); }
+
+.plz-sheet .biz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.plz-sheet .biz-btns button { border: none; border-radius: 12px; padding: 10px 12px; font: inherit; font-weight: 800; background: #e8eef2; color: #23302a; }
+.plz-sheet .biz-btns button.primary { background: #3f8f46; color: #fff; }

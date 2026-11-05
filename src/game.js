@@ -4,6 +4,8 @@ import { GeneralManager } from './gm.js';
 import { Club } from './club.js';
 import { Relations } from './relations.js';
 import { Plaza } from './plaza.js';
+import { Venues } from './venues.js';
+import { Drive } from './drive.js';
 import { Legal } from './legal.js';
 import { Events } from './events.js';
 import { CeoDesk } from './ceo.js';
@@ -154,6 +156,8 @@ export class Game {
     this.ceoDesk = new CeoDesk(this);
     this.relations = new Relations(this);
     this.plaza = new Plaza(this);
+    this.venues = new Venues(this);
+    this.drive = new Drive(this);
     this.decor = new Decor(this);
     this.party = new Celebration(this);
     this.platform = platform;
@@ -939,6 +943,8 @@ export class Game {
     this.events.update();
     this.ceoDesk.update();
     this.plaza.update(dt);
+    this.venues.update(dt);
+    if (this.level >= CITY_MODE.level && !this.venues.built) this.venues.buildMap();
     // Şehir moduna ilk geçiş: plaza açılır, sekreter kendini tanıtır
     if (this.cityMode && !this.plaza.introDone && !this.simulating && !this.paused && !this.viewMode && this.day.phase === 'open') this.ceoDesk.show();
     this.club.update(dt);
@@ -1036,6 +1042,7 @@ export class Game {
   }
 
   updatePlayer(dt) {
+    if (this.drive.update(dt)) return; // makam aracı: caddede sürüş
     const p = this.player;
     const m = this.input.move;
     p.velocity.set(m.x * p.speed, 0, m.z * p.speed);
@@ -1284,6 +1291,7 @@ export class Game {
   }
 
   render() {
+    if (this.venues?.open) return this.venues.draw(this.renderer);
     if (this.plaza?.open && this.plaza.built) return this.plaza.render(this.renderer);
     this.renderer.render(this.scene, this.camera);
   }
