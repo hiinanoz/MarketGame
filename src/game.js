@@ -946,7 +946,11 @@ export class Game {
     this.ceoDesk.update();
     this.plaza.update(dt);
     this.venues.update(dt);
-    if (this.level >= CITY_MODE.level && !this.venues.built) this.venues.buildMap();
+    if (this.level >= CITY_MODE.level && this.venues.mapLevel !== this.level) {
+      this.venues.mapLevel = this.level;
+      this.venues.built = false;
+      this.venues.buildMap(); // yeni seviyede açılan bulvar binaları
+    }
     // Şehir moduna ilk geçiş: plaza açılır, sekreter kendini tanıtır
     if (this.cityMode && !this.plaza.introDone && !this.simulating && !this.paused && !this.viewMode && this.day.phase === 'open') this.ceoDesk.show();
     this.club.update(dt);
@@ -1334,6 +1338,7 @@ export class Game {
       relations: this.relations.serialize(),
       plaza: this.plaza.serialize(),
       news: this.news.serialize(),
+      legacy: this.legacy ?? null,
       legal: this.legal.serialize(),
       ceo: this.ceoDesk.serialize(),
       decor: this.decor.serialize(),
@@ -1413,6 +1418,7 @@ export class Game {
     this.relations.restore(data.relations);
     this.plaza.restore(data.plaza);
     this.news.restore(data.news);
+    this.legacy = data.legacy ?? null; // vasiyet kararı (final)
     if (this.politics.sponsor) { // eski kayıt: sponsorluk siyasetten kulübe taşındı
       this.club.sponsor = true;
       this.politics.sponsor = false;

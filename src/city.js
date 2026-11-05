@@ -133,6 +133,7 @@ export class City {
         <div><span>🗳️ ${t('Kazanılan seçim')}</span><b>${wins}</b></div>
         <div><span>🏆 ${t('En büyük işletme')}</span><b>${biggest ? `${biggest.def.emoji} ${biggest.name}` : '—'}</b></div>
         <div><span>⭐ ${t('Market puanı')}</span><b>${g.rating.stars.toFixed(1)}</b></div>
+        ${g.legacy ? `<div><span>📜 ${t('Vasiyet')}</span><b>${{ corporate: t('Genel müdüre'), foundation: t('Şehre bağış (vakıf)'), sale: t('Satış') }[g.legacy] ?? ''}</b></div>` : ''}
       </div>
       <p class="note">${t('Derece oyun gününe göre: S ≤ 200 · A ≤ 300 · B ≤ 420 · C ≤ 600 · D')}</p>`;
     el.classList.remove('hidden');

@@ -119,21 +119,24 @@ export class Drive {
     this.tick -= dt;
     if (this.tick <= 0) {
       this.tick = 0.25;
-      const s = this.nearestStop();
-      if ((s?.id ?? null) !== (this.stop?.id ?? null) || this.stop === undefined) {
-        this.stop = s;
+      const s = this.nearStops();
+      const key = s.map((x) => `${x.id}:${x.vars?.id ?? ''}`).join(',');
+      if (key !== this.stopKey || this.stop === undefined) {
+        this.stopKey = key;
+        this.stops = s;
+        this.stop = s[0] ?? null;
         this.renderBar();
       }
     }
     return true;
   }
 
-  /** Yakındaki durak (mekân) — bugün orada bir madde varsa öne çıkar. */
-  nearestStop() {
+  /** Yakındaki duraklar (aynı yerde birden fazla mekân olabilir: stadyum / havalimanı). */
+  nearStops() {
     const g = this.game;
     const x = g.player.position.x;
-    let best = null;
-    const cand = Object.keys(VENUES).filter((id) => !VENUES[id].dynamic).map((id) => ({ id, x: VENUES[id].x, vars: {} }));
+    const out = [];
+    const cand = Object.keys(VENUES).filter((id) => !VENUES[id].dynamic && (!VENUES[id].level || g.level >= VENUES[id].level)).map((id) => ({ id, x: VENUES[id].x, vars: {} }));
     for (const a of g.events.active) {
       const c = g.events.card(a.id);
       if (g.events.placeOf(c, a) === 'biz' && a.vars?.id) cand.push({ id: 'biz', x: g.venues.stopX('biz', a.vars), vars: a.vars });
@@ -141,17 +144,22 @@ export class Drive {
     for (const c of cand) {
       if (c.x === null) continue;
       const d = Math.abs(c.x - x);
-      if (d < 4 && (!best || d < best.d)) best = { ...c, d };
+      if (d < 4) out.push({ ...c, d });
     }
-    return best;
+    // Bugün maddesi olan durak önce
+    const has = (s) => g.events.active.some((a) => g.events.placeOf(g.events.card(a.id), a) === s.id);
+    return out.sort((a, b) => (has(b) - has(a)) || a.d - b.d).slice(0, 3);
   }
 
   renderBar() {
     const g = this.game;
-    const s = this.stop;
-    const waiting = s ? g.events.active.filter((a) => g.events.placeOf(g.events.card(a.id), a) === s.id && (s.id !== 'biz' || a.vars?.id === s.vars.id)).length : 0;
-    const name = s ? g.venues.nameOf(s.id, s.vars) : '';
-    this.btn.innerHTML = `${s ? `<button class="primary" data-enter>${VENUES[s.id].emoji} ${s.id === 'market' ? t('Markete gir') : s.id === 'hq' ? t('Plazaya gir') : t('İçeri gir: {name}', { name })}${waiting ? ` <i class="badge">${waiting}</i>` : ''}</button>` : `<span class="drive-hint">🚗 ${t('Sağa sola sür: duraklarda içeri girebilirsin')}</span>`}
+    const stops = this.stops ?? [];
+    const btn = (s, i) => {
+      const waiting = g.events.active.filter((a) => g.events.placeOf(g.events.card(a.id), a) === s.id && (s.id !== 'biz' || a.vars?.id === s.vars.id)).length;
+      const name = g.venues.nameOf(s.id, s.vars);
+      return `<button class="${i === 0 ? 'primary' : ''}" data-enter="${i}">${VENUES[s.id].emoji} ${s.id === 'market' ? t('Markete gir') : s.id === 'hq' ? t('Plazaya gir') : t('İçeri gir: {name}', { name })}${waiting ? ` <i class="badge">${waiting}</i>` : ''}</button>`;
+    };
+    this.btn.innerHTML = `${stops.length ? stops.map(btn).join('') : `<span class="drive-hint">🚗 ${t('Sağa sola sür: duraklarda içeri girebilirsin')}</span>`}
       <div class="drive-row"><button data-walk>🚶 ${t('Arabadan in')}</button><button data-plaza>🏢 ${t('Plazaya dön')}</button></div>`;
   }
 
@@ -159,9 +167,10 @@ export class Drive {
     const g = this.game;
     const b = e.target.closest('button');
     if (!b) return;
-    if (b.dataset.enter !== undefined && this.stop) {
+    if (b.dataset.enter !== undefined && this.stops?.[Number(b.dataset.enter)]) {
+      const s = this.stops[Number(b.dataset.enter)];
       this.speed = 0;
-      g.venues.enter(this.stop.id, this.stop.vars);
+      g.venues.enter(s.id, s.vars);
     } else if (b.dataset.walk !== undefined) this.exitAt(g.player.position.x);
     else if (b.dataset.plaza !== undefined) this.toPlaza();
   }

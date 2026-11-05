@@ -834,3 +834,4 @@ body.in-drive #manage-btn, body.in-drive #holding-btn { visibility: hidden; }
 .plz-sheet .biz-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .plz-sheet .biz-btns button { border: none; border-radius: 12px; padding: 10px 12px; font: inherit; font-weight: 800; background: #e8eef2; color: #23302a; }
 .plz-sheet .biz-btns button.primary { background: #3f8f46; color: #fff; }
+body.in-plaza .drive-bar { display: none; } /* mekân / plaza açıkken araç çubuğu gizli */

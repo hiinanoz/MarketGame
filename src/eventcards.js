@@ -763,4 +763,491 @@ export const CARDS = [
       { label: t('Hemen yaptır ($20K)'), do: (g, E) => { E.cash(-20000); E.influence(2); E.happy(2); } },
     ],
   },
+  // ---- 1.2-d Sv.66–80: ekonominin patronu (PLAN-1.2 C4 #21–#30) ----
+  {
+    id: 'hotel_gala', emoji: '🎭', kind: 'event', place: 'hotel', window: [19, 22], minLevel: 66, weight: 2,
+    title: t('Hayır galası ve müzayede'),
+    text: t('Grand Anadolu\'nun balo salonu ışıl ışıl. Rakip patronlar da davetli; müzayedede üç lot var.'),
+    skip: (g, E) => { E.influence(-1); },
+    steps: {
+      start: { choices: [{ label: t('Salona gir'), hours: 3, goto: 'lot1', do: () => '' }] },
+      lot1: {
+        text: t('1. lot: yerel bir ressamın "Kasaba Sabahı" tablosu. Açılış $20K.'),
+        choices: [
+          { label: t('Teklif ver ($20K+)'), goto: 'lot2', do: (g, E) => (E.relChance('rival', 0.6) ? (E.cash(-22000), E.influence(4), t('Tablo senin')) : t('Ucuzcu Kardeşler son anda kaptı')) },
+          { label: t('Bu lotu geç'), goto: 'lot2', do: () => '' },
+        ],
+      },
+      lot2: {
+        text: t('2. lot: "Başkanla bir akşam yemeği". Salonda kıkırdamalar.'),
+        choices: [
+          { label: t('Teklif ver ($15K)'), goto: 'lot3', do: (g, E) => { E.cash(-15000); E.rel('mayor', 20); } },
+          { label: t('Bu lotu geç'), goto: 'lot3', do: () => '' },
+        ],
+      },
+      lot3: {
+        text: t('Son lot: Kasaba Stadyumu\'nun isim hakkı (5 sezon). Salon sessiz.'),
+        choices: [
+          { label: t('Stadyuma adını ver ($40K)'), do: (g, E) => { E.cash(-40000); E.fans(10); E.customers(5, 30); g.news.lastCharity = g.day.day; } },
+          { label: t('Hiçbir şey alma'), do: (g, E) => { E.influence(1); } },
+        ],
+      },
+    },
+  },
+  {
+    id: 'investor_dinner', emoji: '🥂', kind: 'meeting', place: 'hotel', window: [19, 22], minLevel: 66,
+    title: t('Yatırımcı yemeği: Mr. Kaplan'),
+    text: t('Mr. Kaplan menüye bakmadan "en pahalısı" dedi. Sonra bir kartvizit uzattı.'),
+    skip: (g, E) => { E.rel('investor', -5); },
+    choices: [
+      { label: t('%10 hisse sat'), hours: 2, do: (g, E) => { E.cash(60000); E.rel('investor', 8); return g.finance?.ipo ? t('📈 hisse +%5') : ''; } },
+      { label: t('Ortak liman projesi'), hours: 2, when: (g) => g.holding.get('port')?.owned, do: (g, E) => { E.biz('port', 20, 10); E.rel('investor', 10); } },
+      { label: t('Nazikçe geç'), hours: 2, do: (g, E) => { E.rel('investor', -5); } },
+    ],
+  },
+  {
+    id: 'ipo_gong', emoji: '🔔', kind: 'event', place: 'exchange', window: [9, 11], minLevel: 66, when: (g) => g.finance?.ipo,
+    title: t('Borsada gong töreni'),
+    text: t('Holdingin hisseleri bir yaşında. Borsa seni gongu çalmaya çağırdı.'),
+    skip: () => t('📈 hisse −%2'),
+    choices: [
+      { label: t('Gongu çal, konuşma yap'), hours: 1, do: (g, E) => { E.influence(2); E.rel('investor', 5); return t('📈 hisse +%8'); } },
+      { label: t('Genel müdürü gönder'), anywhere: true, do: () => t('📈 hisse +%3') },
+    ],
+  },
+  {
+    id: 'port_union', emoji: '⚓', kind: 'meeting', place: 'port', window: [10, 16], minLevel: 69, when: (g) => g.holding.get('port')?.owned,
+    title: t('Liman işçileri grev uyarısı'),
+    text: t('Vinç operatörleri vardiya istiyor. Rıza Usta limana bizzat gelmiş.'),
+    skip: (g, E) => (E.chance(0.5) ? (E.biz('port', -60, 3), t('Grev başladı!')) : ''),
+    choices: [
+      { label: t('Uzlaş'), hours: 1, do: (g, E) => { E.cash(-8000); E.rel('union', 8); } },
+      { label: t('Geçici işçi getir'), hours: 1, do: (g, E) => { E.risk(10); E.rel('union', -15); return t('Olumsuz haber çıktı'); } },
+      { label: t('Bekle, grevi göze al'), hours: 1, do: (g, E) => (E.chance(0.5) ? (E.biz('port', -60, 3), t('Grev başladı!')) : t('Homurdanarak işe döndüler')) },
+    ],
+  },
+  {
+    id: 'celeb_wedding', emoji: '💍', minLevel: 68, when: (g) => g.holding.get('hotel')?.owned,
+    title: t('Otelde ünlü düğünü'),
+    text: t('Ünlü bir şarkıcı otelinde evlenmek istiyor. Menajeri "salonu bedava verirseniz çok konuşulur" diyor.'),
+    choices: [
+      { label: t('Salonu ücretsiz ver'), do: (g, E) => { E.biz('hotel', 25, 5); E.influence(2); return t('Olumlu haber çıktı'); } },
+      { label: t('Tam fiyat iste'), do: (g, E) => { E.cash(15000); } },
+    ],
+  },
+  {
+    id: 'foreign_chain', emoji: '🛬', kind: 'meeting', place: 'airport', window: [12, 18], minLevel: 76,
+    title: t('Havalimanı VIP: yabancı zincir şehre giriyor'),
+    text: t('Dev bir market zincirinin temsilcileri VIP salonda. "Ya ortak oluruz ya rakip" diyorlar.'),
+    skip: (g, E) => { E.customers(-8, 20); return t('Rakip zincir şehre girdi'); },
+    choices: [
+      { label: t('Ortaklık kur'), hours: 1, do: (g, E) => { E.cash(30000); E.customers(-5, 10); E.rel('investor', 5); } },
+      { label: t('Arsayı sen kap ($50K)'), hours: 1, do: (g, E) => { E.cash(-50000); E.influence(2); return t('Zincirin yeri kalmadı'); } },
+      { label: t('Belediyeye lobi yap'), hours: 1, do: (g, E) => { E.risk(10); return E.relChance('mayor', 0.5) ? t('Ruhsat çıkmadı, zincir geri döndü') : (E.customers(-8, 20), t('Rakip zincir şehre girdi')); } },
+    ],
+  },
+  {
+    id: 'econ_summit', emoji: '📊', kind: 'event', place: 'hotel', window: [10, 13], minLevel: 66,
+    title: t('Ekonomi zirvesi paneli'),
+    text: t('Panelde üç konuşmacı var; biri sensin. Salonda bakan yardımcısı ve yatırımcılar.'),
+    choices: [
+      { label: t('"Yerel üretim" konuşması'), hours: 2, do: (g, E) => { E.influence(4); E.biz('farm', 5, 7); E.biz('dairy', 5, 7); } },
+      { label: t('"Büyüme" konuşması'), hours: 2, do: (g, E) => { E.rel('investor', 6); return t('📈 hisse +%4'); } },
+      { label: t('Kuliste iş bağla'), hours: 2, do: (g, E) => { E.later('summit_deal', 2); return t('Bir yatırım teklifi gelecek'); } },
+    ],
+  },
+  {
+    id: 'summit_deal', emoji: '🤝', followup: true, def: 1,
+    title: t('Zirveden yatırım teklifi'),
+    text: t('Zirvede tanıştığın fon, holdinge sermaye koymak istiyor. Şartları masada.'),
+    choices: [
+      { label: t('Kabul et'), do: (g, E) => { E.cash(40000); E.rel('investor', 10); } },
+      { label: t('Şimdilik reddet'), do: () => '' },
+    ],
+  },
+  {
+    id: 'critic_kitchen', emoji: '👨‍🍳', kind: 'event', place: 'restaurant', window: [19, 22], minLevel: 68, when: (g) => g.holding.get('restaurant')?.owned,
+    title: t('Restoranda ünlü eleştirmen'),
+    text: t('Eleştirmen pencere kenarında, defteri açık. Şef ellerini önlüğüne siliyor.'),
+    choices: [
+      { label: t('Mutfağa gir, şefle özel menü'), hours: 1, do: (g, E) => (E.chance(0.6) ? (E.influence(3), E.biz('restaurant', 15, 5), t('Beş yıldız!')) : (E.biz('restaurant', -10, 3), t('Tuzluk beğenilmedi'))) },
+      { label: t('Masasına git, ikram et'), hours: 1, do: (g, E) => { E.risk(5); return E.chance(0.5) ? (E.influence(2), t('Çok iyi geçti')) : t('"Rüşvet mi bu?" dedi'); } },
+    ],
+  },
+  {
+    id: 'factory_drill', emoji: '🦺', minLevel: 73, when: (g) => g.holding.get('factory')?.owned,
+    title: t('Fabrikada güvenlik tatbikatı'),
+    text: t('İş güvenliği uzmanı raporunu bıraktı: "Yangın merdiveni var ama nerede olduğunu kimse bilmiyor."'),
+    choices: [
+      { label: t('Güvenlik yatırımı ($25K)'), do: (g, E) => { E.cash(-25000); E.rel('union', 5); } },
+      { label: t('Ertele'), do: (g, E) => { if (E.chance(0.15)) E.later('factory_accident', 3); } },
+    ],
+  },
+  {
+    id: 'factory_accident', emoji: '🚑', followup: true, mandatory: true, def: 0,
+    title: t('Fabrikada iş kazası'),
+    text: t('Bir işçi hafif yaralandı. Gazeteciler kapıda, sendika toplantıda.'),
+    choices: [
+      { label: t('Tazminat öde, sorumluluk al'), do: (g, E) => { E.cash(-30000); E.influence(-2); E.rel('union', 5); } },
+      { label: t('Olayı örtbas et'), do: (g, E) => { E.risk(20); E.rel('union', -15); return E.chance(0.4) ? (E.influence(-8), t('Örtbas haberi sızdı!')) : ''; } },
+    ],
+  },
+  {
+    id: 'bank_merger', emoji: '🏦', kind: 'meeting', place: 'bank', window: [10, 16], minLevel: 70, when: (g) => !!g.finance?.bank,
+    title: t('Şehir Bankası birleşme teklif ediyor'),
+    text: t('Nermin Hanım iki dosya getirdi: biri birleşme protokolü, diğeri "hayır derseniz" senaryosu.'),
+    choices: [
+      { label: t('Birleş'), hours: 2, do: (g, E) => { E.cash(50000); E.rel('banker', 20); } },
+      { label: t('Bağımsız kal'), hours: 1, do: (g, E) => { E.rel('banker', -5); E.influence(1); } },
+    ],
+  },
+  // ---- 1.2-d Sv.81–100: şehrin sahibi (#31–#35) ----
+  {
+    id: 'city_summit', emoji: '🌆', kind: 'event', place: 'fair', window: [10, 16], minLevel: 81,
+    title: t('Şehir Zirvesi: büyük projeler'),
+    text: t('Fuar alanında şehrin geleceği masada. Üç maket, üç fiyat etiketi.'),
+    choices: [
+      { label: t('Metro hattı ($300K)'), hours: 3, do: (g, E) => { E.cash(-300000); E.happy(10); E.customers(10, 60); } },
+      { label: t('Teknopark ($200K)'), hours: 3, do: (g, E) => { E.cash(-200000); E.biz('all', 5, 60); E.rel('investor', 10); } },
+      { label: t('Sahil yolu ($150K)'), hours: 3, do: (g, E) => { E.cash(-150000); E.biz('hotel', 15, 60); E.biz('restaurant', 15, 60); E.happy(4); } },
+    ],
+  },
+  {
+    id: 'national_doc', emoji: '🎥', minLevel: 82,
+    title: t('Ulusal TV belgesel çekmek istiyor'),
+    text: t('"Bakkaldan şehrin sahibine" adlı bir belgesel. Yönetmen ilk sahneyi marketinde çekmek istiyor.'),
+    choices: [
+      { label: t('Çocukluğunu, bakkal günlerini anlat'), do: (g, E) => { E.influence(8); E.happy(2); } },
+      { label: t('Holdingi tanıt'), do: (g, E) => { E.rel('investor', 8); return t('📈 hisse +%5'); } },
+      { label: t('Reddet'), do: () => '' },
+    ],
+  },
+  {
+    id: 'heir_question', emoji: '👑', minLevel: 95, def: 0, mandatory: true,
+    title: t('Holdingi kime bırakacaksın?'),
+    text: t('Avukatın vasiyet taslağını getirdi. Sekreter kapının arkasından dinliyor.'),
+    choices: [
+      { label: t('Genel müdüre (kurumsal devam)'), do: (g) => { g.legacy = 'corporate'; return t('Holding kurumsal olarak devam edecek'); } },
+      { label: t('Bir vakfa (şehre bağış)'), do: (g, E) => { g.legacy = 'foundation'; E.influence(10); E.happy(5); } },
+      { label: t('Satış (nakit)'), do: (g, E) => { g.legacy = 'sale'; E.cash(100000); } },
+    ],
+  },
+  // ---- 1.2-d çeşitlilik: tekrar etmesin diye ek maddeler ----
+  {
+    id: 'charity_marathon', emoji: '🏃', kind: 'event', place: 'culture', window: [8, 11], minLevel: 40,
+    title: t('Hayır koşusu'),
+    text: t('Şehir çocuk hastanesi için koşuyor. Başlangıç çizgisinde senin adının yazılı olduğu boş bir forma var.'),
+    choices: [
+      { label: t('Koş!'), hours: 2, do: (g, E) => { E.influence(3); E.happy(1); g.news.lastCharity = g.day.day; return E.chance(0.3) ? t('Sondan ikinci oldun ama çok alkışlandın') : ''; } },
+      { label: t('Sponsor ol ($5K)'), anywhere: true, do: (g, E) => { E.cash(-5000); E.influence(3); g.news.lastCharity = g.day.day; } },
+    ],
+  },
+  {
+    id: 'blood_drive', emoji: '🩸', kind: 'event', place: 'culture', window: [10, 16], minLevel: 40,
+    title: t('Kan bağışı kampanyası'),
+    text: t('Kızılay çadırı Kültür Merkezi\'nin önünde. Hemşire "patron örnek olsun" diyor.'),
+    choices: [
+      { label: t('Kan ver, çalışanlarını da çağır'), hours: 1, do: (g, E) => { E.influence(3); E.happy(2); E.biz('all', -3, 1); g.news.lastCharity = g.day.day; } },
+      { label: t('Kurabiye ve meyve suyu gönder'), anywhere: true, do: (g, E) => { E.cash(-800); E.influence(1); } },
+    ],
+  },
+  {
+    id: 'teacher_request', emoji: '🧑‍🏫', minLevel: 40,
+    title: t('Öğretmenler laboratuvar istiyor'),
+    text: t('İlkokulun fen laboratuvarında tek mikroskop var, o da 1987 model.'),
+    choices: [
+      { label: t('Laboratuvarı donat ($8K)'), do: (g, E) => { E.cash(-8000); E.happy(3); E.influence(3); g.news.lastCharity = g.day.day; } },
+      { label: t('Mikroskop gönder ($1K)'), do: (g, E) => { E.cash(-1000); E.influence(1); } },
+      { label: t('Şimdilik olmaz'), do: () => '' },
+    ],
+  },
+  {
+    id: 'film_shoot', emoji: '🎬', minLevel: 45,
+    title: t('Dizi ekibi marketinde çekim yapmak istiyor'),
+    text: t('Başrol oyuncusu kasada "aşk sahnesi" çekecek. Kasiyerin heyecandan barkodu ters okuyor.'),
+    choices: [
+      { label: t('İzin ver (kira $6K)'), do: (g, E) => { E.cash(6000); E.customers(-10, 1); E.customers(8, 7); } },
+      { label: t('Ücretsiz izin ver, logoyu göster'), do: (g, E) => { E.customers(12, 7); } },
+      { label: t('Reddet'), do: () => '' },
+    ],
+  },
+  {
+    id: 'flood_warning', emoji: '🌊', minLevel: 40,
+    title: t('Sel uyarısı'),
+    text: t('Dere taşabilir. Depodaki paletler yerde, belediyenin kum torbaları bitti.'),
+    choices: [
+      { label: t('Kum torbası ve pompa al ($3K)'), do: (g, E) => { E.cash(-3000); } },
+      { label: t('Mahalleye de dağıt ($9K)'), do: (g, E) => { E.cash(-9000); E.influence(4); E.happy(3); } },
+      { label: t('Şansını dene'), do: (g, E) => (E.chance(0.4) ? (E.biz('all', -25, 2), t('Depo su aldı')) : t('Fırtına teğet geçti')) },
+    ],
+  },
+  {
+    id: 'golf_day', emoji: '⛳', kind: 'event', place: 'inn', window: [9, 14], minLevel: 55,
+    title: t('Han bahçesinde "iş dünyası kahvaltısı"'),
+    text: t('Banka müdürü, yatırımcılar ve gazeteciler aynı masada. Simit tabağı stratejik noktada.'),
+    choices: [
+      { label: t('Bankacıyla sohbet'), hours: 2, do: (g, E) => { E.rel('banker', 8); } },
+      { label: t('Gazetecilerle sohbet'), hours: 2, do: (g, E) => { E.rel('editor', 8); } },
+      { label: t('Rakiplerle barış çubuğu'), hours: 2, do: (g, E) => { E.rel('rival', 10); } },
+    ],
+  },
+  {
+    id: 'club_transfer', emoji: '✍️', kind: 'meeting', place: 'stadium', window: [11, 17], minLevel: 45, need: 'club', when: (g) => g.club.rank > 0,
+    title: t('Transfer döneminde yıldız pazarlığı'),
+    text: t('Menajer telefonu kapatmadan konuşuyor: "Üç kulüp daha istiyor, karar bugün."'),
+    choices: [
+      { label: t('Transfer et ($25K)'), hours: 1, do: (g, E) => { E.cash(-25000); g.club.strength = Math.min(90, g.club.strength + 5); E.fans(6); } },
+      { label: t('Kiralık al ($8K)'), hours: 1, do: (g, E) => { E.cash(-8000); g.club.strength = Math.min(90, g.club.strength + 2); E.fans(2); } },
+      { label: t('Bütçe yok'), hours: 1, do: (g, E) => { E.fans(-2); } },
+    ],
+  },
+  {
+    id: 'stock_rumor', emoji: '📉', minLevel: 66, when: (g) => g.finance?.ipo,
+    title: t('Borsada söylenti: "holding zorda"'),
+    text: t('Sosyal medyada bir hesap holdingin batacağını iddia ediyor. Hesabın profil fotoğrafı bir patates.'),
+    choices: [
+      { label: t('Geri alım yap ($30K)'), do: (g, E) => { E.cash(-30000); E.rel('investor', 5); return t('📈 hisse +%6'); } },
+      { label: t('Açıklama yap'), do: (g, E) => (E.chance(0.6) ? t('📈 söylenti söndü') : t('📉 hisse −%4')) },
+      { label: t('Görmezden gel'), do: () => t('📉 hisse −%3') },
+    ],
+  },
+  {
+    id: 'minister_transit', emoji: '🧳', kind: 'meeting', place: 'airport', window: [14, 18], minLevel: 76,
+    title: t('Bakan aktarmada, VIP salonda bekliyor'),
+    text: t('Uçuşu iki saat rötarlı. Danışmanı "bakan bey çay içer" dedi.'),
+    choices: [
+      { label: t('Şehir projelerini anlat'), hours: 1, do: (g, E) => { E.influence(4); E.rel('mayor', 5); } },
+      { label: t('Teşvik iste'), hours: 1, do: (g, E) => (E.chance(0.5) ? (E.cash(25000), t('Teşvik çıktı')) : t('"Bakarız" dedi')) },
+    ],
+  },
+  {
+    id: 'mall_anniversary', emoji: '🎈', kind: 'event', place: 'mall', window: [12, 20], minLevel: 75, when: (g) => g.holding.get('mall')?.owned,
+    title: t('AVM yıl dönümü kutlaması'),
+    text: t('Balonlar şişirildi, konfeti topları hazır. Sunucu "patron kurdeleyi keser mi?" diye soruyor.'),
+    choices: [
+      { label: t('Kurdeleyi kes, konuş'), hours: 1, do: (g, E) => { E.biz('mall', 15, 5); E.influence(2); } },
+      { label: t('Çekiliş yap ($10K)'), hours: 1, do: (g, E) => { E.cash(-10000); E.biz('mall', 25, 5); E.happy(2); } },
+    ],
+  },
+  {
+    id: 'ship_delay', emoji: '🚢', minLevel: 69, when: (g) => g.holding.get('port')?.owned,
+    title: t('Limanda gemi rötarı'),
+    text: t('Fırtına yüzünden üç gemi açıkta bekliyor. Kaptanlardan biri telsizden şarkı söylüyor.'),
+    choices: [
+      { label: t('Ek römorkör kirala ($7K)'), do: (g, E) => { E.cash(-7000); } },
+      { label: t('Bekle'), do: (g, E) => { E.biz('port', -30, 2); } },
+    ],
+  },
+  {
+    id: 'health_inspector', emoji: '🧪', minLevel: 68, when: (g) => g.holding.get('restaurant')?.owned || g.holding.get('hotel')?.owned,
+    title: t('Sağlık müfettişi habersiz geldi'),
+    text: t('Müfettiş buzdolabını açtı, termometreye baktı, sonra size.'),
+    choices: [
+      { label: t('Her yeri göster'), do: (g, E) => (E.chance(0.75) ? (E.influence(1), t('Her şey temiz çıktı')) : (E.cash(-6000), t('Ceza kesildi'))) },
+      { label: t('"Bir çay içelim" de'), do: (g, E) => { E.risk(8); return E.chance(0.5) ? t('Müfettiş çayı sevdi') : (E.cash(-10000), t('Ceza kesildi')); } },
+    ],
+  },
+  {
+    id: 'stadium_concert', emoji: '🎤', kind: 'event', place: 'stadium', window: [19, 22], minLevel: 50,
+    title: t('Stadyumda yaz konseri'),
+    text: t('Ünlü bir grup sahnede. Organizatör "sponsor yayında anons edilir" diyor.'),
+    choices: [
+      { label: t('Locadan izle, sponsor ol ($6K)'), hours: 2, do: (g, E) => { E.cash(-6000); E.customers(8, 3); E.fans(3); } },
+      { label: t('Tribünde halkla izle'), hours: 2, do: (g, E) => { E.influence(2); E.happy(1); } },
+    ],
+  },
+  {
+    id: 'court_witness', emoji: '📜', kind: 'meeting', place: 'court', window: [10, 15], minLevel: 51,
+    title: t('Tanık olarak çağrıldın'),
+    text: t('Ucuzcu Kardeşler\'in vergi davasında tanıksın. Kardeşler koridorda sana el sallıyor.'),
+    skip: (g, E) => { E.risk(5); return t('Mahkeme celp kâğıdı gönderdi'); },
+    choices: [
+      { label: t('Doğruyu söyle'), hours: 1, do: (g, E) => { E.rel('rival', -15); E.risk(-5); E.influence(1); } },
+      { label: t('"Hatırlamıyorum"'), hours: 1, do: (g, E) => { E.rel('rival', 10); E.risk(8); } },
+    ],
+  },
+  // ---- Ek kısa kararlar (çeşitlilik) ----
+  {
+    id: 'cat_in_store', emoji: '🐈', minLevel: 30,
+    title: t('Markete bir kedi yerleşti'),
+    text: t('Sarman bir kedi peynir reyonunun üstünde uyuyor. Müşteriler fotoğraf çekiyor.'),
+    choices: [
+      { label: t('Maskot yap, mama koy'), do: (g, E) => { E.cash(-200); E.customers(4, 5); E.rating(1); } },
+      { label: t('Barınağa götür'), do: (g, E) => { E.happy(1); } },
+    ],
+  },
+  {
+    id: 'parking_complaint', emoji: '🚗', minLevel: 30,
+    title: t('Komşular otopark kalabalığından şikâyetçi'),
+    text: t('Bir komşu, arabasının önüne park eden müşteriye not bırakmış: "Bir dahakine lastik."'),
+    choices: [
+      { label: t('Otopark görevlisi tut ($1.5K)'), do: (g, E) => { E.cash(-1500); E.happy(1); } },
+      { label: t('Komşulara indirim kuponu dağıt'), do: (g, E) => { E.cash(-800); E.customers(3, 3); } },
+      { label: t('Umursama'), do: (g, E) => { E.happy(-1); } },
+    ],
+  },
+  {
+    id: 'supplier_bankrupt', emoji: '📦', minLevel: 32,
+    title: t('Bir tedarikçi iflasın eşiğinde'),
+    text: t('Yıllardır mal aldığın ambalaj firması batmak üzere. Sahibi telefonda ağlıyor.'),
+    choices: [
+      { label: t('Satın al ($12K)'), do: (g, E) => { E.cash(-12000); E.biz('all', 4, 20); E.rel('union', 4); } },
+      { label: t('Avans ver ($4K)'), do: (g, E) => { E.cash(-4000); E.happy(1); } },
+      { label: t('Başka tedarikçi bul'), do: (g, E) => { E.biz('all', -3, 3); } },
+    ],
+  },
+  {
+    id: 'energy_price_spike', emoji: '⚡', minLevel: 33,
+    title: t('Elektrik zammı kapıda'),
+    text: t('Dağıtım şirketi zam yapacağını duyurdu. Santrallerin varsa bu iyi haber olabilir.'),
+    choices: [
+      { label: t('Fazla elektriği sat'), when: (g) => g.holding.owned.some((b) => b.def.energy), do: (g, E) => { E.cash(8000); } },
+      { label: t('Tasarruf kampanyası'), do: (g, E) => { E.cash(-1000); E.influence(1); } },
+    ],
+  },
+  {
+    id: 'influencer_visit', emoji: '🤳', minLevel: 35,
+    title: t('Ünlü bir fenomen "market turu" çekmek istiyor'),
+    text: t('Takipçi sayısı kasabanın nüfusunun yüz katı. İstediği: ücretsiz sepet.'),
+    choices: [
+      { label: t('Sepeti doldur'), do: (g, E) => { E.cash(-1500); E.customers(9, 3); } },
+      { label: t('Kibarca reddet'), do: () => '' },
+    ],
+  },
+  {
+    id: 'tax_incentive', emoji: '🧾', minLevel: 40,
+    title: t('Yeşil yatırım vergi teşviki'),
+    text: t('Devlet, güneş paneli kuranlara vergi indirimi veriyor. Formu doldurmak 14 sayfa.'),
+    choices: [
+      { label: t('Muhasebeciye doldurt'), do: (g, E) => { E.cash(6000); } },
+      { label: t('Uğraşmaya değmez'), do: () => '' },
+    ],
+  },
+  {
+    id: 'competitor_poach', emoji: '🎣', minLevel: 42,
+    title: t('Rakip en iyi müdürünü transfer etmeye çalışıyor'),
+    text: t('Ucuzcu Kardeşler, işletme müdürlerinden birine iki katı maaş teklif etmiş.'),
+    choices: [
+      { label: t('Maaşına zam yap ($5K)'), do: (g, E) => { E.cash(-5000); E.biz('all', 3, 10); } },
+      { label: t('Bırak gitsin'), do: (g, E) => { E.biz('all', -6, 5); E.rel('rival', 3); } },
+    ],
+  },
+  {
+    id: 'street_festival', emoji: '🎪', minLevel: 45,
+    title: t('Cadde festivali için sponsor aranıyor'),
+    text: t('Bando, pamuk şeker ve dev bir balon. Belediye "ana sponsor" arıyor.'),
+    choices: [
+      { label: t('Ana sponsor ol ($10K)'), do: (g, E) => { E.cash(-10000); E.customers(15, 2); E.influence(3); } },
+      { label: t('Stand aç ($2K)'), do: (g, E) => { E.cash(-2000); E.customers(6, 2); } },
+      { label: t('Katılma'), do: () => '' },
+    ],
+  },
+  {
+    id: 'cyber_attack', emoji: '💻', minLevel: 48,
+    title: t('Online sipariş sistemine siber saldırı'),
+    text: t('Sitede sadece dans eden bir kedi gif\'i görünüyor. Müşteriler eğleniyor ama sipariş veremiyor.'),
+    choices: [
+      { label: t('Güvenlik firması tut ($7K)'), do: (g, E) => { E.cash(-7000); } },
+      { label: t('Stajyere çözdür'), do: (g, E) => (E.chance(0.5) ? t('Stajyer çözdü!') : (E.customers(-8, 2), t('Site iki gün kapalı kaldı'))) },
+    ],
+  },
+  {
+    id: 'water_shortage', emoji: '🚰', minLevel: 50,
+    title: t('Şehirde su kesintisi'),
+    text: t('Üç gün su yok. Markette damacana rafları boşalıyor.'),
+    choices: [
+      { label: t('Fiyatı sabit tut, ekstra sipariş'), do: (g, E) => { E.cash(-3000); E.influence(3); E.happy(2); } },
+      { label: t('Fiyatı yükselt'), do: (g, E) => { E.cash(6000); E.influence(-4); E.happy(-3); } },
+    ],
+  },
+  {
+    id: 'billboard_war', emoji: '🪧', minLevel: 52, need: 'politics', when: (g) => g.politics.campaignTime,
+    title: t('Rakip adayın afişi marketinin duvarında'),
+    text: t('Gece biri marketin yan duvarına dev bir afiş asmış. Afişteki aday gülümsüyor.'),
+    choices: [
+      { label: t('Söktür, yerine kendi afişini as'), do: (g, E) => { E.influence(2); E.rel('rival', -5); } },
+      { label: t('Bırak, "herkese açığız" de'), do: (g, E) => { E.influence(3); } },
+    ],
+  },
+  {
+    id: 'pension_fund', emoji: '👵', minLevel: 55,
+    title: t('Çalışanlar için emeklilik fonu önerisi'),
+    text: t('İnsan kaynakları müdürü bir sunum hazırlamış. Slaytlarda çok fazla ok işareti var.'),
+    choices: [
+      { label: t('Fonu kur ($15K)'), do: (g, E) => { E.cash(-15000); E.rel('union', 15); E.biz('all', 5, 30); } },
+      { label: t('Seneye'), do: (g, E) => { E.rel('union', -3); } },
+    ],
+  },
+  {
+    id: 'mayor_dinner_invite', emoji: '🍷', minLevel: 51, need: 'politics', when: (g) => !g.isMayor,
+    title: t('Belediye başkanı akşam yemeğine çağırıyor'),
+    text: t('"Gelin konuşalım" diyor. Menüde balık, gündemde imar.'),
+    choices: [
+      { label: t('Git, dinle'), do: (g, E) => { E.rel('mayor', 8); E.influence(-1); } },
+      { label: t('Seçim öncesi görüşmem'), do: (g, E) => { E.rel('mayor', -5); E.influence(2); } },
+    ],
+  },
+  {
+    id: 'stock_tip', emoji: '📈', minLevel: 66,
+    title: t('Bir broker "kaçırılmaz hisse" fısıldıyor'),
+    text: t('Broker ceketinin içinden bir kâğıt çıkardı: üzerinde sadece "AL!" yazıyor.'),
+    choices: [
+      { label: t('$20K yatır'), do: (g, E) => (E.chance(0.5) ? (E.cash(16000), t('Hisse uçtu!')) : (E.cash(-20000), t('Hisse çakıldı'))) },
+      { label: t('İçeriden bilgi mi? Reddet'), do: (g, E) => { E.risk(-3); } },
+    ],
+  },
+  {
+    id: 'hotel_overbooking', emoji: '🛎️', minLevel: 68, when: (g) => g.holding.get('hotel')?.owned,
+    title: t('Otelde aşırı rezervasyon'),
+    text: t('Bir turist kafilesi ve bir düğün aynı gece. Resepsiyon görevlisi saklanacak yer arıyor.'),
+    choices: [
+      { label: t('Rakip otele yönlendir, ücreti öde'), do: (g, E) => { E.cash(-5000); E.influence(1); } },
+      { label: t('Toplantı salonuna yatak kur'), do: (g, E) => (E.chance(0.5) ? t('Misafirler macerayı sevdi') : (E.biz('hotel', -15, 3), t('Yorumlar kötü geldi'))) },
+    ],
+  },
+  {
+    id: 'airport_strike', emoji: '🛫', minLevel: 76, when: (g) => g.holding.get('airport')?.owned,
+    title: t('Yer hizmetleri iş bıraktı'),
+    text: t('Bavullar pistte sıraya dizilmiş. Bir yolcu bavulunun üstünde uyuyor.'),
+    choices: [
+      { label: t('Zam ver ($12K)'), do: (g, E) => { E.cash(-12000); E.rel('union', 8); } },
+      { label: t('Taşeron getir'), do: (g, E) => { E.biz('airport', -20, 3); E.rel('union', -12); } },
+    ],
+  },
+  {
+    id: 'museum_donation', emoji: '🏺', minLevel: 81,
+    title: t('Eski Çarşı\'da müze açılacak'),
+    text: t('Kazıda bir Roma sikkesi ve çok eski bir yazar kasa çıktı. Müze için bağış aranıyor.'),
+    choices: [
+      { label: t('Müzeyi sen kur ($50K)'), do: (g, E) => { E.cash(-50000); E.influence(6); E.happy(4); g.news.lastCharity = g.day.day; } },
+      { label: t('Yazar kasayı satın al ($5K)'), do: (g, E) => { E.cash(-5000); E.customers(3, 10); return t('Kasa marketinde sergileniyor'); } },
+    ],
+  },
+  {
+    id: 'university_chair', emoji: '🎓', minLevel: 87,
+    title: t('Üniversite adına bir kürsü açmak istiyor'),
+    text: t('"Perakende ve Girişimcilik Kürsüsü". Rektör senin adını önermiş.'),
+    choices: [
+      { label: t('Bursları da sen ver ($80K)'), do: (g, E) => { E.cash(-80000); E.influence(8); E.happy(3); } },
+      { label: t('Sadece adını ver'), do: (g, E) => { E.influence(2); } },
+    ],
+  },
+  {
+    id: 'village_road', emoji: '🛣️', minLevel: 89,
+    title: t('Kuzey köyleri yol istiyor'),
+    text: t('Köylerden gelen heyet traktörle gelmiş. Traktör belediyenin önünde park halinde.'),
+    choices: [
+      { label: t('Yolu yaptır ($120K)'), do: (g, E) => { E.cash(-120000); E.happy(6); E.biz('farm', 10, 60); } },
+      { label: t('Bütçeye koy (seneye)'), do: (g, E) => { E.influence(-2); } },
+    ],
+  },
+  {
+    id: 'sister_city', emoji: '🌍', minLevel: 85,
+    title: t('Kardeş şehir protokolü'),
+    text: t('Denizaşırı bir şehrin belediye başkanı ziyarete geliyor. Getirdiği hediye bir tulum peyniri.'),
+    choices: [
+      { label: t('Ağırla, ticaret anlaşması öner'), do: (g, E) => { E.cash(-5000); E.rel('investor', 10); E.biz('port', 10, 20); } },
+      { label: t('Kısa bir tören yeter'), do: (g, E) => { E.influence(1); } },
+    ],
+  },
 ];

@@ -19,6 +19,14 @@ export const VENUES = {
   tv: { name: t('Manşet TV'), emoji: '📺', x: -110, kind: 'studio', color: 0x2c3e66, h: 9, north: true },
   gazette: { name: t('Kasaba Gazetesi'), emoji: '📰', x: -58, kind: 'newsroom', existing: true },
   stadium: { name: t('Stadyum'), emoji: '🏟️', x: -78, kind: 'box', existing: true },
+  airport: { name: t('Havalimanı VIP salonu'), emoji: '✈️', x: -78, kind: 'vip', existing: true, level: 66 },
+  hotel: { name: t('Grand Anadolu Otel balo salonu'), emoji: '🏨', x: -34, kind: 'ballroom', existing: true, level: 66 },
+  restaurant: { name: t('Tombik Restoran'), emoji: '🍽️', x: -20, kind: 'restaurant', existing: true, level: 66 },
+  factory: { name: t('Sanayi Üretim Fabrikası'), emoji: '🏭', x: -30, kind: 'factory', existing: true, level: 66 },
+  port: { name: t('Kasaba Limanı'), emoji: '⚓', x: 26, kind: 'depot', existing: true, level: 66 },
+  mall: { name: t('Kasaba Forum AVM'), emoji: '🛍️', x: -2, kind: 'hall', existing: true, level: 66 },
+  exchange: { name: t('Borsa salonu'), emoji: '📈', x: -125, kind: 'exchange', color: 0x445566, h: 11, north: true, level: 66 },
+  fair: { name: t('Şehir Zirvesi fuar alanı'), emoji: '🌆', x: -140, kind: 'summit', color: 0x8a9aa8, h: 6, north: true, level: 81 },
   market: { name: t('Market'), emoji: '🛒', x: 0, kind: 'market', existing: true },
   depot: { name: t('Lojistik deposu'), emoji: '🚚', x: 38, kind: 'depot', existing: true },
   biz: { name: '{biz}', emoji: '🏭', kind: 'factory', existing: true, dynamic: true },
@@ -72,7 +80,9 @@ export class Venues {
     if (this.built) return;
     this.built = true;
     for (const [id, v] of Object.entries(VENUES)) {
-      if (v.existing) continue;
+      if (v.existing || this.mapBuilt?.[id]) continue;
+      if (v.level && this.game.level < v.level) continue; // ileri seviye binalar seviyesi gelince
+      (this.mapBuilt ??= {})[id] = true;
       const g = new THREE.Group();
       g.position.set(v.x, 0, v.north ? 9.5 : BLVD_Z);
       if (v.north) g.rotation.y = Math.PI; // caddenin kuzeyinde: kapı güneye (caddeye) bakar
@@ -114,7 +124,7 @@ export class Venues {
   sceneFor(kind) {
     if (this.scenes[kind]) return this.scenes[kind];
     const scene = new THREE.Scene();
-    const palette = { studio: [0x151a2a, 0x2c3e66], newsroom: [0x2e3a2e, 0xe8e2d0], hall: [0x5a2e2e, 0xf1e3c8], bank: [0x2f3e4c, 0xe9eef2], townhall: [0x3c4a3a, 0xefe6d2], school: [0x4d6e8a, 0xfff3d6], court: [0x3e342c, 0xe7dcc8], inn: [0x2a1c14, 0xc89a68], box: [0x1d2a3a, 0xd7e3ee], depot: [0x3a3a32, 0xd8d2c0], factory: [0x34383c, 0xd2d6da], hq: [0x2b3a48, 0xe9e2d4], market: [0x2b3a48, 0xe9e2d4] }[kind] ?? [0x333333, 0xeeeeee];
+    const palette = { ballroom: [0x3a1f2c, 0xf3e6cf], vip: [0x1f2a33, 0xdfe7ee], exchange: [0x101826, 0x2b3c56], restaurant: [0x3c2418, 0xead6b8], summit: [0x22303c, 0xe6ebef], studio: [0x151a2a, 0x2c3e66], newsroom: [0x2e3a2e, 0xe8e2d0], hall: [0x5a2e2e, 0xf1e3c8], bank: [0x2f3e4c, 0xe9eef2], townhall: [0x3c4a3a, 0xefe6d2], school: [0x4d6e8a, 0xfff3d6], court: [0x3e342c, 0xe7dcc8], inn: [0x2a1c14, 0xc89a68], box: [0x1d2a3a, 0xd7e3ee], depot: [0x3a3a32, 0xd8d2c0], factory: [0x34383c, 0xd2d6da], hq: [0x2b3a48, 0xe9e2d4], market: [0x2b3a48, 0xe9e2d4] }[kind] ?? [0x333333, 0xeeeeee];
     scene.background = new THREE.Color(palette[0]);
     scene.add(new THREE.HemisphereLight(0xfff6e6, 0x40342a, 1.7));
     const lamp = new THREE.PointLight(0xffd9a0, 8, 12);
@@ -172,6 +182,40 @@ export class Venues {
       box(5, 1.6, 0.06, 0x24423a, 0, 1.8, -3.45); // kara tahta
       for (const [x, z] of [[-2.5, 0.5], [0, 0.5], [2.5, 0.5], [-2.5, 2.3], [0, 2.3], [2.5, 2.3]]) box(1.2, 0.08, 0.7, 0xc89a68, x, 0.6, z);
       seats.push([-2.5, 1.1], [2.5, 1.1], [0, 2.9]);
+    } else if (kind === 'ballroom' || kind === 'restaurant') {
+      if (kind === 'ballroom') {
+        box(5, 0.5, 1.6, 0x6a2a3a, 0, 0.25, -2.6);
+        for (const x of [-3, 3]) {
+          const ch = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4, 0), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }));
+          ch.position.set(x, 3.1, 0.5);
+          scene.add(ch);
+        }
+      }
+      table(-2.6, 0.4);
+      table(2.6, 0.4);
+      table(0, 2.6);
+    } else if (kind === 'vip') {
+      box(12, 2.6, 0.06, 0x9fc6e6, 0, 1.9, -3.45); // pist manzaralı cam
+      for (const [x, z] of [[-2.4, 0], [2.4, 0]]) {
+        box(2.2, 0.45, 0.9, 0x5a4a3a, x, 0.25, z);
+        box(2.2, 0.6, 0.25, 0x5a4a3a, x, 0.6, z - 0.4);
+      }
+      box(1.2, 0.4, 0.8, 0xd8c8a8, 0, 0.35, 0.6);
+      seats.push([-2.4, 0.1], [2.4, 0.1], [0, 1.6]);
+    } else if (kind === 'exchange') {
+      box(10, 1.6, 0.06, 0x1f3d2a, 0, 2.6, -3.45); // kayan fiyat panosu
+      box(10, 0.3, 0.07, 0x5bd38a, 0, 2.2, -3.42);
+      box(2.2, 1.1, 0.9, 0x5a4636, 0, 0.55, -2.0); // kürsü + gong
+      const gong = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 20), mat(0xd4a83a, 0.3));
+      gong.rotation.x = Math.PI / 2;
+      gong.position.set(1.6, 1.6, -2.2);
+      scene.add(gong);
+      seats.push([-2.5, 1.2], [0, 1.6], [2.5, 1.2]);
+    } else if (kind === 'summit') {
+      box(7, 0.5, 1.8, 0x34495e, 0, 0.25, -2.5);
+      box(6, 1.8, 0.06, 0x3a7bd5, 0, 2.1, -3.45);
+      for (let r = 0; r < 2; r++) for (let i = -2; i <= 2; i++) box(0.8, 0.45, 0.6, 0x7f8c8d, i * 1.6, 0.22, 0.6 + r * 1.4);
+      seats.push([-1.6, 0.9], [1.6, 0.9], [0, 2.3], [-3.2, 2.3], [3.2, 2.3]);
     } else if (kind === 'studio') {
       box(6, 0.4, 2.2, 0x23283a, 0, 0.2, -1.8); // stüdyo masası zemini
       box(3.6, 0.9, 0.9, 0xd8dde8, 0, 0.75, -1.6);

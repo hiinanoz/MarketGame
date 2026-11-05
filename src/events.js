@@ -169,6 +169,11 @@ export class Events {
     return CARDS.find((c) => c.id === id);
   }
 
+  /** Tüm kartlar (test ve hata ayıklama). */
+  allCards() {
+    return CARDS;
+  }
+
   /** Kartın şu anki adımı (çok adımlı etkinlik). */
   stepOf(card, entry) {
     if (entry?.step && card.steps?.[entry.step]) return card.steps[entry.step];
