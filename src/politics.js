@@ -227,9 +227,15 @@ export class Politics {
     if (!show) return;
     if (!this.started) {
       this.started = true;
-      this.nextElection = g.day.day + POLITICS.termYears * YEAR;
+      this.retimed = true;
+      this.nextElection = g.day.day + POLITICS.firstElectionMonths * M;
       this.makeRivals();
       g.hud.toast(`🗳️ ${t('Siyaset açıldı! Seçime {left} var — nüfuzunu artır', { left: this.leftText() })}`);
+    }
+    // Eski kayıtlar (2 yıllık dönem): seçim en geç 1 dönem sonra
+    if (!this.retimed) {
+      this.retimed = true;
+      if (!this.autocracy) this.nextElection = Math.min(this.nextElection, g.day.day + POLITICS.termYears * YEAR);
     }
     const txt = this.autocracy ? `👑 ${t('Kral')}` : `🗳️ ${t('Seçime {left}', { left: this.leftText() })} · ${t('%{n}', { n: this.popularity })}`;
     if (txt !== this.pillText) {
@@ -451,8 +457,8 @@ export class Politics {
   }
 
   serialize() {
-    const { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history, happyBonus } = this;
-    return { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history, happyBonus };
+    const { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history, happyBonus, retimed } = this;
+    return { started, nextElection, temp, donated, sponsor, buildings, projects, mayor, wins, autocracy, lowDays, taxRate, zoned, rallyDay, rivals, history, happyBonus, retimed };
   }
 
   restore(d) {

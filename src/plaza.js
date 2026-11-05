@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { t } from './i18n.js';
-import { SECRETARY } from './config.js';
+import { SECRETARY, PREMIUM } from './config.js';
 import { formatMoney } from './hud.js';
 import { Character } from './character.js';
 
@@ -288,7 +288,22 @@ export class Plaza {
     const msg = g.day.phase !== 'open' ? t('Gece: ajanda sabah 08:00\'de gelir.')
       : n ? t('Bugün {n} madde bekliyor', { n }) + (next ? ` · ${t('sıradaki {time}', { time: ev.clock(next.from) })}` : '')
         : t('Bugünün ajandası tamam.');
-    this.bottom.innerHTML = `<button class="plz-agenda" data-spot="agenda">🗂️ ${msg}</button>`;
+    // CEO çubuğu: oyunun tüm menüleri plazadan da erişilir
+    const sp = g.options.speed ?? 1;
+    const fin = g.finishDaysLeft;
+    const items = [
+      ['agenda', '🗂️', t('Ajanda'), n],
+      ['tablet', '💼', t('Tablet')],
+      g.politics?.unlocked ? ['politics', '🗳️', t('Siyaset')] : null,
+      g.club?.unlocked ? ['club', '⚽', t('Kulüp')] : null,
+      ['safe', '🏦', t('Banka')],
+      ['quests', '🎯', t('Görevler')],
+      ['speed', '⏩', `${sp}×`],
+      ['finish', '⏭️', fin > 0 ? t('Günü bitir') : g.level >= PREMIUM.finishGemsLevel ? `💎${PREMIUM.finishGems}` : t('Günü bitir'), 0, fin <= 0 && g.level < PREMIUM.finishGemsLevel],
+      ['menu', '☰', t('Menü')],
+    ].filter(Boolean);
+    this.bottom.innerHTML = `<div class="plz-status">🗂️ ${msg}</div>
+      <div class="ceo-bar">${items.map(([id, e, label, badge, off]) => `<button data-bar="${id}" class="${off ? 'off' : ''}"><span>${e}</span><b>${label}</b>${badge ? `<i class="badge">${badge}</i>` : ''}</button>`).join('')}</div>`;
     const badge = this.spotsEl.querySelector('[data-spot="agenda"] .badge');
     badge.textContent = n || '';
     badge.classList.toggle('hidden', !n);
@@ -402,6 +417,8 @@ export class Plaza {
     if (e.target.closest('[data-close]')) return this.closeSheet();
     if (this.panel === 'agenda' && g.events.handleAgendaClick(e)) return;
     if (this.panel === 'safe' && g.office.panel.bankAction(e)) return this.renderSheet();
+    const bar = e.target.closest('[data-bar]');
+    if (bar) return this.barAction(bar.dataset.bar);
     const spot = e.target.closest('[data-spot]');
     if (spot) {
       const id = spot.dataset.spot;
@@ -424,6 +441,27 @@ export class Plaza {
     } else if (b.dataset.expand) g.holding.get(b.dataset.expand)?.expand();
     this.renderSheet();
     this.renderBottom();
+  }
+
+  /** CEO çubuğu düğmeleri. */
+  barAction(id) {
+    const g = this.game;
+    g.audio.play('click');
+    if (id === 'agenda' || id === 'safe') return this.openSheet(id);
+    this.closeSheet();
+    if (id === 'tablet') return g.holding.open('biz');
+    if (id === 'politics') return g.politics.open();
+    if (id === 'club') return g.club.open();
+    if (id === 'quests') return document.getElementById('quest-btn').click();
+    if (id === 'menu') return document.getElementById('menu-btn').click();
+    if (id === 'speed') {
+      document.getElementById('speed-btn').click();
+      return this.renderBottom();
+    }
+    if (id === 'finish') {
+      g.finishDay();
+      return this.renderBottom();
+    }
   }
 
   /** Markete git: plaza kapanır, oyuncu marketin önüne. */

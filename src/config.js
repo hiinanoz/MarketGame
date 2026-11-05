@@ -314,7 +314,8 @@ export const PREMIUM = {
   onlineStaff: 6,       // standart: online bölümünde en fazla 6 kişi (ciro ≈ marketin %50'si)
   builds: 2,            // standart: aynı anda en fazla 2 inşaat; Premium sınırsız
   buildSpeed: 0.75,     // Premium: inşaat süresi %25 kısa
-  finishDays: 1,        // standart: gerçek günde 1 kez "Günü tamamla"; Premium sınırsız
+  finishDays: 1,
+  finishGems: 10, finishGemsLevel: 40, // Sv.40+: ücretsiz hak bitince günü elmasla tamamla        // standart: gerçek günde 1 kez "Günü tamamla"; Premium sınırsız
   decorSlots: 6,        // standart: mağaza önünde 6 süs yeri (Premium 10)
   gemFactor: 1.5,       // Premium: görev ve giriş ödülünde elmas 1.5 kat
   // Geliştiriciye teşekkür (App Store'da tekrar alınabilen bahşiş ürünleri)
@@ -805,8 +806,9 @@ export const MEDIA = { adDiscount: 0.6, salesBoost: 1.15 }; // medya sende: rekl
 export const POLITICS = {
   fromLevel: 51,
   daysPerMonth: 2,
-  termYears: 2,
-  campaignMonths: 6,
+  termYears: 1,         // 1.3: dönem 1 oyun yılı (24 gün)
+  firstElectionMonths: 6, // siyaset açılınca ilk seçim 6 ay (12 gün) sonra
+  campaignMonths: 3,    // seçimden önceki son 3 ay (6 gün) kampanya dönemi
   mainMin: 25,          // ana rakip her zaman en az %25
   minorMax: 8,          // diğer adaylar en fazla %8
   voteFactor: 0.8,      // popülerlik → oy oranı

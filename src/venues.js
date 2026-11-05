@@ -85,6 +85,8 @@ export class Venues {
       (this.mapBuilt ??= {})[id] = true;
       const g = new THREE.Group();
       g.position.set(v.x, 0, v.north ? 9.5 : BLVD_Z);
+      const cz = v.north ? 9.5 : BLVD_Z;
+      this.game.nav.setBox(`venue-${id}`, { minX: v.x - 3.3, maxX: v.x + 3.3, minZ: cz - 3.1, maxZ: cz + 3.1 }); // araç / oyuncu çarpar
       if (v.north) g.rotation.y = Math.PI; // caddenin kuzeyinde: kapı güneye (caddeye) bakar
       const mat = (c, r = 0.8) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
       const body = new THREE.Mesh(new THREE.BoxGeometry(6.4, v.h, 6), mat(v.color, v.kind === 'hq' ? 0.25 : 0.8));

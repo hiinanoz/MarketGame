@@ -140,7 +140,32 @@ export class Club {
     return true;
   }
 
-  /** Başkanlık seçimi sonucu (olay kartından). */
+  /** Sezon sonuna (başkanlık seçimine) kalan gün. */
+  get daysToElection() {
+    const g = this.game;
+    const left = Math.max(0, CLUB.season - this.played);
+    if (!left) return 0;
+    const first = g.day.day % CLUB.matchEvery === 0 ? g.day.day : g.day.day + (CLUB.matchEvery - (g.day.day % CLUB.matchEvery));
+    return first + (left - 1) * CLUB.matchEvery - g.day.day;
+  }
+
+  /** Aday olunca kazanma ihtimali (kampanya dahil). */
+  get winChance() {
+    return Math.max(0.1, Math.min(0.9, 0.55 + (this.fans - CLUB.electionFans) / 60));
+  }
+
+  /** Yönetim kurulu üyesi sezon sonundaki seçime aday olur (kampanya ücreti şimdi). */
+  declareCandidacy() {
+    const g = this.game;
+    if (this.role !== 'board' || this.candidate || g.money < CLUB.campaign) return false;
+    g.spend(CLUB.campaign);
+    this.candidate = true;
+    g.hud.toast(`🗳️ ${t('Kulüp başkanlığına aday oldun! Seçim {n} gün sonra', { n: this.daysToElection })}`);
+    g.save();
+    return true;
+  }
+
+  /** Başkanlık seçimi sonucu. */
   runForPresident(extraChance = 0) {
     const p = Math.max(0.1, Math.min(0.9, 0.45 + (this.fans - CLUB.electionFans) / 60 + extraChance));
     const won = Math.random() < p;
@@ -246,9 +271,14 @@ export class Club {
       g.gainXp(300);
       g.party?.start?.(`🏆 ${t('Kasaba Spor şampiyon!')}`, t('Kupa marketin vitrininde'), 6);
     }
-    // Sezon sonu: yönetimdeysen başkanlık seçimi kartı
-    if (this.role === 'board') g.events.later.push({ id: 'club_election', day: g.day.day + 1 });
-    else if (this.role === 'president' && bad) g.events.later.push({ id: 'club_noconfidence', day: g.day.day + 1 });
+    // Sezon sonu: başkanlık seçimi (aday olduysan sonuç hemen)
+    if (this.role === 'board') {
+      if (this.candidate) {
+        const won = this.runForPresident(0.1);
+        g.hud.toast(won ? `🎉 ${t('Kulüp başkanı oldun!')}` : `😞 ${t('Kulüp başkanlığı seçimini kaybettin')}`);
+      } else g.hud.toast(`⚽ ${t('Kulüpte mevcut başkan yeniden seçildi')}`);
+      this.candidate = false;
+    } else if (this.role === 'president' && bad) g.events.later.push({ id: 'club_noconfidence', day: g.day.day + 1 });
     this.season++;
     this.played = 0;
     this.table = null;
@@ -356,9 +386,14 @@ export class Club {
       <div class="bank-group"><span>🤝 ${t('Bağış')}</span>${CLUB.donations.map((n) => `<button data-donate="${n}" ${m < n ? 'disabled' : ''}>$${formatMoney(n)}</button>`).join('')}</div>`);
     if (this.role === 'fan') {
       const pct = Math.min(100, Math.round((this.donated / CLUB.boardAt) * 100));
-      parts.push(`<p class="note">${t('Toplam ${n} bağışta yönetim kuruluna davet edilirsin (siyasette kalıcı nüfuz).', { n: formatMoney(CLUB.boardAt) })}</p><div class="progress"><i style="width:${pct}%"></i></div>`);
+      parts.push(`<p class="note">${t('Toplam ${n} bağışta yönetim kuruluna davet edilirsin (siyasette kalıcı nüfuz).', { n: formatMoney(CLUB.boardAt) })} ${t('Yönetime girince başkanlığa aday olabilirsin (seçim {n} gün sonra).', { n: this.daysToElection })}</p><div class="progress"><i style="width:${pct}%"></i></div>`);
     } else if (this.role === 'board') {
-      parts.push(`<p class="note">${t('Sezon sonunda başkanlık seçimi yapılır. Taraftar sevgin yüksekse kazanma şansın artar.')}</p>`);
+      const d = this.daysToElection;
+      const when = d === 0 ? t('bugün') : t('{n} gün sonra', { n: d });
+      parts.push(`<div class="biz-row"><span>🗳️ ${t('Başkanlık seçimi')}</span><b>${when}</b>${this.candidate
+        ? `<small>${t('Adaysın · kazanma şansı {n}', { n: t('%{n}', { n: Math.round(this.winChance * 100) }) })}</small>`
+        : `<button data-candidate ${m < CLUB.campaign ? 'disabled' : ''}>${t('Aday ol ${n}', { n: formatMoney(CLUB.campaign) })}</button>`}</div>
+        <p class="note">${this.candidate ? t('Taraftar sevgini artırdıkça şansın yükselir (bağış, sponsorluk, galibiyet).') : t('Aday olursan kazanma şansın şu an {n}. Taraftar sevgisi yükseldikçe artar.', { n: t('%{n}', { n: Math.round(this.winChance * 100) }) })}</p>`);
     } else {
       const c = this.transferCost();
       parts.push(`<p class="note">${t('<b>Başkanlık</b> · iyi sezon siyasette artı, kötü sezon eksi yazar.')}</p>
@@ -381,12 +416,13 @@ export class Club {
     if (d.donate) this.donate(Number(d.donate));
     if (d.transfer !== undefined) this.transfer();
     if (d.coach !== undefined) this.changeCoach();
+    if (d.candidate !== undefined) this.declareCandidacy();
     this.render();
   }
 
   serialize() {
-    const { sponsor, donated, role, fans, strength, season, played, table, results, history } = this;
-    return { sponsor, donated, role, fans, strength, season, played, table, results, history };
+    const { sponsor, donated, role, fans, strength, season, played, table, results, history, candidate } = this;
+    return { sponsor, donated, role, fans, strength, season, played, table, results, history, candidate };
   }
 
   restore(d) {

@@ -503,12 +503,22 @@ export class Game {
 
   finishDay({ free = false } = {}) {
     if (this.simulating || this.day.phase === 'night') return;
-    if (!free && this.finishDaysLeft <= 0) {
+    let gemPaid = false;
+    if (!free && this.finishDaysLeft <= 0 && this.level >= PREMIUM.finishGemsLevel) {
+      if (!this.goals.spendGems(PREMIUM.finishGems)) {
+        this.hud.toast(t('💎 Günü tamamlamak için {n} elmas gerekli', { n: PREMIUM.finishGems }));
+        this.audio.play('error');
+        return;
+      }
+      gemPaid = true;
+      this.hud.toast(`💎 −${PREMIUM.finishGems} · ${t('Gün tamamlanıyor')}`);
+    }
+    if (!free && !gemPaid && this.finishDaysLeft <= 0) {
       this.hud.toast(t('👑 Günü tamamla standart sürümde günde {n} kez — Premium\'da sınırsız. Yarın tekrar kullanabilirsin.', { n: PREMIUM.finishDays }));
       this.audio.play('error');
       return;
     }
-    if (!free && !this.premium) {
+    if (!free && !gemPaid && !this.premium) {
       const today = new Date().toDateString();
       this.stats.finishCount = this.stats.finishDate === today ? (this.stats.finishCount ?? 0) + 1 : 1;
       this.stats.finishDate = today;

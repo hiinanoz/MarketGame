@@ -178,8 +178,9 @@ export class Hud {
     const g = this.game;
     const btn = document.getElementById('finish-day');
     const left = g.finishDaysLeft;
-    btn.textContent = left === Infinity ? t('⏭️ Günü tamamla') : left > 0 ? t('⏭️ Günü tamamla (bugün {n} hak)', { n: left }) : t('⏭️ Günü tamamla · 👑 yarın ya da Premium');
-    btn.classList.toggle('locked', left <= 0);
+    const gemsOk = left <= 0 && g.level >= PREMIUM.finishGemsLevel;
+    btn.textContent = left === Infinity ? t('⏭️ Günü tamamla') : left > 0 ? t('⏭️ Günü tamamla (bugün {n} hak)', { n: left }) : gemsOk ? t('⏭️ Günü tamamla (💎{n})', { n: PREMIUM.finishGems }) : t('⏭️ Günü tamamla · 👑 yarın ya da Premium');
+    btn.classList.toggle('locked', left <= 0 && !gemsOk);
   }
 
   syncPaused() {
